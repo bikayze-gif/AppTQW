@@ -367,7 +367,11 @@ export default function Activity() {
                   {filteredAndSortedData.map((row, idx) => (
                     <tr
                       key={row.id}
-                      className="hover:bg-white/5 transition-colors"
+                      onClick={() => {
+                        setSelectedDate(row.fecha);
+                        setShowDrawer(true);
+                      }}
+                      className="hover:bg-white/5 transition-colors cursor-pointer"
                       data-testid={`activity-row-${idx}`}
                     >
                       <td className="px-3 md:px-6 py-3 text-xs md:text-sm text-slate-400" data-testid={`activity-date-${idx}`}>{formatDate(row.fecha)}</td>
