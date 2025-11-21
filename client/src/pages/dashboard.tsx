@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, Search, X, ArrowUp, ArrowDown } from "lucide-react";
+import { ArrowUp, ArrowDown } from "lucide-react";
 
 const evolutionData = [
   { month: "Dic 24", value: 88 },
@@ -31,14 +31,11 @@ const efficiencyData = [
 ];
 
 const tableData = [
-  { id: 1, rut: "12.345.678-9", estado: "Activo", eficiencia: "95%", fecha: "2025-01-15" },
-  { id: 2, rut: "23.456.789-0", estado: "Pendiente", eficiencia: "78%", fecha: "2025-01-14" },
-  { id: 3, rut: "34.567.890-1", estado: "Activo", eficiencia: "100%", fecha: "2025-01-13" },
-  { id: 4, rut: "45.678.901-2", estado: "Inactivo", eficiencia: "45%", fecha: "2025-01-12" },
-  { id: 5, rut: "56.789.012-3", estado: "Activo", eficiencia: "88%", fecha: "2025-01-11" },
-  { id: 6, rut: "67.890.123-4", estado: "Activo", eficiencia: "92%", fecha: "2025-01-10" },
-  { id: 7, rut: "78.901.234-5", estado: "Pendiente", eficiencia: "65%", fecha: "2025-01-09" },
-  { id: 8, rut: "89.012.345-6", estado: "Activo", eficiencia: "99%", fecha: "2025-01-08" },
+  { id: 1, mes: "Dic 24", totales: 73, cumple: 64, noCumple: 9 },
+  { id: 2, mes: "Mar 24", totales: 23, cumple: 23, noCumple: 0 },
+  { id: 3, mes: "Abr 24", totales: 41, cumple: 41, noCumple: 0 },
+  { id: 4, mes: "May 24", totales: 55, cumple: 50, noCumple: 5 },
+  { id: 5, mes: "Jun 24", totales: 67, cumple: 62, noCumple: 5 },
 ];
 
 const CustomDot = (props: any) => {
@@ -53,144 +50,26 @@ const CustomDot = (props: any) => {
   );
 };
 
-const getStatusColor = (status: string) => {
-  switch(status) {
-    case "Activo":
-      return "bg-green-500/20 text-green-400 border border-green-500/30";
-    case "Pendiente":
-      return "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30";
-    case "Inactivo":
-      return "bg-red-500/20 text-red-400 border border-red-500/30";
-    default:
-      return "bg-slate-500/20 text-slate-400 border border-slate-500/30";
-  }
-};
 
-type TableRecord = typeof tableData[0];
-
-function DetailPanel({ record, onClose }: { record: TableRecord; onClose: () => void }) {
-  return (
-    <motion.div
-      className="fixed inset-0 z-50 overflow-hidden"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-    >
-      {/* Backdrop */}
-      <motion.div
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-        onClick={onClose}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-      />
-
-      {/* Slide Panel */}
-      <motion.div
-        className="absolute inset-y-0 right-0 w-full md:w-96 bg-card shadow-2xl flex flex-col"
-        initial={{ x: "100%" }}
-        animate={{ x: 0 }}
-        exit={{ x: "100%" }}
-        transition={{ type: "spring", damping: 30, stiffness: 300 }}
-      >
-        {/* Header */}
-        <div className="sticky top-0 bg-card/95 backdrop-blur border-b border-white/5 px-4 py-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-white">Detalles del Registro</h2>
-          <button
-            onClick={onClose}
-            className="p-1 hover:bg-white/10 rounded-lg transition-colors"
-            data-testid="button-close-detail"
-          >
-            <ChevronLeft size={24} className="text-slate-400" />
-          </button>
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
-          
-          {/* RUT Section */}
-          <div>
-            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">RUT</label>
-            <p className="text-xl font-bold text-white mt-2" data-testid="detail-rut">{record.rut}</p>
-          </div>
-
-          {/* Estado Section */}
-          <div>
-            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Estado</label>
-            <div className="mt-2">
-              <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold ${getStatusColor(record.estado)}`} data-testid="detail-estado">
-                {record.estado}
-              </span>
-            </div>
-          </div>
-
-          {/* Eficiencia Section */}
-          <div>
-            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Eficiencia</label>
-            <div className="mt-2 bg-white/5 rounded-lg p-4">
-              <div className="text-3xl font-bold text-[#06b6d4]" data-testid="detail-eficiency">{record.eficiencia}</div>
-              <div className="w-full bg-white/10 rounded-full h-2 mt-3 overflow-hidden">
-                <motion.div
-                  className="h-full bg-gradient-to-r from-[#06b6d4] to-[#0891b2]"
-                  initial={{ width: 0 }}
-                  animate={{ width: record.eficiencia }}
-                  transition={{ delay: 0.2, duration: 0.6 }}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Fecha Section */}
-          <div>
-            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Fecha de Registro</label>
-            <p className="text-base text-slate-300 mt-2" data-testid="detail-fecha">{record.fecha}</p>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="space-y-2 pt-4">
-            <button className="w-full bg-[#06b6d4] hover:bg-[#0891b2] text-black font-semibold py-2.5 rounded-lg transition-colors" data-testid="button-edit-record">
-              Editar Registro
-            </button>
-            <button className="w-full bg-white/10 hover:bg-white/20 text-white font-semibold py-2.5 rounded-lg transition-colors" data-testid="button-delete-record">
-              Eliminar
-            </button>
-          </div>
-        </div>
-      </motion.div>
-    </motion.div>
-  );
-}
 
 export default function Dashboard() {
-  const [selectedRecord, setSelectedRecord] = useState<TableRecord | null>(null);
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
-  const [searchText, setSearchText] = useState("");
 
-  const filteredAndSortedData = useMemo(() => {
+  const sortedData = useMemo(() => {
     let data = [...tableData];
     
-    // Filter
-    if (searchText) {
-      data = data.filter((row) =>
-        Object.values(row).some((val) =>
-          String(val).toLowerCase().includes(searchText.toLowerCase())
-        )
-      );
-    }
-    
-    // Sort
     if (sortColumn) {
       data.sort((a, b) => {
-        const aVal = String(a[sortColumn as keyof typeof a]);
-        const bVal = String(b[sortColumn as keyof typeof b]);
-        const comparison = aVal.localeCompare(bVal, undefined, { numeric: true });
+        const aVal = a[sortColumn as keyof typeof a];
+        const bVal = b[sortColumn as keyof typeof b];
+        const comparison = Number(aVal) - Number(bVal);
         return sortDirection === "asc" ? comparison : -comparison;
       });
     }
     
     return data;
-  }, [searchText, sortColumn, sortDirection]);
+  }, [sortColumn, sortDirection]);
 
   const handleSort = (column: string) => {
     if (sortColumn === column) {
@@ -318,45 +197,21 @@ export default function Dashboard() {
 
           {/* Table Section */}
           <div className="pt-4">
-            <h3 className="text-base md:text-lg font-bold text-white mb-3 px-2">Registros</h3>
-            
-            {/* Search Bar */}
-            <div className="mb-3 px-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 text-slate-400" size={18} />
-                <input
-                  type="text"
-                  placeholder="Buscar registros..."
-                  value={searchText}
-                  onChange={(e) => setSearchText(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#06b6d4]"
-                  data-testid="search-input"
-                />
-                {searchText && (
-                  <button
-                    onClick={() => setSearchText("")}
-                    className="absolute right-3 top-3 text-slate-400 hover:text-white"
-                    data-testid="clear-search"
-                  >
-                    <X size={18} />
-                  </button>
-                )}
-              </div>
-            </div>
+            <h3 className="text-base md:text-lg font-bold text-white mb-3 px-2">Detalle por Mes</h3>
             
             {/* Responsive Table Container */}
             <div className="overflow-x-auto">
               <Card className="bg-card border-none shadow-xl rounded-2xl md:rounded-3xl overflow-hidden">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-white/5">
+                    <tr className="border-b border-white/5 bg-white/5">
                       <th 
-                        onClick={() => handleSort("rut")}
+                        onClick={() => handleSort("mes")}
                         className="px-3 md:px-6 py-3 text-left font-semibold text-slate-300 text-xs md:text-sm cursor-pointer hover:bg-white/10 transition-colors"
                       >
                         <div className="flex items-center gap-2">
-                          RUT
-                          {sortColumn === "rut" && (
+                          Mes
+                          {sortColumn === "mes" && (
                             <span>
                               {sortDirection === "asc" ? (
                                 <ArrowUp size={14} className="text-[#06b6d4]" />
@@ -368,12 +223,12 @@ export default function Dashboard() {
                         </div>
                       </th>
                       <th 
-                        onClick={() => handleSort("estado")}
+                        onClick={() => handleSort("totales")}
                         className="px-3 md:px-6 py-3 text-left font-semibold text-slate-300 text-xs md:text-sm cursor-pointer hover:bg-white/10 transition-colors"
                       >
                         <div className="flex items-center gap-2">
-                          Estado
-                          {sortColumn === "estado" && (
+                          Totales
+                          {sortColumn === "totales" && (
                             <span>
                               {sortDirection === "asc" ? (
                                 <ArrowUp size={14} className="text-[#06b6d4]" />
@@ -385,12 +240,12 @@ export default function Dashboard() {
                         </div>
                       </th>
                       <th 
-                        onClick={() => handleSort("eficiencia")}
+                        onClick={() => handleSort("cumple")}
                         className="px-3 md:px-6 py-3 text-left font-semibold text-slate-300 text-xs md:text-sm cursor-pointer hover:bg-white/10 transition-colors"
                       >
                         <div className="flex items-center gap-2">
-                          Eficiencia
-                          {sortColumn === "eficiencia" && (
+                          Cumple
+                          {sortColumn === "cumple" && (
                             <span>
                               {sortDirection === "asc" ? (
                                 <ArrowUp size={14} className="text-[#06b6d4]" />
@@ -402,12 +257,12 @@ export default function Dashboard() {
                         </div>
                       </th>
                       <th 
-                        onClick={() => handleSort("fecha")}
+                        onClick={() => handleSort("noCumple")}
                         className="px-3 md:px-6 py-3 text-left font-semibold text-slate-300 text-xs md:text-sm cursor-pointer hover:bg-white/10 transition-colors"
                       >
                         <div className="flex items-center gap-2">
-                          Fecha
-                          {sortColumn === "fecha" && (
+                          No Cumple
+                          {sortColumn === "noCumple" && (
                             <span>
                               {sortDirection === "asc" ? (
                                 <ArrowUp size={14} className="text-[#06b6d4]" />
@@ -421,21 +276,16 @@ export default function Dashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
-                    {filteredAndSortedData.map((row, idx) => (
+                    {sortedData.map((row, idx) => (
                       <tr
                         key={row.id}
-                        onClick={() => setSelectedRecord(row)}
-                        className="hover:bg-white/5 transition-colors cursor-pointer"
+                        className="hover:bg-white/5 transition-colors"
                         data-testid={`table-row-${idx}`}
                       >
-                        <td className="px-3 md:px-6 py-3 text-xs md:text-sm text-slate-200" data-testid={`table-rut-${idx}`}>{row.rut}</td>
-                        <td className="px-3 md:px-6 py-3">
-                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(row.estado)}`} data-testid={`table-status-${idx}`}>
-                            {row.estado}
-                          </span>
-                        </td>
-                        <td className="px-3 md:px-6 py-3 text-xs md:text-sm text-slate-200" data-testid={`table-eficiency-${idx}`}>{row.eficiencia}</td>
-                        <td className="px-3 md:px-6 py-3 text-xs md:text-sm text-slate-400" data-testid={`table-date-${idx}`}>{row.fecha}</td>
+                        <td className="px-3 md:px-6 py-3 text-xs md:text-sm text-slate-200" data-testid={`table-mes-${idx}`}>{row.mes}</td>
+                        <td className="px-3 md:px-6 py-3 text-xs md:text-sm text-slate-200" data-testid={`table-totales-${idx}`}>{row.totales}</td>
+                        <td className="px-3 md:px-6 py-3 text-xs md:text-sm text-green-400 font-semibold" data-testid={`table-cumple-${idx}`}>{row.cumple}</td>
+                        <td className="px-3 md:px-6 py-3 text-xs md:text-sm text-red-400 font-semibold" data-testid={`table-noCumple-${idx}`}>{row.noCumple}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -446,16 +296,6 @@ export default function Dashboard() {
 
         </div>
       </main>
-
-      {/* Detail Panel with Slide Animation */}
-      <AnimatePresence>
-        {selectedRecord && (
-          <DetailPanel
-            record={selectedRecord}
-            onClose={() => setSelectedRecord(null)}
-          />
-        )}
-      </AnimatePresence>
     </div>
   );
 }
