@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowUp, ArrowDown } from "lucide-react";
+import { ArrowUp, ArrowDown, ChevronLeft } from "lucide-react";
 
 const evolutionData = [
   { month: "Dic 24", value: 88 },
@@ -38,6 +38,45 @@ const tableData = [
   { id: 5, mes: "Jun 24", totales: 67, cumple: 62, noCumple: 5 },
 ];
 
+const detailData: Record<string, { todas: Array<{orden: string; estado: string; fecha: string}>; cumple: Array<{orden: string; estado: string; fecha: string}>; noCumple: Array<{orden: string; estado: string; fecha: string}> }> = {
+  "Dic 24": { 
+    todas: [
+      { orden: "1-36KUTNFZ", estado: "CUMPLE", fecha: "2024-12-01" },
+      { orden: "1-36KMLHXJ", estado: "CUMPLE", fecha: "2024-12-02" },
+      { orden: "1-36IN099J", estado: "CUMPLE", fecha: "2024-12-03" },
+      { orden: "1-36KHPGRE", estado: "CUMPLE", fecha: "2024-12-04" },
+      { orden: "1-36KEP900", estado: "CUMPLE", fecha: "2024-12-05" },
+      { orden: "1-36J9Z09S", estado: "NO CUMPLE", fecha: "2024-12-06" },
+      { orden: "1-36HN04I7", estado: "CUMPLE", fecha: "2024-12-07" },
+      { orden: "1-36I3AK9V", estado: "CUMPLE", fecha: "2024-12-08" },
+      { orden: "1-36HWRONT", estado: "CUMPLE", fecha: "2024-12-09" },
+      { orden: "1-36HJOQ9F", estado: "NO CUMPLE", fecha: "2024-12-10" },
+    ],
+    cumple: [
+      { orden: "1-36KUTNFZ", estado: "CUMPLE", fecha: "2024-12-01" },
+      { orden: "1-36KMLHXJ", estado: "CUMPLE", fecha: "2024-12-02" },
+      { orden: "1-36IN099J", estado: "CUMPLE", fecha: "2024-12-03" },
+      { orden: "1-36KHPGRE", estado: "CUMPLE", fecha: "2024-12-04" },
+    ],
+    noCumple: [
+      { orden: "1-36J9Z09S", estado: "NO CUMPLE", fecha: "2024-12-06" },
+      { orden: "1-36HJOQ9F", estado: "NO CUMPLE", fecha: "2024-12-10" },
+    ]
+  },
+  "Mar 24": { 
+    todas: [
+      { orden: "1-36KUTNFZ", estado: "CUMPLE", fecha: "2024-03-01" },
+      { orden: "1-36KMLHXJ", estado: "CUMPLE", fecha: "2024-03-02" },
+      { orden: "1-36IN099J", estado: "CUMPLE", fecha: "2024-03-03" },
+    ],
+    cumple: [
+      { orden: "1-36KUTNFZ", estado: "CUMPLE", fecha: "2024-03-01" },
+      { orden: "1-36KMLHXJ", estado: "CUMPLE", fecha: "2024-03-02" },
+    ],
+    noCumple: []
+  },
+};
+
 const CustomDot = (props: any) => {
   const { cx, cy, stroke, payload, value } = props;
   if (value === undefined) return null;
@@ -50,9 +89,109 @@ const CustomDot = (props: any) => {
   );
 };
 
+type TableRow = typeof tableData[0];
+
+function DetailPanel({ record, onClose }: { record: TableRow; onClose: () => void }) {
+  const [activeTab, setActiveTab] = useState<"todas" | "cumple" | "noCumple">("todas");
+  const data = detailData[record.mes] || { todas: [], cumple: [], noCumple: [] };
+  const currentData = data[activeTab];
+
+  return (
+    <motion.div
+      className="fixed inset-0 z-50 overflow-hidden"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
+      <motion.div
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        onClick={onClose}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+      />
+
+      <motion.div
+        className="absolute inset-y-0 right-0 w-full md:w-full lg:w-2/3 bg-card shadow-2xl flex flex-col"
+        initial={{ x: "100%" }}
+        animate={{ x: 0 }}
+        exit={{ x: "100%" }}
+        transition={{ type: "spring", damping: 30, stiffness: 300 }}
+      >
+        <div className="sticky top-0 bg-card/95 backdrop-blur border-b border-white/5 px-4 py-4 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-white">Detalle {record.mes}</h2>
+          <button
+            onClick={onClose}
+            className="p-1 hover:bg-white/10 rounded-lg transition-colors"
+            data-testid="button-close-detail"
+          >
+            <ChevronLeft size={24} className="text-slate-400" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-4 border-b border-white/5">
+            <div className="flex gap-2">
+              <button
+                onClick={() => setActiveTab("todas")}
+                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${activeTab === "todas" ? "bg-[#06b6d4] text-black" : "bg-white/10 text-slate-300 hover:bg-white/20"}`}
+                data-testid="tab-todas"
+              >
+                Todas ({record.totales})
+              </button>
+              <button
+                onClick={() => setActiveTab("cumple")}
+                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${activeTab === "cumple" ? "bg-green-500 text-black" : "bg-white/10 text-slate-300 hover:bg-white/20"}`}
+                data-testid="tab-cumple"
+              >
+                Cumplen ({record.cumple})
+              </button>
+              <button
+                onClick={() => setActiveTab("noCumple")}
+                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${activeTab === "noCumple" ? "bg-red-500 text-black" : "bg-white/10 text-slate-300 hover:bg-white/20"}`}
+                data-testid="tab-noCumple"
+              >
+                No Cumple ({record.noCumple})
+              </button>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-white/5 bg-white/5">
+                  <th className="px-4 py-3 text-left font-semibold text-slate-300 text-xs">ORDEN</th>
+                  <th className="px-4 py-3 text-left font-semibold text-slate-300 text-xs">ESTADO</th>
+                  <th className="px-4 py-3 text-left font-semibold text-slate-300 text-xs">FECHA</th>
+                  <th className="px-4 py-3 text-left font-semibold text-slate-300 text-xs">ACCIÓN</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {currentData.map((row, idx) => (
+                  <tr key={idx} className="hover:bg-white/5 transition-colors" data-testid={`detail-row-${idx}`}>
+                    <td className="px-4 py-3 text-xs text-slate-200" data-testid={`detail-orden-${idx}`}>{row.orden}</td>
+                    <td className="px-4 py-3 text-xs">
+                      <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-semibold ${row.estado === "CUMPLE" ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}`} data-testid={`detail-estado-${idx}`}>
+                        {row.estado}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-xs text-slate-400" data-testid={`detail-fecha-${idx}`}>{row.fecha}</td>
+                    <td className="px-4 py-3 text-xs text-slate-400">—</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 
 
 export default function Dashboard() {
+  const [selectedRecord, setSelectedRecord] = useState<TableRow | null>(null);
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
@@ -279,7 +418,8 @@ export default function Dashboard() {
                     {sortedData.map((row, idx) => (
                       <tr
                         key={row.id}
-                        className="hover:bg-white/5 transition-colors"
+                        onClick={() => setSelectedRecord(row)}
+                        className="hover:bg-white/5 transition-colors cursor-pointer"
                         data-testid={`table-row-${idx}`}
                       >
                         <td className="px-3 md:px-6 py-3 text-xs md:text-sm text-slate-200" data-testid={`table-mes-${idx}`}>{row.mes}</td>
@@ -296,6 +436,16 @@ export default function Dashboard() {
 
         </div>
       </main>
+
+      <AnimatePresence>
+        {selectedRecord && (
+          <DetailPanel
+            record={selectedRecord}
+            onClose={() => setSelectedRecord(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
+
