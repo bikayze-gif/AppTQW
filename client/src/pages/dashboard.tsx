@@ -228,7 +228,7 @@ export default function Dashboard() {
           {/* Bottom Chart Card */}
           <Card className="bg-card border-none shadow-xl rounded-2xl md:rounded-3xl overflow-hidden">
             <CardContent className="p-3 md:p-6 pt-4">
-              <div className="h-48 md:h-64 w-full">
+              <div className="h-64 md:h-80 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={efficiencyData} margin={{ top: 20, right: 30, left: 0, bottom: 35 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
@@ -237,6 +237,7 @@ export default function Dashboard() {
                       hide={true}
                     />
                     <YAxis 
+                      type="number"
                       axisLine={false} 
                       tickLine={false} 
                       tick={{ fill: '#94a3b8', fontSize: 11 }}
