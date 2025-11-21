@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, X, MessageCircle, Phone, Info } from "lucide-react";
+import { Send, X, MessageCircle, Phone, Camera, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 interface ChatMessage {
   id: string;
-  text: string;
+  text?: string;
+  image?: string;
   sender: "user" | "support";
   timestamp: Date;
 }
@@ -27,7 +28,11 @@ export function ChatReporte({ isOpen, onClose }: ChatReporteProps) {
   ]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -36,6 +41,87 @@ export function ChatReporte({ isOpen, onClose }: ChatReporteProps) {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    return () => {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, [cameraStream]);
+
+  const handleOpenCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" },
+      });
+      setCameraStream(stream);
+      setIsCameraOpen(true);
+
+      setTimeout(() => {
+        if (videoRef.current && stream) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play();
+        }
+      }, 100);
+    } catch (error) {
+      console.error("Error accessing camera:", error);
+      alert("No se pudo acceder a la cámara. Verifica los permisos.");
+    }
+  };
+
+  const handleTakePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const context = canvasRef.current.getContext("2d");
+      if (context) {
+        canvasRef.current.width = videoRef.current.videoWidth;
+        canvasRef.current.height = videoRef.current.videoHeight;
+        context.drawImage(videoRef.current, 0, 0);
+        const imageData = canvasRef.current.toDataURL("image/jpeg");
+
+        const userMessage: ChatMessage = {
+          id: Date.now().toString(),
+          image: imageData,
+          sender: "user",
+          timestamp: new Date(),
+        };
+
+        setMessages((prev) => [...prev, userMessage]);
+        handleCloseCamera();
+        setIsLoading(true);
+
+        setTimeout(() => {
+          const responses = [
+            "Gracias por la foto. ¿Puedes describir lo que vemos?",
+            "Perfecto, he recibido la imagen. ¿Hay más detalles?",
+            "Excelente, veo la foto. ¿Cuándo sucedió esto?",
+            "Entendido. ¿Qué información adicional puedes proporcionar?",
+          ];
+
+          const randomResponse =
+            responses[Math.floor(Math.random() * responses.length)];
+
+          const aiMessage: ChatMessage = {
+            id: (Date.now() + 1).toString(),
+            text: randomResponse,
+            sender: "support",
+            timestamp: new Date(),
+          };
+
+          setMessages((prev) => [...prev, aiMessage]);
+          setIsLoading(false);
+        }, 800);
+      }
+    }
+  };
+
+  const handleCloseCamera = () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach((track) => track.stop());
+      setCameraStream(null);
+    }
+    setIsCameraOpen(false);
+  };
 
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
@@ -141,20 +227,41 @@ export function ChatReporte({ isOpen, onClose }: ChatReporteProps) {
                   }`}
                 >
                   <div
-                    className={`max-w-xs px-4 py-2 rounded-2xl text-sm ${
+                    className={`max-w-xs ${
+                      message.image ? "p-0" : "px-4 py-2"
+                    } rounded-2xl text-sm ${
                       message.sender === "user"
                         ? "bg-gradient-to-r from-[#06b6d4] to-[#0891b2] text-white rounded-br-none"
                         : "bg-white/10 text-white/90 rounded-bl-none border border-white/10"
                     }`}
                     data-testid={`chat-message-${message.id}`}
                   >
-                    <p>{message.text}</p>
-                    <p className="text-xs opacity-60 mt-1 text-right">
-                      {message.timestamp.toLocaleTimeString("es-ES", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </p>
+                    {message.image && (
+                      <img
+                        src={message.image}
+                        alt="Foto capturada"
+                        className="w-full rounded-2xl rounded-br-none"
+                      />
+                    )}
+                    {message.text && (
+                      <>
+                        <p>{message.text}</p>
+                        <p className="text-xs opacity-60 mt-1 text-right">
+                          {message.timestamp.toLocaleTimeString("es-ES", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </p>
+                      </>
+                    )}
+                    {message.image && !message.text && (
+                      <p className="text-xs opacity-60 p-2 text-right">
+                        {message.timestamp.toLocaleTimeString("es-ES", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                    )}
                   </div>
                 </motion.div>
               ))}
@@ -181,6 +288,14 @@ export function ChatReporte({ isOpen, onClose }: ChatReporteProps) {
             {/* Input Area */}
             <div className="p-4 border-t border-white/10 bg-[#0f1419]/80">
               <div className="flex gap-2">
+                <Button
+                  onClick={handleOpenCamera}
+                  disabled={isLoading}
+                  className="bg-white/10 hover:bg-white/20 text-[#06b6d4]"
+                  data-testid="button-open-camera"
+                >
+                  <Camera size={18} />
+                </Button>
                 <Input
                   type="text"
                   placeholder="Escribe tu reporte..."
@@ -205,7 +320,63 @@ export function ChatReporte({ isOpen, onClose }: ChatReporteProps) {
                 </Button>
               </div>
             </div>
+
+            {/* Hidden Canvas for Photo Capture */}
+            <canvas ref={canvasRef} className="hidden" />
           </motion.div>
+
+          {/* Camera Modal */}
+          <AnimatePresence>
+            {isCameraOpen && (
+              <>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 z-50 bg-black/90"
+                  data-testid="camera-modal-backdrop"
+                />
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  className="fixed inset-0 z-50 flex flex-col items-center justify-center p-4"
+                  data-testid="camera-modal"
+                >
+                  <div className="w-full max-w-md bg-black rounded-2xl overflow-hidden">
+                    <video
+                      ref={videoRef}
+                      className="w-full aspect-video bg-black"
+                      data-testid="camera-video"
+                    />
+                    <div className="bg-[#0f1419] border-t border-white/10 p-4 flex gap-3 justify-center">
+                      <Button
+                        onClick={handleCloseCamera}
+                        className="bg-white/10 hover:bg-white/20 text-white"
+                        data-testid="button-camera-cancel"
+                      >
+                        <X size={18} />
+                      </Button>
+                      <Button
+                        onClick={handleTakePhoto}
+                        className="bg-gradient-to-r from-[#06b6d4] to-[#0891b2] hover:from-[#06b6d4]/80 hover:to-[#0891b2]/80 text-white px-8"
+                        data-testid="button-take-photo"
+                      >
+                        Capturar
+                      </Button>
+                      <Button
+                        onClick={handleOpenCamera}
+                        className="bg-white/10 hover:bg-white/20 text-white"
+                        data-testid="button-camera-switch"
+                      >
+                        <RotateCcw size={18} />
+                      </Button>
+                    </div>
+                  </div>
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
         </>
       )}
     </AnimatePresence>
