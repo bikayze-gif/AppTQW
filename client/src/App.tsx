@@ -8,6 +8,7 @@ import { BottomNav } from "@/components/bottom-nav";
 import { AddMenu } from "@/components/add-menu";
 import { MaterialForm, type MaterialFormData } from "@/components/material-form";
 import { AIChat } from "@/components/ai-chat";
+import { ChatReporte } from "@/components/chat-reporte";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
 import PeriodInfo from "@/pages/period-info";
@@ -30,6 +31,7 @@ function AppLayout() {
   const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
   const [isMaterialFormOpen, setIsMaterialFormOpen] = useState(false);
   const [isAIChatOpen, setIsAIChatOpen] = useState(false);
+  const [isReportChatOpen, setIsReportChatOpen] = useState(false);
 
   const handleMaterialSubmit = (data: MaterialFormData) => {
     console.log("Material request submitted:", data);
@@ -37,7 +39,7 @@ function AppLayout() {
   };
 
   const handleReportClick = () => {
-    console.log("Nuevo reporte clicked");
+    setIsReportChatOpen(true);
   };
 
   const handleSettingsClick = () => {
@@ -67,6 +69,10 @@ function AppLayout() {
       <AIChat
         isOpen={isAIChatOpen}
         onClose={() => setIsAIChatOpen(false)}
+      />
+      <ChatReporte
+        isOpen={isReportChatOpen}
+        onClose={() => setIsReportChatOpen(false)}
       />
       <BottomNav onAddClick={() => setIsAddMenuOpen(!isAddMenuOpen)} />
     </div>
