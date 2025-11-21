@@ -38,21 +38,21 @@ const chartDataFull = [
 ];
 
 const tableData = [
-  { id: 1, actividad: "Tarea A", responsable: "Juan", estado: "Completado", fecha: "2025-01-15" },
-  { id: 2, actividad: "Tarea B", responsable: "María", estado: "En Progreso", fecha: "2025-01-14" },
-  { id: 3, actividad: "Tarea C", responsable: "Carlos", estado: "Completado", fecha: "2025-01-13" },
-  { id: 4, actividad: "Tarea D", responsable: "Ana", estado: "Pendiente", fecha: "2025-01-12" },
-  { id: 5, actividad: "Tarea E", responsable: "Pedro", estado: "Completado", fecha: "2025-01-11" },
-  { id: 6, actividad: "Tarea F", responsable: "Laura", estado: "En Progreso", fecha: "2025-01-10" },
-  { id: 7, actividad: "Tarea G", responsable: "Luis", estado: "Completado", fecha: "2025-01-09" },
-  { id: 8, actividad: "Tarea H", responsable: "Sandra", estado: "Completado", fecha: "2025-01-08" },
-  { id: 9, actividad: "Tarea I", responsable: "Roberto", estado: "En Progreso", fecha: "2025-01-07" },
-  { id: 10, actividad: "Tarea J", responsable: "Mónica", estado: "Completado", fecha: "2025-01-06" },
-  { id: 11, actividad: "Tarea K", responsable: "Fernando", estado: "Pendiente", fecha: "2025-01-05" },
-  { id: 12, actividad: "Tarea L", responsable: "Beatriz", estado: "Completado", fecha: "2025-01-04" },
-  { id: 13, actividad: "Tarea M", responsable: "Diego", estado: "En Progreso", fecha: "2025-01-03" },
-  { id: 14, actividad: "Tarea N", responsable: "Cristina", estado: "Completado", fecha: "2025-01-02" },
-  { id: 15, actividad: "Tarea O", responsable: "Rodrigo", estado: "Completado", fecha: "2025-01-01" },
+  { id: 1, fecha: "2025-01-15", tipoRed: "FTTH", puntos: 45, rgu: 4.75 },
+  { id: 2, fecha: "2025-01-15", tipoRed: "HFC", puntos: 0, rgu: 2.30 },
+  { id: 3, fecha: "2025-01-14", tipoRed: "FTTH", puntos: 52, rgu: 5.10 },
+  { id: 4, fecha: "2025-01-14", tipoRed: "HFC", puntos: 15, rgu: 1.85 },
+  { id: 5, fecha: "2025-01-13", tipoRed: "FTTH", puntos: 48, rgu: 4.90 },
+  { id: 6, fecha: "2025-01-13", tipoRed: "HFC", puntos: 0, rgu: 3.20 },
+  { id: 7, fecha: "2025-01-12", tipoRed: "FTTH", puntos: 61, rgu: 5.50 },
+  { id: 8, fecha: "2025-01-12", tipoRed: "HFC", puntos: 8, rgu: 2.15 },
+  { id: 9, fecha: "2025-01-11", tipoRed: "FTTH", puntos: 55, rgu: 4.80 },
+  { id: 10, fecha: "2025-01-11", tipoRed: "HFC", puntos: 22, rgu: 2.75 },
+  { id: 11, fecha: "2025-01-10", tipoRed: "FTTH", puntos: 67, rgu: 5.60 },
+  { id: 12, fecha: "2025-01-10", tipoRed: "HFC", puntos: 0, rgu: 1.95 },
+  { id: 13, fecha: "2025-01-09", tipoRed: "FTTH", puntos: 72, rgu: 6.10 },
+  { id: 14, fecha: "2025-01-09", tipoRed: "HFC", puntos: 5, rgu: 2.40 },
+  { id: 15, fecha: "2025-01-08", tipoRed: "FTTH", puntos: 68, rgu: 5.85 },
 ];
 
 const dayDetailsData: Record<string, { summary: string; count: number; completed: number; inProgress: number; items: Array<{ code: string; value: number | string; type: "puntos" | "rgu" }>; activities: Array<{ name: string; responsible: string; status: string; time: string }> }> = {
@@ -311,12 +311,12 @@ export default function Activity() {
                       </div>
                     </th>
                     <th 
-                      onClick={() => handleSort("actividad")}
+                      onClick={() => handleSort("tipoRed")}
                       className="px-3 md:px-6 py-3 text-left font-semibold text-slate-300 text-xs md:text-sm cursor-pointer hover:bg-white/10 transition-colors"
                     >
                       <div className="flex items-center gap-2">
-                        Actividad
-                        {sortColumn === "actividad" && (
+                        Tipo Red
+                        {sortColumn === "tipoRed" && (
                           <span>
                             {sortDirection === "asc" ? (
                               <ArrowUp size={14} className="text-[#06b6d4]" />
@@ -328,12 +328,12 @@ export default function Activity() {
                       </div>
                     </th>
                     <th 
-                      onClick={() => handleSort("responsable")}
+                      onClick={() => handleSort("puntos")}
                       className="px-3 md:px-6 py-3 text-left font-semibold text-slate-300 text-xs md:text-sm cursor-pointer hover:bg-white/10 transition-colors"
                     >
                       <div className="flex items-center gap-2">
-                        Responsable
-                        {sortColumn === "responsable" && (
+                        Puntos
+                        {sortColumn === "puntos" && (
                           <span>
                             {sortDirection === "asc" ? (
                               <ArrowUp size={14} className="text-[#06b6d4]" />
@@ -345,12 +345,12 @@ export default function Activity() {
                       </div>
                     </th>
                     <th 
-                      onClick={() => handleSort("estado")}
+                      onClick={() => handleSort("rgu")}
                       className="px-3 md:px-6 py-3 text-left font-semibold text-slate-300 text-xs md:text-sm cursor-pointer hover:bg-white/10 transition-colors"
                     >
                       <div className="flex items-center gap-2">
-                        Estado
-                        {sortColumn === "estado" && (
+                        RGU
+                        {sortColumn === "rgu" && (
                           <span>
                             {sortDirection === "asc" ? (
                               <ArrowUp size={14} className="text-[#06b6d4]" />
@@ -360,9 +360,6 @@ export default function Activity() {
                           </span>
                         )}
                       </div>
-                    </th>
-                    <th className="px-3 md:px-6 py-3 text-left font-semibold text-slate-300 text-xs md:text-sm">
-                      Detalles
                     </th>
                   </tr>
                 </thead>
@@ -374,25 +371,9 @@ export default function Activity() {
                       data-testid={`activity-row-${idx}`}
                     >
                       <td className="px-3 md:px-6 py-3 text-xs md:text-sm text-slate-400" data-testid={`activity-date-${idx}`}>{formatDate(row.fecha)}</td>
-                      <td className="px-3 md:px-6 py-3 text-xs md:text-sm text-slate-200" data-testid={`activity-name-${idx}`}>{row.actividad}</td>
-                      <td className="px-3 md:px-6 py-3 text-xs md:text-sm text-slate-200" data-testid={`activity-responsible-${idx}`}>{row.responsable}</td>
-                      <td className="px-3 md:px-6 py-3">
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(row.estado)}`} data-testid={`activity-status-${idx}`}>
-                          {row.estado}
-                        </span>
-                      </td>
-                      <td className="px-3 md:px-6 py-3">
-                        <button
-                          onClick={() => {
-                            setSelectedDate(row.fecha);
-                            setShowDrawer(true);
-                          }}
-                          className="p-2 text-slate-400 hover:text-[#06b6d4] hover:bg-white/10 rounded-lg transition-colors"
-                          data-testid={`button-details-${idx}`}
-                        >
-                          <Eye size={18} />
-                        </button>
-                      </td>
+                      <td className="px-3 md:px-6 py-3 text-xs md:text-sm text-slate-200" data-testid={`activity-tipoRed-${idx}`}>{row.tipoRed}</td>
+                      <td className="px-3 md:px-6 py-3 text-xs md:text-sm text-slate-200" data-testid={`activity-puntos-${idx}`}>{row.puntos}</td>
+                      <td className="px-3 md:px-6 py-3 text-xs md:text-sm text-[#06b6d4] font-semibold" data-testid={`activity-rgu-${idx}`}>{row.rgu}</td>
                     </tr>
                   ))}
                 </tbody>
