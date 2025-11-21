@@ -39,6 +39,7 @@ function AppLayout() {
   };
 
   const handleReportClick = () => {
+    setIsMaterialFormOpen(false);
     setIsAIChatOpen(false);
     setIsReportChatOpen(true);
   };
@@ -48,8 +49,15 @@ function AppLayout() {
   };
 
   const handleAIClick = () => {
+    setIsMaterialFormOpen(false);
     setIsReportChatOpen(false);
     setIsAIChatOpen(true);
+  };
+
+  const handleMaterialClick = () => {
+    setIsReportChatOpen(false);
+    setIsAIChatOpen(false);
+    setIsMaterialFormOpen(true);
   };
 
   return (
@@ -58,7 +66,7 @@ function AppLayout() {
       <AddMenu
         isOpen={isAddMenuOpen}
         onClose={() => setIsAddMenuOpen(false)}
-        onMaterialClick={() => setIsMaterialFormOpen(true)}
+        onMaterialClick={handleMaterialClick}
         onReportClick={handleReportClick}
         onSettingsClick={handleSettingsClick}
         onAIClick={handleAIClick}
