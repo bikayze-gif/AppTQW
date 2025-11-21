@@ -9,12 +9,14 @@ import { MaterialForm, type MaterialFormData } from "@/components/material-form"
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
 import PeriodInfo from "@/pages/period-info";
+import Analytics from "@/pages/analytics";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Dashboard} />
       <Route path="/period-info" component={PeriodInfo} />
+      <Route path="/analytics" component={Analytics} />
       <Route component={NotFound} />
     </Switch>
   );

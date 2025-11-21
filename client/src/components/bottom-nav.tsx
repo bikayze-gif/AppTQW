@@ -11,6 +11,7 @@ export function BottomNav({ onAddClick }: BottomNavProps) {
 
   const isDashboard = currentPath === "/";
   const isPeriodInfo = currentPath === "/period-info";
+  const isAnalytics = currentPath === "/analytics";
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-[#1A1F33] border-t border-white/5 px-4 pb-4 pt-3 z-40">
@@ -54,7 +55,16 @@ export function BottomNav({ onAddClick }: BottomNavProps) {
 
         {/* Right Group - 2.5 icons */}
         <div className="flex gap-3 items-center">
-          <button className="text-slate-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/5" data-testid="button-nav-ticket">
+          <button 
+            onClick={() => setLocation("/analytics")}
+            className={`p-2 rounded-lg relative hover:bg-white/5 transition-colors ${isAnalytics ? "text-[#06b6d4]" : "text-slate-400 hover:text-white"}`}
+            data-testid="button-nav-ticket"
+          >
+            <Ticket size={22} />
+            {isAnalytics && (
+              <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-[#06b6d4] rounded-full"></span>
+            )}
+          </button>
             <Ticket size={22} />
           </button>
           <button className="text-slate-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/5" data-testid="button-nav-box">
