@@ -21,11 +21,11 @@ export default function PeriodInfo() {
   };
 
   const StatCard = ({ icon, label, value, unit = "" }: any) => (
-    <div className="bg-white/5 border border-white/10 rounded-xl p-3 text-center overflow-hidden">
+    <div className="bg-white/5 border border-white/10 rounded-xl p-3 text-center overflow-hidden flex flex-col items-center justify-center min-h-[120px]">
       <div className="text-xl mb-2">{icon}</div>
-      <div className="text-lg md:text-xl font-bold text-white mb-1 truncate">{value}</div>
-      {unit && <div className="text-xs text-slate-400 mb-1">{unit}</div>}
-      <div className="text-xs text-slate-500 truncate">{label}</div>
+      <div className="text-sm md:text-base font-bold text-white mb-1 leading-tight line-clamp-2">{value}</div>
+      {unit && <div className="text-xs text-slate-400">{unit}</div>}
+      <div className="text-xs text-slate-500 leading-tight line-clamp-3">{label}</div>
     </div>
   );
 
