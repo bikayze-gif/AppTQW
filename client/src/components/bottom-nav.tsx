@@ -16,10 +16,10 @@ export function BottomNav({ onAddClick }: BottomNavProps) {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-[#1A1F33] border-t border-white/5 px-4 pb-4 pt-3 z-40">
-      <div className="flex items-center justify-around max-w-4xl mx-auto">
+      <div className="flex items-center justify-around md:justify-between md:max-w-none max-w-4xl mx-auto md:px-8 lg:px-16">
         
         {/* Left Group - 2.5 icons */}
-        <div className="flex gap-3 items-center">
+        <div className="flex gap-3 items-center md:flex-1 md:justify-start">
           <button 
             onClick={() => setLocation("/")}
             className={`p-2 rounded-lg relative hover:bg-white/5 transition-colors ${isPeriodInfo ? "text-[#06b6d4]" : "text-slate-400 hover:text-white"}`}
@@ -62,7 +62,7 @@ export function BottomNav({ onAddClick }: BottomNavProps) {
         </button>
 
         {/* Right Group - 2.5 icons */}
-        <div className="flex gap-3 items-center">
+        <div className="flex gap-3 items-center md:flex-1 md:justify-end">
           <button 
             onClick={() => setLocation("/analytics")}
             className={`p-2 rounded-lg relative hover:bg-white/5 transition-colors ${isAnalytics ? "text-[#06b6d4]" : "text-slate-400 hover:text-white"}`}
