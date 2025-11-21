@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { ChevronLeft, Search, X, ArrowUp, ArrowDown } from "lucide-react";
+import { ChevronLeft, Search, X, ArrowUp, ArrowDown, Clock, Check, Trash2 } from "lucide-react";
 import { useLocation } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -12,27 +12,27 @@ const mockData1 = [
 ];
 
 const mockData2 = [
-  { id: 1, proyecto: "Proyecto A", progreso: "85%", responsable: "Juan", fecha: "2025-01-15" },
-  { id: 2, proyecto: "Proyecto B", progreso: "60%", responsable: "María", fecha: "2025-01-14" },
-  { id: 3, proyecto: "Proyecto C", progreso: "100%", responsable: "Carlos", fecha: "2025-01-13" },
-  { id: 4, proyecto: "Proyecto D", progreso: "40%", responsable: "Ana", fecha: "2025-01-12" },
-  { id: 5, proyecto: "Proyecto E", progreso: "75%", responsable: "Pedro", fecha: "2025-01-11" },
+  { id: 1, serie: "E77BZG252914571", estado: "PENDIENTE POR" },
+  { id: 2, serie: "E77BZG252921412", estado: "PENDIENTE POR" },
+  { id: 3, serie: "ZTFGDA1513B7", estado: "PENDIENTE POR" },
+  { id: 4, serie: "ZTFGDA151378", estado: "PENDIENTE POR" },
+  { id: 5, serie: "E77BZG252914999", estado: "PENDIENTE POR" },
 ];
 
 const mockData3 = [
-  { id: 1, servicio: "Servicio 1", clientes: "250", ingresos: "$12,500", estado: "Activo" },
-  { id: 2, servicio: "Servicio 2", clientes: "180", ingresos: "$9,000", estado: "Activo" },
-  { id: 3, servicio: "Servicio 3", clientes: "95", ingresos: "$4,750", estado: "Pausado" },
-  { id: 4, servicio: "Servicio 4", clientes: "320", ingresos: "$16,000", estado: "Activo" },
-  { id: 5, servicio: "Servicio 5", clientes: "140", ingresos: "$7,000", estado: "Activo" },
+  { id: 1, serie: "DT-001-2025", estado: "PENDIENTE POR" },
+  { id: 2, serie: "DT-002-2025", estado: "PENDIENTE POR" },
+  { id: 3, serie: "DT-003-2025", estado: "PENDIENTE POR" },
+  { id: 4, serie: "DT-004-2025", estado: "PENDIENTE POR" },
+  { id: 5, serie: "DT-005-2025", estado: "PENDIENTE POR" },
 ];
 
 const mockData4 = [
-  { id: 1, tarea: "Tarea 1", asignado: "Equipo A", prioridad: "Alta", vencimiento: "2025-01-20" },
-  { id: 2, tarea: "Tarea 2", asignado: "Equipo B", prioridad: "Media", vencimiento: "2025-01-25" },
-  { id: 3, tarea: "Tarea 3", asignado: "Equipo A", prioridad: "Baja", vencimiento: "2025-02-01" },
-  { id: 4, tarea: "Tarea 4", asignado: "Equipo C", prioridad: "Alta", vencimiento: "2025-01-18" },
-  { id: 5, tarea: "Tarea 5", asignado: "Equipo B", prioridad: "Media", vencimiento: "2025-01-30" },
+  { id: 1, serie: "RV-001-2025", estado: "PENDIENTE POR" },
+  { id: 2, serie: "RV-002-2025", estado: "PENDIENTE POR" },
+  { id: 3, serie: "RV-003-2025", estado: "PENDIENTE POR" },
+  { id: 4, serie: "RV-004-2025", estado: "PENDIENTE POR" },
+  { id: 5, serie: "RV-005-2025", estado: "PENDIENTE POR" },
 ];
 
 const getStatusColor = (status: string) => {
@@ -58,6 +58,7 @@ interface Tab {
   label: string;
   data: any[];
   columns: string[];
+  isSpecialFormat?: boolean;
 }
 
 const tabs: Tab[] = [
@@ -71,19 +72,22 @@ const tabs: Tab[] = [
     id: "recepcion",
     label: "RECEPCIÓN",
     data: mockData2,
-    columns: ["proyecto", "progreso", "responsable", "fecha"],
+    columns: ["serie", "estado"],
+    isSpecialFormat: true,
   },
   {
     id: "directa",
     label: "DIRECTA",
     data: mockData3,
-    columns: ["servicio", "clientes", "ingresos", "estado"],
+    columns: ["serie", "estado"],
+    isSpecialFormat: true,
   },
   {
     id: "reversa",
     label: "REVERSA",
     data: mockData4,
-    columns: ["tarea", "asignado", "prioridad", "vencimiento"],
+    columns: ["serie", "estado"],
+    isSpecialFormat: true,
   },
 ];
 
@@ -201,68 +205,132 @@ export default function Analytics() {
         {activeTabData && (
           <Card className="bg-card border-none shadow-xl rounded-2xl md:rounded-3xl overflow-hidden">
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-white/5 bg-white/5">
-                      {activeTabData.columns.map((col) => (
-                        <th
-                          key={col}
-                          onClick={() => handleSort(col)}
-                          className="px-4 md:px-6 py-4 text-left font-semibold text-slate-300 text-xs md:text-sm capitalize cursor-pointer hover:bg-white/10 transition-colors"
-                          data-testid={`header-${col}`}
-                        >
-                          <div className="flex items-center gap-2">
-                            {col}
-                            {sortColumn === col && (
-                              <span>
-                                {sortDirection === "asc" ? (
-                                  <ArrowUp size={14} className="text-[#06b6d4]" />
-                                ) : (
-                                  <ArrowDown size={14} className="text-[#06b6d4]" />
-                                )}
-                              </span>
-                            )}
-                          </div>
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/5">
+              {activeTabData.isSpecialFormat ? (
+                // Special format for RECEPCIÓN, DIRECTA, REVERSA
+                <div className="divide-y divide-white/5">
+                  {/* Header */}
+                  <div className="bg-[#06b6d4] px-4 md:px-6 py-4">
+                    <h3 className="text-lg font-bold text-black uppercase">{activeTabData.label}</h3>
+                  </div>
+
+                  {/* Column Headers */}
+                  <div className="bg-[#06b6d4] px-4 md:px-6 py-3 flex items-center justify-between">
+                    <div className="flex-1">
+                      <p className="text-sm font-bold text-black">SERIE</p>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-bold text-black">ESTADO</p>
+                    </div>
+                    <div className="w-32">
+                      <p className="text-sm font-bold text-black text-center">ACCIONES</p>
+                    </div>
+                  </div>
+
+                  {/* Rows */}
+                  <div className="divide-y divide-white/5">
                     {filteredAndSortedData.map((row, idx) => (
-                      <tr
+                      <div
                         key={row.id}
-                        className="hover:bg-white/5 transition-colors"
+                        className="px-4 md:px-6 py-4 flex items-center justify-between hover:bg-white/5 transition-colors"
                         data-testid={`row-${activeTab}-${idx}`}
                       >
-                        {activeTabData.columns.map((col) => {
-                          const value = row[col];
-                          const isStatus = shouldHighlight(value);
-                          return (
-                            <td
-                              key={`${row.id}-${col}`}
-                              className="px-4 md:px-6 py-4 text-xs md:text-sm"
-                              data-testid={`cell-${col}-${idx}`}
-                            >
-                              {isStatus && typeof value === "string" ? (
-                                <span
-                                  className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                                    value
-                                  )}`}
-                                >
-                                  {value}
-                                </span>
-                              ) : (
-                                <span className="text-slate-200">{value}</span>
-                              )}
-                            </td>
-                          );
-                        })}
-                      </tr>
+                        <div className="flex-1">
+                          <span className="text-slate-200 font-semibold text-sm">{row.serie}</span>
+                        </div>
+                        <div className="flex-1">
+                          <span className="inline-flex items-center px-3 py-1 rounded text-xs font-bold bg-yellow-500 text-black">
+                            {row.estado}
+                          </span>
+                        </div>
+                        <div className="w-32 flex gap-2 justify-center">
+                          <button
+                            className="p-2 border border-yellow-500/50 rounded-lg text-yellow-500 hover:bg-yellow-500/10 transition-colors"
+                            data-testid={`action-clock-${idx}`}
+                          >
+                            <Clock size={18} />
+                          </button>
+                          <button
+                            className="p-2 border border-green-500/50 rounded-lg text-green-400 hover:bg-green-500/10 transition-colors"
+                            data-testid={`action-check-${idx}`}
+                          >
+                            <Check size={18} />
+                          </button>
+                          <button
+                            className="p-2 border border-red-500/50 rounded-lg text-red-400 hover:bg-red-500/10 transition-colors"
+                            data-testid={`action-trash-${idx}`}
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
-              </div>
+                  </div>
+                </div>
+              ) : (
+                // Standard table format for FALTANTE
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-white/5 bg-white/5">
+                        {activeTabData.columns.map((col) => (
+                          <th
+                            key={col}
+                            onClick={() => handleSort(col)}
+                            className="px-4 md:px-6 py-4 text-left font-semibold text-slate-300 text-xs md:text-sm capitalize cursor-pointer hover:bg-white/10 transition-colors"
+                            data-testid={`header-${col}`}
+                          >
+                            <div className="flex items-center gap-2">
+                              {col}
+                              {sortColumn === col && (
+                                <span>
+                                  {sortDirection === "asc" ? (
+                                    <ArrowUp size={14} className="text-[#06b6d4]" />
+                                  ) : (
+                                    <ArrowDown size={14} className="text-[#06b6d4]" />
+                                  )}
+                                </span>
+                              )}
+                            </div>
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {filteredAndSortedData.map((row, idx) => (
+                        <tr
+                          key={row.id}
+                          className="hover:bg-white/5 transition-colors"
+                          data-testid={`row-${activeTab}-${idx}`}
+                        >
+                          {activeTabData.columns.map((col) => {
+                            const value = row[col];
+                            const isStatus = shouldHighlight(value);
+                            return (
+                              <td
+                                key={`${row.id}-${col}`}
+                                className="px-4 md:px-6 py-4 text-xs md:text-sm"
+                                data-testid={`cell-${col}-${idx}`}
+                              >
+                                {isStatus && typeof value === "string" ? (
+                                  <span
+                                    className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                                      value
+                                    )}`}
+                                  >
+                                    {value}
+                                  </span>
+                                ) : (
+                                  <span className="text-slate-200">{value}</span>
+                                )}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
