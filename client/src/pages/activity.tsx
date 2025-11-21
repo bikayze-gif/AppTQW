@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 import { Search, X, ArrowUp, ArrowDown } from "lucide-react";
 
-const chartData = [
+const chartDataFull = [
   { day: "01", actividad1: 45, actividad2: 30 },
   { day: "02", actividad1: 52, actividad2: 45 },
   { day: "03", actividad1: 48, actividad2: 50 },
@@ -11,6 +11,29 @@ const chartData = [
   { day: "05", actividad1: 55, actividad2: 65 },
   { day: "06", actividad1: 67, actividad2: 58 },
   { day: "07", actividad1: 72, actividad2: 70 },
+  { day: "08", actividad1: 68, actividad2: 75 },
+  { day: "09", actividad1: 75, actividad2: 68 },
+  { day: "10", actividad1: 82, actividad2: 72 },
+  { day: "11", actividad1: 79, actividad2: 80 },
+  { day: "12", actividad1: 85, actividad2: 76 },
+  { day: "13", actividad1: 78, actividad2: 82 },
+  { day: "14", actividad1: 88, actividad2: 85 },
+  { day: "15", actividad1: 92, actividad2: 88 },
+  { day: "16", actividad1: 86, actividad2: 90 },
+  { day: "17", actividad1: 89, actividad2: 84 },
+  { day: "18", actividad1: 94, actividad2: 91 },
+  { day: "19", actividad1: 87, actividad2: 93 },
+  { day: "20", actividad1: 95, actividad2: 89 },
+  { day: "21", actividad1: 91, actividad2: 92 },
+  { day: "22", actividad1: 96, actividad2: 94 },
+  { day: "23", actividad1: 98, actividad2: 96 },
+  { day: "24", actividad1: 93, actividad2: 95 },
+  { day: "25", actividad1: 97, actividad2: 98 },
+  { day: "26", actividad1: 99, actividad2: 97 },
+  { day: "27", actividad1: 94, actividad2: 99 },
+  { day: "28", actividad1: 100, actividad2: 100 },
+  { day: "29", actividad1: 96, actividad2: 101 },
+  { day: "30", actividad1: 102, actividad2: 98 },
 ];
 
 const tableData = [
@@ -56,6 +79,13 @@ export default function Activity() {
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [searchText, setSearchText] = useState("");
+  const [dayFilter, setDayFilter] = useState<7 | 15 | 30>(30);
+
+  const chartData = useMemo(() => {
+    if (dayFilter === 7) return chartDataFull.slice(-7);
+    if (dayFilter === 15) return chartDataFull.slice(-15);
+    return chartDataFull;
+  }, [dayFilter]);
 
   const filteredAndSortedData = useMemo(() => {
     let data = [...tableData];
@@ -103,7 +133,44 @@ export default function Activity() {
         {/* Chart Card */}
         <Card className="bg-card border-none shadow-xl rounded-2xl md:rounded-3xl overflow-hidden">
           <CardContent className="p-3 md:p-6 pt-4">
-            <h2 className="text-base md:text-lg font-bold text-white mb-4">Gráfico de Actividades</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base md:text-lg font-bold text-white">Gráfico de Actividades</h2>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setDayFilter(7)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                    dayFilter === 7
+                      ? "bg-[#06b6d4] text-black"
+                      : "bg-white/10 text-white hover:bg-white/20"
+                  }`}
+                  data-testid="filter-7days"
+                >
+                  7 días
+                </button>
+                <button
+                  onClick={() => setDayFilter(15)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                    dayFilter === 15
+                      ? "bg-[#06b6d4] text-black"
+                      : "bg-white/10 text-white hover:bg-white/20"
+                  }`}
+                  data-testid="filter-15days"
+                >
+                  15 días
+                </button>
+                <button
+                  onClick={() => setDayFilter(30)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                    dayFilter === 30
+                      ? "bg-[#06b6d4] text-black"
+                      : "bg-white/10 text-white hover:bg-white/20"
+                  }`}
+                  data-testid="filter-30days"
+                >
+                  Mes completo
+                </button>
+              </div>
+            </div>
             <div className="h-64 md:h-80 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 35 }}>
