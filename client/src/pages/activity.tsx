@@ -103,6 +103,8 @@ const formatDate = (dateString: string) => {
   return `${day}-${month.toLowerCase()}-${year.slice(2)}`;
 };
 
+const ITEMS_PER_PAGE = 10;
+
 export default function Activity() {
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
@@ -110,6 +112,7 @@ export default function Activity() {
   const [dayFilter, setDayFilter] = useState<7 | 15 | 30>(30);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [showDrawer, setShowDrawer] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const chartData = useMemo(() => {
     if (dayFilter === 7) return chartDataFull.slice(-7);
@@ -157,6 +160,16 @@ export default function Activity() {
     
     return data;
   }, [searchText, sortColumn, sortDirection, dayFilter]);
+
+  const totalPages = Math.ceil(filteredAndSortedData.length / ITEMS_PER_PAGE);
+  const paginatedData = useMemo(() => {
+    const startIdx = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredAndSortedData.slice(startIdx, startIdx + ITEMS_PER_PAGE);
+  }, [filteredAndSortedData, currentPage]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  };
 
   const handleSort = (column: string) => {
     if (sortColumn === column) {
@@ -364,7 +377,7 @@ export default function Activity() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {filteredAndSortedData.map((row, idx) => (
+                  {paginatedData.map((row, idx) => (
                     <tr
                       key={row.id}
                       onClick={() => {
@@ -382,6 +395,47 @@ export default function Activity() {
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            {/* Pagination Controls */}
+            <div className="border-t border-white/5 px-4 md:px-6 py-4 flex items-center justify-between bg-white/5">
+              <div className="text-xs md:text-sm text-slate-400">
+                Mostrando {((currentPage - 1) * ITEMS_PER_PAGE) + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filteredAndSortedData.length)} de {filteredAndSortedData.length}
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1 rounded-lg text-sm font-medium bg-white/10 text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white/20 transition-colors"
+                  data-testid="pagination-prev"
+                >
+                  Anterior
+                </button>
+                <div className="flex items-center gap-2">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => handlePageChange(page)}
+                      className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                        currentPage === page
+                          ? "bg-[#06b6d4] text-black"
+                          : "bg-white/10 text-white hover:bg-white/20"
+                      }`}
+                      data-testid={`pagination-page-${page}`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1 rounded-lg text-sm font-medium bg-white/10 text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white/20 transition-colors"
+                  data-testid="pagination-next"
+                >
+                  Siguiente
+                </button>
+              </div>
             </div>
           </CardContent>
         </Card>
