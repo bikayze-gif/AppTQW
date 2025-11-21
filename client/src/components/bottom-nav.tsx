@@ -11,6 +11,7 @@ export function BottomNav({ onAddClick }: BottomNavProps) {
 
   const isPeriodInfo = currentPath === "/";
   const isDashboard = currentPath === "/dashboard";
+  const isActivity = currentPath === "/activity";
   const isAnalytics = currentPath === "/analytics";
 
   return (
@@ -29,8 +30,15 @@ export function BottomNav({ onAddClick }: BottomNavProps) {
               <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-[#06b6d4] rounded-full"></span>
             )}
           </button>
-          <button className="text-slate-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/5" data-testid="button-nav-activity">
+          <button 
+            onClick={() => setLocation("/activity")}
+            className={`p-2 rounded-lg relative hover:bg-white/5 transition-colors ${isActivity ? "text-[#06b6d4]" : "text-slate-400 hover:text-white"}`}
+            data-testid="button-nav-activity"
+          >
             <Activity size={22} />
+            {isActivity && (
+              <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-[#06b6d4] rounded-full"></span>
+            )}
           </button>
           <button 
             onClick={() => setLocation("/dashboard")}

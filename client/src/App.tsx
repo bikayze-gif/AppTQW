@@ -11,12 +11,14 @@ import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
 import PeriodInfo from "@/pages/period-info";
 import Analytics from "@/pages/analytics";
+import Activity from "@/pages/activity";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={PeriodInfo} />
       <Route path="/dashboard" component={Dashboard} />
+      <Route path="/activity" component={Activity} />
       <Route path="/analytics" component={Analytics} />
       <Route component={NotFound} />
     </Switch>
