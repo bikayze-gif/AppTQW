@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { BottomNav } from "@/components/bottom-nav";
+import { MaterialForm, type MaterialFormData } from "@/components/material-form";
 import { Card, CardContent } from "@/components/ui/card";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid } from "recharts";
 import { motion, AnimatePresence } from "framer-motion";
@@ -164,6 +165,11 @@ function DetailPanel({ record, onClose }: { record: TableRecord; onClose: () => 
 
 export default function Dashboard() {
   const [selectedRecord, setSelectedRecord] = useState<TableRecord | null>(null);
+  const [isMaterialFormOpen, setIsMaterialFormOpen] = useState(false);
+
+  const handleMaterialSubmit = (data: MaterialFormData) => {
+    console.log("Material solicitud enviada:", data);
+  };
 
   return (
     <div className="min-h-screen bg-background text-white font-sans">
@@ -323,7 +329,13 @@ export default function Dashboard() {
         )}
       </AnimatePresence>
 
-      <BottomNav />
+      <MaterialForm
+        isOpen={isMaterialFormOpen}
+        onClose={() => setIsMaterialFormOpen(false)}
+        onSubmit={handleMaterialSubmit}
+      />
+
+      <BottomNav onAddClick={() => setIsMaterialFormOpen(true)} />
     </div>
   );
 }
