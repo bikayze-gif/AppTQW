@@ -70,14 +70,25 @@ export function AIChat({ isOpen, onClose }: AIChatProps) {
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="fixed bottom-24 right-4 w-96 h-96 bg-gradient-to-br from-[#1A1F33] to-[#0f1419] border border-white/10 rounded-xl shadow-2xl flex flex-col z-50"
-          data-testid="ai-chat-container"
-        >
+        <>
+          {/* Backdrop Blur */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-40 backdrop-blur-md bg-black/20"
+            data-testid="ai-chat-backdrop"
+          />
+
+          {/* Chat Container */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className="fixed bottom-24 right-4 w-96 h-96 bg-gradient-to-br from-[#1A1F33] to-[#0f1419] border border-white/10 rounded-xl shadow-2xl flex flex-col z-50"
+            data-testid="ai-chat-container"
+          >
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-white/10">
             <div className="flex items-center gap-3">
@@ -169,7 +180,8 @@ export function AIChat({ isOpen, onClose }: AIChatProps) {
               </Button>
             </div>
           </div>
-        </motion.div>
+          </motion.div>
+        </>
       )}
     </AnimatePresence>
   );
