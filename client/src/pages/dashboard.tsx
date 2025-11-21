@@ -192,14 +192,14 @@ export default function Dashboard() {
             <CardContent className="p-3 md:p-6 pt-4">
               <div className="h-64 md:h-80 w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={evolutionData} margin={{ top: 20, right: 20, left: -20, bottom: 0 }}>
+                  <LineChart data={evolutionData} margin={{ top: 20, right: 30, left: 0, bottom: 35 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
                     <XAxis 
                       dataKey="month" 
                       axisLine={false} 
                       tickLine={false} 
                       tick={{ fill: '#94a3b8', fontSize: 11 }}
-                      dy={10}
+                      dy={5}
                     />
                     <YAxis 
                       axisLine={false} 
@@ -208,7 +208,8 @@ export default function Dashboard() {
                       domain={[0, 100]}
                       ticks={[0, 20, 40, 60, 80, 100]}
                       tickFormatter={(value) => `${value}%`}
-                      label={{ value: 'Eficiencia (%)', angle: -90, position: 'insideLeft', fill: '#94a3b8', style: { textAnchor: 'middle' }, offset: 5 }}
+                      label={{ value: 'Eficiencia (%)', angle: -90, position: 'insideLeft', fill: '#94a3b8', style: { textAnchor: 'middle' }, offset: 10 }}
+                      width={50}
                     />
                     <Line 
                       type="monotone" 
@@ -229,7 +230,7 @@ export default function Dashboard() {
             <CardContent className="p-3 md:p-6 pt-4">
               <div className="h-48 md:h-64 w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={efficiencyData} margin={{ top: 20, right: 20, left: -20, bottom: 0 }}>
+                  <LineChart data={efficiencyData} margin={{ top: 20, right: 30, left: 0, bottom: 35 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
                     <XAxis 
                       dataKey="month" 
@@ -242,7 +243,8 @@ export default function Dashboard() {
                       domain={[0, 120]}
                       ticks={[20, 40, 60, 80, 100]}
                       tickFormatter={(value) => `${value}%`}
-                      label={{ value: 'Eficiencia (%)', angle: -90, position: 'insideLeft', fill: '#94a3b8', style: { textAnchor: 'middle' }, offset: 5 }}
+                      label={{ value: 'Eficiencia (%)', angle: -90, position: 'insideLeft', fill: '#94a3b8', style: { textAnchor: 'middle' }, offset: 10 }}
+                      width={50}
                     />
                     <Line 
                       type="monotone" 
