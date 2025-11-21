@@ -12,9 +12,6 @@ export function BottomNav({ onAddClick }: BottomNavProps) {
   const isDashboard = currentPath === "/";
   const isPeriodInfo = currentPath === "/period-info";
 
-  // Color dinámico del icono FileText según la página
-  const fileIconColor = isDashboard ? "#06b6d4" : isPeriodInfo ? "#10b981" : "#94a3b8";
-
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-[#1A1F33] border-t border-white/5 px-4 pb-4 pt-3 z-40">
       <div className="flex items-center justify-around max-w-4xl mx-auto">
@@ -23,26 +20,25 @@ export function BottomNav({ onAddClick }: BottomNavProps) {
         <div className="flex gap-3 items-center">
           <button 
             onClick={() => setLocation("/period-info")}
-            className="text-slate-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/5" 
+            className={`p-2 rounded-lg relative hover:bg-white/5 transition-colors ${isPeriodInfo ? "text-[#06b6d4]" : "text-slate-400 hover:text-white"}`}
             data-testid="button-nav-grid"
           >
             <LayoutGrid size={22} />
+            {isPeriodInfo && (
+              <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-[#06b6d4] rounded-full"></span>
+            )}
           </button>
           <button className="text-slate-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/5" data-testid="button-nav-activity">
             <Activity size={22} />
           </button>
           <button 
             onClick={() => setLocation("/")}
-            className="p-2 rounded-lg relative hover:bg-white/5 transition-colors"
-            style={{ color: fileIconColor }}
+            className={`p-2 rounded-lg relative hover:bg-white/5 transition-colors ${isDashboard ? "text-[#06b6d4]" : "text-slate-400 hover:text-white"}`}
             data-testid="button-nav-file"
           >
             <FileText size={22} />
-            {(isDashboard || isPeriodInfo) && (
-              <span 
-                className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full transition-colors" 
-                style={{ backgroundColor: fileIconColor }}
-              ></span>
+            {isDashboard && (
+              <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-[#06b6d4] rounded-full"></span>
             )}
           </button>
         </div>
