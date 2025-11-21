@@ -22,10 +22,10 @@ export default function PeriodInfo() {
 
   const StatCard = ({ icon, label, value, unit = "" }: any) => (
     <div className="bg-white/5 border border-white/10 rounded-xl p-3 text-center overflow-hidden flex flex-col items-center justify-center min-h-[120px]">
-      <div className="text-lg mb-2">{icon}</div>
-      <div className="text-xs md:text-sm font-bold text-white mb-1 leading-tight line-clamp-2">{value}</div>
-      {unit && <div className="text-xs text-slate-400" style={{fontSize: '0.7rem'}}>{unit}</div>}
-      <div className="text-xs text-slate-500 leading-tight line-clamp-3" style={{fontSize: '0.65rem'}}>{label}</div>
+      <div className="text-2xl mb-2">{icon}</div>
+      <div className="text-sm md:text-base font-bold text-white mb-1 leading-tight line-clamp-2">{value}</div>
+      {unit && <div className="text-sm text-slate-400" style={{fontSize: '0.77rem'}}>{unit}</div>}
+      <div className="text-sm text-slate-500 leading-tight line-clamp-3" style={{fontSize: '0.715rem'}}>{label}</div>
     </div>
   );
 
@@ -34,7 +34,7 @@ export default function PeriodInfo() {
       {/* Header */}
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-sm border-b border-white/5 px-4 md:px-6 pt-6 pb-4 flex items-center justify-between">
         <div className="w-6" /> {/* Spacer for alignment */}
-        <h1 className="text-base md:text-lg font-bold tracking-tight text-white">Información Técnica</h1>
+        <h1 className="text-lg md:text-xl font-bold tracking-tight text-white">Información Técnica</h1>
         <div className="w-6" /> {/* Spacer for alignment */}
       </header>
 
@@ -43,8 +43,8 @@ export default function PeriodInfo() {
         {/* Period Header */}
         <Card className="bg-[#06b6d4]/20 border border-[#06b6d4]/30 shadow-lg rounded-2xl overflow-hidden">
           <CardContent className="p-4 flex items-center justify-center gap-2">
-            <div className="text-[#06b6d4]">📅</div>
-            <h2 className="text-base font-bold text-white">PERÍODO 202511</h2>
+            <div className="text-[#06b6d4] text-xl">📅</div>
+            <h2 className="text-lg font-bold text-white">PERÍODO 202511</h2>
           </CardContent>
         </Card>
 
@@ -55,7 +55,7 @@ export default function PeriodInfo() {
             className="w-full flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-colors"
             data-testid="button-toggle-tecnico"
           >
-            <h3 className="text-sm font-bold text-white">Información del Técnico</h3>
+            <h3 className="text-base font-bold text-white">Información del Técnico</h3>
             <ChevronDown
               size={18}
               className={`transition-transform ${expandedSections.tecnico ? "rotate-180" : ""}`}
@@ -64,7 +64,7 @@ export default function PeriodInfo() {
 
           {expandedSections.tecnico && (
             <div className="space-y-3 pl-2">
-              <div className="text-xs text-slate-400">
+              <div className="text-sm text-slate-400">
                 Técnico: <span className="text-slate-200 font-semibold">Jesús Ignacio Lepe Rojas</span>
               </div>
 
@@ -84,7 +84,7 @@ export default function PeriodInfo() {
             className="w-full flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-colors"
             data-testid="button-toggle-comisiones"
           >
-            <h3 className="text-sm font-bold text-white">Comisiones</h3>
+            <h3 className="text-base font-bold text-white">Comisiones</h3>
             <ChevronDown
               size={18}
               className={`transition-transform ${expandedSections.comisiones ? "rotate-180" : ""}`}
@@ -114,7 +114,7 @@ export default function PeriodInfo() {
             className="w-full flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-colors"
             data-testid="button-toggle-produccion"
           >
-            <h3 className="text-sm font-bold text-white">Producción</h3>
+            <h3 className="text-base font-bold text-white">Producción</h3>
             <ChevronDown
               size={18}
               className={`transition-transform ${expandedSections.produccion ? "rotate-180" : ""}`}
@@ -155,7 +155,7 @@ export default function PeriodInfo() {
             className="w-full flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-colors"
             data-testid="button-toggle-indicadores"
           >
-            <h3 className="text-sm font-bold text-white">Indicadores de Calidad</h3>
+            <h3 className="text-base font-bold text-white">Indicadores de Calidad</h3>
             <ChevronDown
               size={18}
               className={`transition-transform ${expandedSections.indicadores ? "rotate-180" : ""}`}
@@ -186,7 +186,7 @@ export default function PeriodInfo() {
             className="w-full flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-colors"
             data-testid="button-toggle-asistencia"
           >
-            <h3 className="text-sm font-bold text-white">Asistencia y Factores</h3>
+            <h3 className="text-base font-bold text-white">Asistencia y Factores</h3>
             <ChevronDown
               size={18}
               className={`transition-transform ${expandedSections.asistencia ? "rotate-180" : ""}`}
