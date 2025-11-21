@@ -65,8 +65,6 @@ export function BottomNav({ onAddClick }: BottomNavProps) {
               <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-[#06b6d4] rounded-full"></span>
             )}
           </button>
-            <Ticket size={22} />
-          </button>
           <button className="text-slate-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/5" data-testid="button-nav-box">
             <Box size={22} />
           </button>
