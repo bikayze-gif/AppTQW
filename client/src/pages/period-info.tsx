@@ -9,6 +9,8 @@ export default function PeriodInfo() {
     tecnico: true,
     comisiones: true,
     produccion: true,
+    indicadores: true,
+    asistencia: true,
   });
 
   const toggleSection = (section: keyof typeof expandedSections) => {
@@ -142,6 +144,73 @@ export default function PeriodInfo() {
               <div className="grid grid-cols-2 gap-3">
                 <StatCard icon="🎁" label="Meta Producción HFC" value="349" />
                 <StatCard icon="📊" label="Cumplimiento HFC" value="0.0%" />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <StatCard icon="🎁" label="Meta Producción FTTH" value="1.6" />
+                <StatCard icon="📊" label="Cumplimiento FTTH" value="74.0%" />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Indicadores de Calidad */}
+        <div className="space-y-3">
+          <button
+            onClick={() => toggleSection("indicadores")}
+            className="w-full flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-colors"
+            data-testid="button-toggle-indicadores"
+          >
+            <h3 className="text-base font-bold text-white">Indicadores de Calidad</h3>
+            <ChevronDown
+              size={20}
+              className={`transition-transform ${expandedSections.indicadores ? "rotate-180" : ""}`}
+            />
+          </button>
+
+          {expandedSections.indicadores && (
+            <div className="space-y-3 pl-2">
+              <div className="grid grid-cols-3 gap-3">
+                <StatCard icon="✅" label="KPI Calidad HFC" value="92.7" unit="%" />
+                <StatCard icon="✅" label="Meta Calidad HFC" value="90.8" unit="%" />
+                <StatCard icon="✅" label="Cumplimiento Calidad HFC" value="102.0" unit="%" />
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <StatCard icon="✅" label="KPI Calidad FTTH" value="100.0" unit="%" />
+                <StatCard icon="✅" label="Meta Calidad FTTH" value="89.3" unit="%" />
+                <StatCard icon="✅" label="Cumplimiento Calidad FTTH" value="112.0" unit="%" />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Asistencia y Factores */}
+        <div className="space-y-3">
+          <button
+            onClick={() => toggleSection("asistencia")}
+            className="w-full flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-colors"
+            data-testid="button-toggle-asistencia"
+          >
+            <h3 className="text-base font-bold text-white">Asistencia y Factores</h3>
+            <ChevronDown
+              size={20}
+              className={`transition-transform ${expandedSections.asistencia ? "rotate-180" : ""}`}
+            />
+          </button>
+
+          {expandedSections.asistencia && (
+            <div className="space-y-3 pl-2">
+              <div className="grid grid-cols-3 gap-3">
+                <StatCard icon="📅" label="Días Operativos" value="11" />
+                <StatCard icon="📅" label="Días Ausencia" value="0" />
+                <StatCard icon="📅" label="Días Vacaciones" value="5" />
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <StatCard icon="📅" label="Días Licencia" value="0" />
+                <StatCard icon="📊" label="Factor Asistencia" value="100.0" unit="%" />
+                <StatCard icon="📊" label="Factor Vacaciones" value="83.3" unit="%" />
               </div>
             </div>
           )}
