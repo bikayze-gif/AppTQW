@@ -4,13 +4,13 @@ import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tool
 import { Search, X, ArrowUp, ArrowDown } from "lucide-react";
 
 const chartData = [
-  { week: "Sem 1", actividad1: 45, actividad2: 30 },
-  { week: "Sem 2", actividad1: 52, actividad2: 45 },
-  { week: "Sem 3", actividad1: 48, actividad2: 50 },
-  { week: "Sem 4", actividad1: 61, actividad2: 55 },
-  { week: "Sem 5", actividad1: 55, actividad2: 65 },
-  { week: "Sem 6", actividad1: 67, actividad2: 58 },
-  { week: "Sem 7", actividad1: 72, actividad2: 70 },
+  { day: "01", actividad1: 45, actividad2: 30 },
+  { day: "02", actividad1: 52, actividad2: 45 },
+  { day: "03", actividad1: 48, actividad2: 50 },
+  { day: "04", actividad1: 61, actividad2: 55 },
+  { day: "05", actividad1: 55, actividad2: 65 },
+  { day: "06", actividad1: 67, actividad2: 58 },
+  { day: "07", actividad1: 72, actividad2: 70 },
 ];
 
 const tableData = [
@@ -45,6 +45,11 @@ const getStatusColor = (status: string) => {
     default:
       return "bg-slate-500/20 text-slate-400 border border-slate-500/30";
   }
+};
+
+const formatDate = (dateString: string) => {
+  const [year, month, day] = dateString.split('-');
+  return `${day}-${month.toLowerCase()}-${year.slice(2)}`;
 };
 
 export default function Activity() {
@@ -104,10 +109,11 @@ export default function Activity() {
                 <LineChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 35 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
                   <XAxis 
-                    dataKey="week" 
+                    dataKey="day" 
                     axisLine={false} 
                     tickLine={false} 
                     tick={{ fill: '#94a3b8', fontSize: 11 }}
+                    label={{ value: 'Días', position: 'insideBottomRight', offset: -5, fill: '#94a3b8' }}
                     dy={5}
                   />
                   <YAxis 
@@ -175,6 +181,23 @@ export default function Activity() {
                 <thead>
                   <tr className="border-b border-white/5 bg-white/5">
                     <th 
+                      onClick={() => handleSort("fecha")}
+                      className="px-3 md:px-6 py-3 text-left font-semibold text-slate-300 text-xs md:text-sm cursor-pointer hover:bg-white/10 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        Fecha
+                        {sortColumn === "fecha" && (
+                          <span>
+                            {sortDirection === "asc" ? (
+                              <ArrowUp size={14} className="text-[#06b6d4]" />
+                            ) : (
+                              <ArrowDown size={14} className="text-[#06b6d4]" />
+                            )}
+                          </span>
+                        )}
+                      </div>
+                    </th>
+                    <th 
                       onClick={() => handleSort("actividad")}
                       className="px-3 md:px-6 py-3 text-left font-semibold text-slate-300 text-xs md:text-sm cursor-pointer hover:bg-white/10 transition-colors"
                     >
@@ -225,23 +248,6 @@ export default function Activity() {
                         )}
                       </div>
                     </th>
-                    <th 
-                      onClick={() => handleSort("fecha")}
-                      className="px-3 md:px-6 py-3 text-left font-semibold text-slate-300 text-xs md:text-sm cursor-pointer hover:bg-white/10 transition-colors"
-                    >
-                      <div className="flex items-center gap-2">
-                        Fecha
-                        {sortColumn === "fecha" && (
-                          <span>
-                            {sortDirection === "asc" ? (
-                              <ArrowUp size={14} className="text-[#06b6d4]" />
-                            ) : (
-                              <ArrowDown size={14} className="text-[#06b6d4]" />
-                            )}
-                          </span>
-                        )}
-                      </div>
-                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
@@ -251,6 +257,7 @@ export default function Activity() {
                       className="hover:bg-white/5 transition-colors"
                       data-testid={`activity-row-${idx}`}
                     >
+                      <td className="px-3 md:px-6 py-3 text-xs md:text-sm text-slate-400" data-testid={`activity-date-${idx}`}>{formatDate(row.fecha)}</td>
                       <td className="px-3 md:px-6 py-3 text-xs md:text-sm text-slate-200" data-testid={`activity-name-${idx}`}>{row.actividad}</td>
                       <td className="px-3 md:px-6 py-3 text-xs md:text-sm text-slate-200" data-testid={`activity-responsible-${idx}`}>{row.responsable}</td>
                       <td className="px-3 md:px-6 py-3">
@@ -258,7 +265,6 @@ export default function Activity() {
                           {row.estado}
                         </span>
                       </td>
-                      <td className="px-3 md:px-6 py-3 text-xs md:text-sm text-slate-400" data-testid={`activity-date-${idx}`}>{row.fecha}</td>
                     </tr>
                   ))}
                 </tbody>
