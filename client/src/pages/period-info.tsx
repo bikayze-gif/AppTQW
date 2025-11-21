@@ -33,13 +33,7 @@ export default function PeriodInfo() {
     <div className="min-h-screen bg-background text-white font-sans pb-24">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-sm border-b border-white/5 px-4 md:px-6 pt-6 pb-4 flex items-center justify-between">
-        <button
-          onClick={() => setLocation("/")}
-          className="p-1 hover:bg-white/10 rounded-lg transition-colors"
-          data-testid="button-back-to-dashboard"
-        >
-          <ChevronLeft size={24} className="text-slate-400" />
-        </button>
+        <div className="w-6" /> {/* Spacer for alignment */}
         <h1 className="text-lg md:text-xl font-bold tracking-tight text-white">Información Técnica</h1>
         <div className="w-6" /> {/* Spacer for alignment */}
       </header>

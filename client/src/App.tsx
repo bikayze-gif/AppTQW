@@ -15,8 +15,8 @@ import Analytics from "@/pages/analytics";
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Dashboard} />
-      <Route path="/period-info" component={PeriodInfo} />
+      <Route path="/" component={PeriodInfo} />
+      <Route path="/dashboard" component={Dashboard} />
       <Route path="/analytics" component={Analytics} />
       <Route component={NotFound} />
     </Switch>

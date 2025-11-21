@@ -9,8 +9,8 @@ export function BottomNav({ onAddClick }: BottomNavProps) {
   const [currentPath] = useLocation();
   const [, setLocation] = useLocation();
 
-  const isDashboard = currentPath === "/";
-  const isPeriodInfo = currentPath === "/period-info";
+  const isPeriodInfo = currentPath === "/";
+  const isDashboard = currentPath === "/dashboard";
   const isAnalytics = currentPath === "/analytics";
 
   return (
@@ -20,7 +20,7 @@ export function BottomNav({ onAddClick }: BottomNavProps) {
         {/* Left Group - 2.5 icons */}
         <div className="flex gap-3 items-center">
           <button 
-            onClick={() => setLocation("/period-info")}
+            onClick={() => setLocation("/")}
             className={`p-2 rounded-lg relative hover:bg-white/5 transition-colors ${isPeriodInfo ? "text-[#06b6d4]" : "text-slate-400 hover:text-white"}`}
             data-testid="button-nav-grid"
           >
@@ -33,7 +33,7 @@ export function BottomNav({ onAddClick }: BottomNavProps) {
             <Activity size={22} />
           </button>
           <button 
-            onClick={() => setLocation("/")}
+            onClick={() => setLocation("/dashboard")}
             className={`p-2 rounded-lg relative hover:bg-white/5 transition-colors ${isDashboard ? "text-[#06b6d4]" : "text-slate-400 hover:text-white"}`}
             data-testid="button-nav-file"
           >
