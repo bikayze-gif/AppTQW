@@ -1,8 +1,11 @@
+import { useState } from "react";
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { BottomNav } from "@/components/bottom-nav";
+import { MaterialForm, type MaterialFormData } from "@/components/material-form";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
 import PeriodInfo from "@/pages/period-info";
@@ -17,12 +20,33 @@ function Router() {
   );
 }
 
+function AppLayout() {
+  const [isMaterialFormOpen, setIsMaterialFormOpen] = useState(false);
+
+  const handleMaterialSubmit = (data: MaterialFormData) => {
+    console.log("Material request submitted:", data);
+    setIsMaterialFormOpen(false);
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Router />
+      <MaterialForm
+        isOpen={isMaterialFormOpen}
+        onClose={() => setIsMaterialFormOpen(false)}
+        onSubmit={handleMaterialSubmit}
+      />
+      <BottomNav onAddClick={() => setIsMaterialFormOpen(true)} />
+    </div>
+  );
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
-        <Router />
+        <AppLayout />
       </TooltipProvider>
     </QueryClientProvider>
   );

@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { BottomNav } from "@/components/bottom-nav";
-import { MaterialForm, type MaterialFormData } from "@/components/material-form";
 import { Card, CardContent } from "@/components/ui/card";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid } from "recharts";
 import { motion, AnimatePresence } from "framer-motion";
