@@ -55,22 +55,22 @@ const tableData = [
   { id: 15, actividad: "Tarea O", responsable: "Rodrigo", estado: "Completado", fecha: "2025-01-01" },
 ];
 
-const dayDetailsData: Record<string, { summary: string; count: number; completed: number; inProgress: number; activities: Array<{ name: string; responsible: string; status: string; time: string }> }> = {
-  "2025-01-15": { summary: "4 actividades completadas, 0 pendientes", count: 4, completed: 2, inProgress: 0, activities: [{ name: "Tarea A", responsible: "Juan", status: "Completado", time: "09:30" }] },
-  "2025-01-14": { summary: "3 actividades procesadas, 1 en progreso", count: 3, completed: 2, inProgress: 1, activities: [{ name: "Tarea B", responsible: "María", status: "En Progreso", time: "10:15" }] },
-  "2025-01-13": { summary: "2 tareas completadas hoy", count: 2, completed: 2, inProgress: 0, activities: [{ name: "Tarea C", responsible: "Carlos", status: "Completado", time: "08:45" }] },
-  "2025-01-12": { summary: "Actividades pendientes: 1", count: 2, completed: 0, inProgress: 0, activities: [{ name: "Tarea D", responsible: "Ana", status: "Pendiente", time: "14:20" }] },
-  "2025-01-11": { summary: "Día productivo: 3 completadas", count: 3, completed: 3, inProgress: 0, activities: [{ name: "Tarea E", responsible: "Pedro", status: "Completado", time: "11:00" }] },
-  "2025-01-10": { summary: "2 tareas en progreso", count: 2, completed: 0, inProgress: 2, activities: [{ name: "Tarea F", responsible: "Laura", status: "En Progreso", time: "15:30" }] },
-  "2025-01-09": { summary: "3 tareas completadas", count: 3, completed: 3, inProgress: 0, activities: [{ name: "Tarea G", responsible: "Luis", status: "Completado", time: "09:00" }] },
-  "2025-01-08": { summary: "2 tareas exitosas", count: 2, completed: 2, inProgress: 0, activities: [{ name: "Tarea H", responsible: "Sandra", status: "Completado", time: "13:45" }] },
-  "2025-01-07": { summary: "1 en progreso, actividades continúan", count: 2, completed: 1, inProgress: 1, activities: [{ name: "Tarea I", responsible: "Roberto", status: "En Progreso", time: "10:30" }] },
-  "2025-01-06": { summary: "Día completamente productivo", count: 2, completed: 2, inProgress: 0, activities: [{ name: "Tarea J", responsible: "Mónica", status: "Completado", time: "12:15" }] },
-  "2025-01-05": { summary: "1 tarea pendiente por revisar", count: 2, completed: 0, inProgress: 0, activities: [{ name: "Tarea K", responsible: "Fernando", status: "Pendiente", time: "16:00" }] },
-  "2025-01-04": { summary: "Tarea completada satisfactoriamente", count: 1, completed: 1, inProgress: 0, activities: [{ name: "Tarea L", responsible: "Beatriz", status: "Completado", time: "14:00" }] },
-  "2025-01-03": { summary: "En progreso: tareas del día", count: 2, completed: 0, inProgress: 1, activities: [{ name: "Tarea M", responsible: "Diego", status: "En Progreso", time: "11:20" }] },
-  "2025-01-02": { summary: "1 tarea completada", count: 1, completed: 1, inProgress: 0, activities: [{ name: "Tarea N", responsible: "Cristina", status: "Completado", time: "10:00" }] },
-  "2025-01-01": { summary: "Inicio del mes productivo", count: 1, completed: 1, inProgress: 0, activities: [{ name: "Tarea O", responsible: "Rodrigo", status: "Completado", time: "09:30" }] },
+const dayDetailsData: Record<string, { summary: string; count: number; completed: number; inProgress: number; items: Array<{ code: string; value: number | string; type: "puntos" | "rgu" }>; activities: Array<{ name: string; responsible: string; status: string; time: string }> }> = {
+  "2025-01-15": { summary: "4 actividades completadas, 0 pendientes", count: 4, completed: 2, inProgress: 0, items: [{ code: "ACT-001", value: 150, type: "puntos" }, { code: "ACT-002", value: "rgu", type: "rgu" }, { code: "ACT-003", value: 200, type: "puntos" }], activities: [{ name: "Tarea A", responsible: "Juan", status: "Completado", time: "09:30" }] },
+  "2025-01-14": { summary: "3 actividades procesadas, 1 en progreso", count: 3, completed: 2, inProgress: 1, items: [{ code: "ACT-004", value: 120, type: "puntos" }, { code: "ACT-005", value: "rgu", type: "rgu" }], activities: [{ name: "Tarea B", responsible: "María", status: "En Progreso", time: "10:15" }] },
+  "2025-01-13": { summary: "2 tareas completadas hoy", count: 2, completed: 2, inProgress: 0, items: [{ code: "ACT-006", value: 180, type: "puntos" }, { code: "ACT-007", value: "rgu", type: "rgu" }], activities: [{ name: "Tarea C", responsible: "Carlos", status: "Completado", time: "08:45" }] },
+  "2025-01-12": { summary: "Actividades pendientes: 1", count: 2, completed: 0, inProgress: 0, items: [{ code: "ACT-008", value: 90, type: "puntos" }], activities: [{ name: "Tarea D", responsible: "Ana", status: "Pendiente", time: "14:20" }] },
+  "2025-01-11": { summary: "Día productivo: 3 completadas", count: 3, completed: 3, inProgress: 0, items: [{ code: "ACT-009", value: 250, type: "puntos" }, { code: "ACT-010", value: "rgu", type: "rgu" }, { code: "ACT-011", value: 175, type: "puntos" }], activities: [{ name: "Tarea E", responsible: "Pedro", status: "Completado", time: "11:00" }] },
+  "2025-01-10": { summary: "2 tareas en progreso", count: 2, completed: 0, inProgress: 2, items: [{ code: "ACT-012", value: 140, type: "puntos" }], activities: [{ name: "Tarea F", responsible: "Laura", status: "En Progreso", time: "15:30" }] },
+  "2025-01-09": { summary: "3 tareas completadas", count: 3, completed: 3, inProgress: 0, items: [{ code: "ACT-013", value: 210, type: "puntos" }, { code: "ACT-014", value: "rgu", type: "rgu" }], activities: [{ name: "Tarea G", responsible: "Luis", status: "Completado", time: "09:00" }] },
+  "2025-01-08": { summary: "2 tareas exitosas", count: 2, completed: 2, inProgress: 0, items: [{ code: "ACT-015", value: 165, type: "puntos" }, { code: "ACT-016", value: "rgu", type: "rgu" }], activities: [{ name: "Tarea H", responsible: "Sandra", status: "Completado", time: "13:45" }] },
+  "2025-01-07": { summary: "1 en progreso, actividades continúan", count: 2, completed: 1, inProgress: 1, items: [{ code: "ACT-017", value: 110, type: "puntos" }], activities: [{ name: "Tarea I", responsible: "Roberto", status: "En Progreso", time: "10:30" }] },
+  "2025-01-06": { summary: "Día completamente productivo", count: 2, completed: 2, inProgress: 0, items: [{ code: "ACT-018", value: 195, type: "puntos" }, { code: "ACT-019", value: "rgu", type: "rgu" }], activities: [{ name: "Tarea J", responsible: "Mónica", status: "Completado", time: "12:15" }] },
+  "2025-01-05": { summary: "1 tarea pendiente por revisar", count: 2, completed: 0, inProgress: 0, items: [{ code: "ACT-020", value: 85, type: "puntos" }], activities: [{ name: "Tarea K", responsible: "Fernando", status: "Pendiente", time: "16:00" }] },
+  "2025-01-04": { summary: "Tarea completada satisfactoriamente", count: 1, completed: 1, inProgress: 0, items: [{ code: "ACT-021", value: 220, type: "puntos" }, { code: "ACT-022", value: "rgu", type: "rgu" }], activities: [{ name: "Tarea L", responsible: "Beatriz", status: "Completado", time: "14:00" }] },
+  "2025-01-03": { summary: "En progreso: tareas del día", count: 2, completed: 0, inProgress: 1, items: [{ code: "ACT-023", value: 130, type: "puntos" }], activities: [{ name: "Tarea M", responsible: "Diego", status: "En Progreso", time: "11:20" }] },
+  "2025-01-02": { summary: "1 tarea completada", count: 1, completed: 1, inProgress: 0, items: [{ code: "ACT-024", value: "rgu", type: "rgu" }, { code: "ACT-025", value: 160, type: "puntos" }], activities: [{ name: "Tarea N", responsible: "Cristina", status: "Completado", time: "10:00" }] },
+  "2025-01-01": { summary: "Inicio del mes productivo", count: 1, completed: 1, inProgress: 0, items: [{ code: "ACT-026", value: 200, type: "puntos" }], activities: [{ name: "Tarea O", responsible: "Rodrigo", status: "Completado", time: "09:30" }] },
 };
 
 const CustomDot = (props: any) => {
@@ -458,6 +458,38 @@ export default function Activity() {
                       <p className="text-xl font-bold text-blue-400">{dayDetailsData[selectedDate].inProgress}</p>
                       <p className="text-xs text-slate-400 mt-1">En Progreso</p>
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Items Table */}
+              {dayDetailsData[selectedDate] && dayDetailsData[selectedDate].items && dayDetailsData[selectedDate].items.length > 0 && (
+                <div className="px-6 py-4 border-b border-white/5">
+                  <h3 className="text-sm font-semibold text-white mb-3">Entregas del Día</h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="border-b border-white/10">
+                          <th className="text-left py-2 px-2 text-slate-300 font-medium">Código</th>
+                          <th className="text-right py-2 px-2 text-slate-300 font-medium">Valor</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/5">
+                        {dayDetailsData[selectedDate].items.map((item, idx) => (
+                          <tr key={idx} className="hover:bg-white/5 transition-colors">
+                            <td className="py-2 px-2 text-slate-300" data-testid={`item-code-${idx}`}>{item.code}</td>
+                            <td className="py-2 px-2 text-right">
+                              <span 
+                                className={`font-semibold ${item.type === 'puntos' ? 'text-[#06b6d4]' : 'text-violet-400'}`}
+                                data-testid={`item-value-${idx}`}
+                              >
+                                {item.type === 'puntos' ? `${item.value} pts` : item.value}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               )}
