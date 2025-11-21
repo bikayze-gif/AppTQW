@@ -163,11 +163,6 @@ function DetailPanel({ record, onClose }: { record: TableRecord; onClose: () => 
 
 export default function Dashboard() {
   const [selectedRecord, setSelectedRecord] = useState<TableRecord | null>(null);
-  const [isMaterialFormOpen, setIsMaterialFormOpen] = useState(false);
-
-  const handleMaterialSubmit = (data: MaterialFormData) => {
-    console.log("Material solicitud enviada:", data);
-  };
 
   return (
     <div className="min-h-screen bg-background text-white font-sans">
@@ -326,14 +321,6 @@ export default function Dashboard() {
           />
         )}
       </AnimatePresence>
-
-      <MaterialForm
-        isOpen={isMaterialFormOpen}
-        onClose={() => setIsMaterialFormOpen(false)}
-        onSubmit={handleMaterialSubmit}
-      />
-
-      <BottomNav onAddClick={() => setIsMaterialFormOpen(true)} />
     </div>
   );
 }
