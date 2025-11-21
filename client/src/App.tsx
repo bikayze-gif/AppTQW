@@ -5,6 +5,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { BottomNav } from "@/components/bottom-nav";
+import { AddMenu } from "@/components/add-menu";
 import { MaterialForm, type MaterialFormData } from "@/components/material-form";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
@@ -23,6 +24,7 @@ function Router() {
 }
 
 function AppLayout() {
+  const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
   const [isMaterialFormOpen, setIsMaterialFormOpen] = useState(false);
 
   const handleMaterialSubmit = (data: MaterialFormData) => {
@@ -30,15 +32,30 @@ function AppLayout() {
     setIsMaterialFormOpen(false);
   };
 
+  const handleReportClick = () => {
+    console.log("Nuevo reporte clicked");
+  };
+
+  const handleSettingsClick = () => {
+    console.log("Configuración clicked");
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Router />
+      <AddMenu
+        isOpen={isAddMenuOpen}
+        onClose={() => setIsAddMenuOpen(false)}
+        onMaterialClick={() => setIsMaterialFormOpen(true)}
+        onReportClick={handleReportClick}
+        onSettingsClick={handleSettingsClick}
+      />
       <MaterialForm
         isOpen={isMaterialFormOpen}
         onClose={() => setIsMaterialFormOpen(false)}
         onSubmit={handleMaterialSubmit}
       />
-      <BottomNav onAddClick={() => setIsMaterialFormOpen(true)} />
+      <BottomNav onAddClick={() => setIsAddMenuOpen(!isAddMenuOpen)} />
     </div>
   );
 }
