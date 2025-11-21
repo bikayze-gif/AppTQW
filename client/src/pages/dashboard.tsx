@@ -234,7 +234,10 @@ export default function Dashboard() {
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
                     <XAxis 
                       dataKey="month" 
-                      hide={true}
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{ fill: '#94a3b8', fontSize: 11 }}
+                      dy={5}
                     />
                     <YAxis 
                       type="number"
