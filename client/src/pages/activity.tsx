@@ -228,14 +228,14 @@ export default function Activity() {
                     dataKey="actividad1" 
                     stroke="#06b6d4" 
                     strokeWidth={3}
-                    dot={<CustomDot />}
+                    dot={false}
                   />
                   <Line 
                     type="monotone" 
                     dataKey="actividad2" 
                     stroke="#0891b2" 
                     strokeWidth={3}
-                    dot={<CustomDot />}
+                    dot={false}
                   />
                 </LineChart>
               </ResponsiveContainer>

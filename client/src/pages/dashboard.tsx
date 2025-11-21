@@ -257,8 +257,8 @@ export default function Dashboard() {
                       dataKey="value" 
                       stroke="hsl(var(--chart-1))" 
                       strokeWidth={3}
-                      dot={<CustomDot />}
-                      activeDot={{ r: 8, strokeWidth: 0 }}
+                      dot={false}
+                      activeDot={false}
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -301,14 +301,14 @@ export default function Dashboard() {
                       dataKey="val1" 
                       stroke="hsl(var(--chart-3))" 
                       strokeWidth={3}
-                      dot={<CustomDot />}
+                      dot={false}
                     />
                     <Line 
                       type="monotone" 
                       dataKey="val2" 
                       stroke="hsl(var(--chart-2))" 
                       strokeWidth={3}
-                      dot={<CustomDot />}
+                      dot={false}
                     />
                   </LineChart>
                 </ResponsiveContainer>
