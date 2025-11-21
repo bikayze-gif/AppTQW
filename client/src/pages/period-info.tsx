@@ -8,9 +8,9 @@ export default function PeriodInfo() {
   const [expandedSections, setExpandedSections] = useState({
     tecnico: true,
     comisiones: true,
-    produccion: true,
-    indicadores: true,
-    asistencia: true,
+    produccion: false,
+    indicadores: false,
+    asistencia: false,
   });
 
   const toggleSection = (section: keyof typeof expandedSections) => {
