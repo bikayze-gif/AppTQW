@@ -1,6 +1,11 @@
+"use client";
+
+import { useState } from "react";
 import { BottomNav } from "@/components/bottom-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid } from "recharts";
+import { motion, AnimatePresence } from "framer-motion";
+import { ChevronLeft } from "lucide-react";
 
 const evolutionData = [
   { month: "Dic 24", value: 88 },
@@ -62,7 +67,104 @@ const getStatusColor = (status: string) => {
   }
 };
 
+type TableRecord = typeof tableData[0];
+
+function DetailPanel({ record, onClose }: { record: TableRecord; onClose: () => void }) {
+  return (
+    <motion.div
+      className="fixed inset-0 z-50 overflow-hidden"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
+      {/* Backdrop */}
+      <motion.div
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        onClick={onClose}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+      />
+
+      {/* Slide Panel */}
+      <motion.div
+        className="absolute inset-y-0 right-0 w-full md:w-96 bg-card shadow-2xl flex flex-col"
+        initial={{ x: "100%" }}
+        animate={{ x: 0 }}
+        exit={{ x: "100%" }}
+        transition={{ type: "spring", damping: 30, stiffness: 300 }}
+      >
+        {/* Header */}
+        <div className="sticky top-0 bg-card/95 backdrop-blur border-b border-white/5 px-4 py-4 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-white">Detalles del Registro</h2>
+          <button
+            onClick={onClose}
+            className="p-1 hover:bg-white/10 rounded-lg transition-colors"
+            data-testid="button-close-detail"
+          >
+            <ChevronLeft size={24} className="text-slate-400" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
+          
+          {/* RUT Section */}
+          <div>
+            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">RUT</label>
+            <p className="text-xl font-bold text-white mt-2" data-testid="detail-rut">{record.rut}</p>
+          </div>
+
+          {/* Estado Section */}
+          <div>
+            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Estado</label>
+            <div className="mt-2">
+              <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold ${getStatusColor(record.estado)}`} data-testid="detail-estado">
+                {record.estado}
+              </span>
+            </div>
+          </div>
+
+          {/* Eficiencia Section */}
+          <div>
+            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Eficiencia</label>
+            <div className="mt-2 bg-white/5 rounded-lg p-4">
+              <div className="text-3xl font-bold text-[#06b6d4]" data-testid="detail-eficiency">{record.eficiencia}</div>
+              <div className="w-full bg-white/10 rounded-full h-2 mt-3 overflow-hidden">
+                <motion.div
+                  className="h-full bg-gradient-to-r from-[#06b6d4] to-[#0891b2]"
+                  initial={{ width: 0 }}
+                  animate={{ width: record.eficiencia }}
+                  transition={{ delay: 0.2, duration: 0.6 }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Fecha Section */}
+          <div>
+            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Fecha de Registro</label>
+            <p className="text-base text-slate-300 mt-2" data-testid="detail-fecha">{record.fecha}</p>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="space-y-2 pt-4">
+            <button className="w-full bg-[#06b6d4] hover:bg-[#0891b2] text-black font-semibold py-2.5 rounded-lg transition-colors" data-testid="button-edit-record">
+              Editar Registro
+            </button>
+            <button className="w-full bg-white/10 hover:bg-white/20 text-white font-semibold py-2.5 rounded-lg transition-colors" data-testid="button-delete-record">
+              Eliminar
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 export default function Dashboard() {
+  const [selectedRecord, setSelectedRecord] = useState<TableRecord | null>(null);
+
   return (
     <div className="min-h-screen bg-background text-white font-sans">
       {/* Fixed Header */}
@@ -76,7 +178,7 @@ export default function Dashboard() {
       </header>
 
       {/* Scrollable Content */}
-      <main className="pb-32 md:pb-24">
+      <main className="pb-24">
         <div className="px-3 md:px-6 space-y-4 max-w-4xl mx-auto">
           
           {/* Chart Section Title */}
@@ -180,7 +282,12 @@ export default function Dashboard() {
                   </thead>
                   <tbody className="divide-y divide-white/5">
                     {tableData.map((row, idx) => (
-                      <tr key={row.id} className="hover:bg-white/5 transition-colors">
+                      <tr
+                        key={row.id}
+                        onClick={() => setSelectedRecord(row)}
+                        className="hover:bg-white/5 transition-colors cursor-pointer"
+                        data-testid={`table-row-${idx}`}
+                      >
                         <td className="px-3 md:px-6 py-3 text-xs md:text-sm text-slate-200" data-testid={`table-rut-${idx}`}>{row.rut}</td>
                         <td className="px-3 md:px-6 py-3">
                           <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(row.estado)}`} data-testid={`table-status-${idx}`}>
@@ -199,6 +306,16 @@ export default function Dashboard() {
 
         </div>
       </main>
+
+      {/* Detail Panel with Slide Animation */}
+      <AnimatePresence>
+        {selectedRecord && (
+          <DetailPanel
+            record={selectedRecord}
+            onClose={() => setSelectedRecord(null)}
+          />
+        )}
+      </AnimatePresence>
 
       <BottomNav />
     </div>
