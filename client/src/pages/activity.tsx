@@ -1,7 +1,8 @@
 import { useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
-import { Search, X, ArrowUp, ArrowDown } from "lucide-react";
+import { Search, X, ArrowUp, ArrowDown, Eye, ChevronLeft } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const chartDataFull = [
   { day: "01", actividad1: 45, actividad2: 30 },
@@ -54,6 +55,24 @@ const tableData = [
   { id: 15, actividad: "Tarea O", responsable: "Rodrigo", estado: "Completado", fecha: "2025-01-01" },
 ];
 
+const dayDetailsData: Record<string, { summary: string; count: number; completed: number; inProgress: number; activities: Array<{ name: string; responsible: string; status: string; time: string }> }> = {
+  "2025-01-15": { summary: "4 actividades completadas, 0 pendientes", count: 4, completed: 2, inProgress: 0, activities: [{ name: "Tarea A", responsible: "Juan", status: "Completado", time: "09:30" }] },
+  "2025-01-14": { summary: "3 actividades procesadas, 1 en progreso", count: 3, completed: 2, inProgress: 1, activities: [{ name: "Tarea B", responsible: "María", status: "En Progreso", time: "10:15" }] },
+  "2025-01-13": { summary: "2 tareas completadas hoy", count: 2, completed: 2, inProgress: 0, activities: [{ name: "Tarea C", responsible: "Carlos", status: "Completado", time: "08:45" }] },
+  "2025-01-12": { summary: "Actividades pendientes: 1", count: 2, completed: 0, inProgress: 0, activities: [{ name: "Tarea D", responsible: "Ana", status: "Pendiente", time: "14:20" }] },
+  "2025-01-11": { summary: "Día productivo: 3 completadas", count: 3, completed: 3, inProgress: 0, activities: [{ name: "Tarea E", responsible: "Pedro", status: "Completado", time: "11:00" }] },
+  "2025-01-10": { summary: "2 tareas en progreso", count: 2, completed: 0, inProgress: 2, activities: [{ name: "Tarea F", responsible: "Laura", status: "En Progreso", time: "15:30" }] },
+  "2025-01-09": { summary: "3 tareas completadas", count: 3, completed: 3, inProgress: 0, activities: [{ name: "Tarea G", responsible: "Luis", status: "Completado", time: "09:00" }] },
+  "2025-01-08": { summary: "2 tareas exitosas", count: 2, completed: 2, inProgress: 0, activities: [{ name: "Tarea H", responsible: "Sandra", status: "Completado", time: "13:45" }] },
+  "2025-01-07": { summary: "1 en progreso, actividades continúan", count: 2, completed: 1, inProgress: 1, activities: [{ name: "Tarea I", responsible: "Roberto", status: "En Progreso", time: "10:30" }] },
+  "2025-01-06": { summary: "Día completamente productivo", count: 2, completed: 2, inProgress: 0, activities: [{ name: "Tarea J", responsible: "Mónica", status: "Completado", time: "12:15" }] },
+  "2025-01-05": { summary: "1 tarea pendiente por revisar", count: 2, completed: 0, inProgress: 0, activities: [{ name: "Tarea K", responsible: "Fernando", status: "Pendiente", time: "16:00" }] },
+  "2025-01-04": { summary: "Tarea completada satisfactoriamente", count: 1, completed: 1, inProgress: 0, activities: [{ name: "Tarea L", responsible: "Beatriz", status: "Completado", time: "14:00" }] },
+  "2025-01-03": { summary: "En progreso: tareas del día", count: 2, completed: 0, inProgress: 1, activities: [{ name: "Tarea M", responsible: "Diego", status: "En Progreso", time: "11:20" }] },
+  "2025-01-02": { summary: "1 tarea completada", count: 1, completed: 1, inProgress: 0, activities: [{ name: "Tarea N", responsible: "Cristina", status: "Completado", time: "10:00" }] },
+  "2025-01-01": { summary: "Inicio del mes productivo", count: 1, completed: 1, inProgress: 0, activities: [{ name: "Tarea O", responsible: "Rodrigo", status: "Completado", time: "09:30" }] },
+};
+
 const CustomDot = (props: any) => {
   const { cx, cy, stroke, payload, value } = props;
   if (value === undefined) return null;
@@ -89,6 +108,8 @@ export default function Activity() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [searchText, setSearchText] = useState("");
   const [dayFilter, setDayFilter] = useState<7 | 15 | 30>(30);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [showDrawer, setShowDrawer] = useState(false);
 
   const chartData = useMemo(() => {
     if (dayFilter === 7) return chartDataFull.slice(-7);
@@ -340,6 +361,9 @@ export default function Activity() {
                         )}
                       </div>
                     </th>
+                    <th className="px-3 md:px-6 py-3 text-left font-semibold text-slate-300 text-xs md:text-sm">
+                      Detalles
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
@@ -357,6 +381,18 @@ export default function Activity() {
                           {row.estado}
                         </span>
                       </td>
+                      <td className="px-3 md:px-6 py-3">
+                        <button
+                          onClick={() => {
+                            setSelectedDate(row.fecha);
+                            setShowDrawer(true);
+                          }}
+                          className="p-2 text-slate-400 hover:text-[#06b6d4] hover:bg-white/10 rounded-lg transition-colors"
+                          data-testid={`button-details-${idx}`}
+                        >
+                          <Eye size={18} />
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -366,6 +402,96 @@ export default function Activity() {
         </Card>
 
       </main>
+
+      {/* Details Drawer */}
+      <AnimatePresence>
+        {showDrawer && selectedDate && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowDrawer(false)}
+              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+              data-testid="drawer-backdrop"
+            />
+            
+            {/* Drawer Panel */}
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 30, stiffness: 300 }}
+              className="fixed right-0 top-0 bottom-0 w-full md:w-96 bg-card border-l border-white/10 shadow-2xl z-50 flex flex-col overflow-hidden"
+              data-testid="drawer-panel"
+            >
+              {/* Header */}
+              <div className="border-b border-white/5 p-6 flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-bold text-white">Detalles del Día</h2>
+                  <p className="text-sm text-slate-400 mt-1">{formatDate(selectedDate)}</p>
+                </div>
+                <button
+                  onClick={() => setShowDrawer(false)}
+                  className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                  data-testid="button-close-drawer"
+                >
+                  <ChevronLeft size={20} />
+                </button>
+              </div>
+
+              {/* Summary */}
+              {dayDetailsData[selectedDate] && (
+                <div className="p-6 border-b border-white/5">
+                  <p className="text-sm text-slate-300">{dayDetailsData[selectedDate].summary}</p>
+                  <div className="grid grid-cols-3 gap-3 mt-4">
+                    <div className="bg-white/5 rounded-lg p-3 text-center">
+                      <p className="text-xl font-bold text-[#06b6d4]">{dayDetailsData[selectedDate].count}</p>
+                      <p className="text-xs text-slate-400 mt-1">Total</p>
+                    </div>
+                    <div className="bg-white/5 rounded-lg p-3 text-center">
+                      <p className="text-xl font-bold text-green-400">{dayDetailsData[selectedDate].completed}</p>
+                      <p className="text-xs text-slate-400 mt-1">Completadas</p>
+                    </div>
+                    <div className="bg-white/5 rounded-lg p-3 text-center">
+                      <p className="text-xl font-bold text-blue-400">{dayDetailsData[selectedDate].inProgress}</p>
+                      <p className="text-xs text-slate-400 mt-1">En Progreso</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Activities List */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-3">
+                {tableData
+                  .filter((item) => item.fecha === selectedDate)
+                  .map((item) => (
+                    <div
+                      key={item.id}
+                      className="bg-white/5 rounded-lg p-4 border border-white/10 hover:border-[#06b6d4]/30 transition-colors"
+                      data-testid={`detail-activity-${item.id}`}
+                    >
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <h3 className="text-sm font-semibold text-white flex-1">{item.actividad}</h3>
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getStatusColor(item.estado)}`}>
+                          {item.estado}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-400 mb-2">Por: {item.responsable}</p>
+                      <p className="text-xs text-slate-500">Registrado: 10:00 AM</p>
+                    </div>
+                  ))}
+                {tableData.filter((item) => item.fecha === selectedDate).length === 0 && (
+                  <div className="text-center py-8">
+                    <p className="text-slate-400 text-sm">No hay actividades para este día</p>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
