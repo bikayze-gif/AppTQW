@@ -62,26 +62,26 @@ interface Tab {
 
 const tabs: Tab[] = [
   {
-    id: "tecnicos",
-    label: "Técnicos",
+    id: "faltante",
+    label: "FALTANTE",
     data: mockData1,
     columns: ["nombre", "estado", "valor", "fecha"],
   },
   {
-    id: "proyectos",
-    label: "Proyectos",
+    id: "recepcion",
+    label: "RECEPCIÓN",
     data: mockData2,
     columns: ["proyecto", "progreso", "responsable", "fecha"],
   },
   {
-    id: "servicios",
-    label: "Servicios",
+    id: "directa",
+    label: "DIRECTA",
     data: mockData3,
     columns: ["servicio", "clientes", "ingresos", "estado"],
   },
   {
-    id: "tareas",
-    label: "Tareas",
+    id: "reversa",
+    label: "REVERSA",
     data: mockData4,
     columns: ["tarea", "asignado", "prioridad", "vencimiento"],
   },
@@ -89,7 +89,7 @@ const tabs: Tab[] = [
 
 export default function Analytics() {
   const [, setLocation] = useLocation();
-  const [activeTab, setActiveTab] = useState("tecnicos");
+  const [activeTab, setActiveTab] = useState("faltante");
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [searchText, setSearchText] = useState("");
