@@ -39,6 +39,7 @@ function AppLayout() {
   };
 
   const handleReportClick = () => {
+    setIsAIChatOpen(false);
     setIsReportChatOpen(true);
   };
 
@@ -47,6 +48,7 @@ function AppLayout() {
   };
 
   const handleAIClick = () => {
+    setIsReportChatOpen(false);
     setIsAIChatOpen(true);
   };
 
