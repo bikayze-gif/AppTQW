@@ -240,8 +240,8 @@ export default function Dashboard() {
                       axisLine={false} 
                       tickLine={false} 
                       tick={{ fill: '#94a3b8', fontSize: 11 }}
-                      domain={[0, 120]}
-                      ticks={[20, 40, 60, 80, 100]}
+                      domain={[0, 100]}
+                      ticks={[0, 20, 40, 60, 80, 100]}
                       tickFormatter={(value) => `${value}%`}
                       label={{ value: 'Eficiencia (%)', angle: -90, position: 'insideLeft', fill: '#94a3b8', style: { textAnchor: 'middle' }, offset: 10 }}
                       width={50}
