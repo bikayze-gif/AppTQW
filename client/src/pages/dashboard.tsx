@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid } from "recharts";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Search, X, ArrowUp, ArrowDown } from "lucide-react";
 
 const evolutionData = [
   { month: "Dic 24", value: 88 },
@@ -163,6 +163,43 @@ function DetailPanel({ record, onClose }: { record: TableRecord; onClose: () => 
 
 export default function Dashboard() {
   const [selectedRecord, setSelectedRecord] = useState<TableRecord | null>(null);
+  const [sortColumn, setSortColumn] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [searchText, setSearchText] = useState("");
+
+  const filteredAndSortedData = useMemo(() => {
+    let data = [...tableData];
+    
+    // Filter
+    if (searchText) {
+      data = data.filter((row) =>
+        Object.values(row).some((val) =>
+          String(val).toLowerCase().includes(searchText.toLowerCase())
+        )
+      );
+    }
+    
+    // Sort
+    if (sortColumn) {
+      data.sort((a, b) => {
+        const aVal = String(a[sortColumn as keyof typeof a]);
+        const bVal = String(b[sortColumn as keyof typeof b]);
+        const comparison = aVal.localeCompare(bVal, undefined, { numeric: true });
+        return sortDirection === "asc" ? comparison : -comparison;
+      });
+    }
+    
+    return data;
+  }, [searchText, sortColumn, sortDirection]);
+
+  const handleSort = (column: string) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortColumn(column);
+      setSortDirection("asc");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background text-white font-sans">
@@ -273,20 +310,108 @@ export default function Dashboard() {
           <div className="pt-4">
             <h3 className="text-base md:text-lg font-bold text-white mb-3 px-2">Registros</h3>
             
+            {/* Search Bar */}
+            <div className="mb-3 px-2">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 text-slate-400" size={18} />
+                <input
+                  type="text"
+                  placeholder="Buscar registros..."
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#06b6d4]"
+                  data-testid="search-input"
+                />
+                {searchText && (
+                  <button
+                    onClick={() => setSearchText("")}
+                    className="absolute right-3 top-3 text-slate-400 hover:text-white"
+                    data-testid="clear-search"
+                  >
+                    <X size={18} />
+                  </button>
+                )}
+              </div>
+            </div>
+            
             {/* Responsive Table Container */}
             <div className="overflow-x-auto">
               <Card className="bg-card border-none shadow-xl rounded-2xl md:rounded-3xl overflow-hidden">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-white/5">
-                      <th className="px-3 md:px-6 py-3 text-left font-semibold text-slate-300 text-xs md:text-sm">RUT</th>
-                      <th className="px-3 md:px-6 py-3 text-left font-semibold text-slate-300 text-xs md:text-sm">Estado</th>
-                      <th className="px-3 md:px-6 py-3 text-left font-semibold text-slate-300 text-xs md:text-sm">Eficiencia</th>
-                      <th className="px-3 md:px-6 py-3 text-left font-semibold text-slate-300 text-xs md:text-sm">Fecha</th>
+                      <th 
+                        onClick={() => handleSort("rut")}
+                        className="px-3 md:px-6 py-3 text-left font-semibold text-slate-300 text-xs md:text-sm cursor-pointer hover:bg-white/10 transition-colors"
+                      >
+                        <div className="flex items-center gap-2">
+                          RUT
+                          {sortColumn === "rut" && (
+                            <span>
+                              {sortDirection === "asc" ? (
+                                <ArrowUp size={14} className="text-[#06b6d4]" />
+                              ) : (
+                                <ArrowDown size={14} className="text-[#06b6d4]" />
+                              )}
+                            </span>
+                          )}
+                        </div>
+                      </th>
+                      <th 
+                        onClick={() => handleSort("estado")}
+                        className="px-3 md:px-6 py-3 text-left font-semibold text-slate-300 text-xs md:text-sm cursor-pointer hover:bg-white/10 transition-colors"
+                      >
+                        <div className="flex items-center gap-2">
+                          Estado
+                          {sortColumn === "estado" && (
+                            <span>
+                              {sortDirection === "asc" ? (
+                                <ArrowUp size={14} className="text-[#06b6d4]" />
+                              ) : (
+                                <ArrowDown size={14} className="text-[#06b6d4]" />
+                              )}
+                            </span>
+                          )}
+                        </div>
+                      </th>
+                      <th 
+                        onClick={() => handleSort("eficiencia")}
+                        className="px-3 md:px-6 py-3 text-left font-semibold text-slate-300 text-xs md:text-sm cursor-pointer hover:bg-white/10 transition-colors"
+                      >
+                        <div className="flex items-center gap-2">
+                          Eficiencia
+                          {sortColumn === "eficiencia" && (
+                            <span>
+                              {sortDirection === "asc" ? (
+                                <ArrowUp size={14} className="text-[#06b6d4]" />
+                              ) : (
+                                <ArrowDown size={14} className="text-[#06b6d4]" />
+                              )}
+                            </span>
+                          )}
+                        </div>
+                      </th>
+                      <th 
+                        onClick={() => handleSort("fecha")}
+                        className="px-3 md:px-6 py-3 text-left font-semibold text-slate-300 text-xs md:text-sm cursor-pointer hover:bg-white/10 transition-colors"
+                      >
+                        <div className="flex items-center gap-2">
+                          Fecha
+                          {sortColumn === "fecha" && (
+                            <span>
+                              {sortDirection === "asc" ? (
+                                <ArrowUp size={14} className="text-[#06b6d4]" />
+                              ) : (
+                                <ArrowDown size={14} className="text-[#06b6d4]" />
+                              )}
+                            </span>
+                          )}
+                        </div>
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
-                    {tableData.map((row, idx) => (
+                    {filteredAndSortedData.map((row, idx) => (
                       <tr
                         key={row.id}
                         onClick={() => setSelectedRecord(row)}

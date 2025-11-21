@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { ChevronLeft } from "lucide-react";
+import { useState, useMemo } from "react";
+import { ChevronLeft, Search, X, ArrowUp, ArrowDown } from "lucide-react";
 import { useLocation } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -90,8 +90,47 @@ const tabs: Tab[] = [
 export default function Analytics() {
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState("tecnicos");
+  const [sortColumn, setSortColumn] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [searchText, setSearchText] = useState("");
 
   const activeTabData = tabs.find((tab) => tab.id === activeTab);
+
+  const filteredAndSortedData = useMemo(() => {
+    if (!activeTabData) return [];
+    
+    let data = [...activeTabData.data];
+    
+    // Filter
+    if (searchText) {
+      data = data.filter((row) =>
+        Object.values(row).some((val) =>
+          String(val).toLowerCase().includes(searchText.toLowerCase())
+        )
+      );
+    }
+    
+    // Sort
+    if (sortColumn) {
+      data.sort((a, b) => {
+        const aVal = String(a[sortColumn as keyof typeof a]);
+        const bVal = String(b[sortColumn as keyof typeof b]);
+        const comparison = aVal.localeCompare(bVal, undefined, { numeric: true });
+        return sortDirection === "asc" ? comparison : -comparison;
+      });
+    }
+    
+    return data;
+  }, [activeTabData, searchText, sortColumn, sortDirection]);
+
+  const handleSort = (column: string) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortColumn(column);
+      setSortDirection("asc");
+    }
+  };
 
   const shouldHighlight = (value: string) => {
     return (
@@ -134,6 +173,30 @@ export default function Analytics() {
           ))}
         </div>
 
+        {/* Search Bar */}
+        {activeTabData && (
+          <div className="relative mb-4">
+            <Search className="absolute left-3 top-3 text-slate-400" size={18} />
+            <input
+              type="text"
+              placeholder="Buscar en tabla..."
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#06b6d4]"
+              data-testid="search-input"
+            />
+            {searchText && (
+              <button
+                onClick={() => setSearchText("")}
+                className="absolute right-3 top-3 text-slate-400 hover:text-white"
+                data-testid="clear-search"
+              >
+                <X size={18} />
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Table */}
         {activeTabData && (
           <Card className="bg-card border-none shadow-xl rounded-2xl md:rounded-3xl overflow-hidden">
@@ -145,16 +208,28 @@ export default function Analytics() {
                       {activeTabData.columns.map((col) => (
                         <th
                           key={col}
-                          className="px-4 md:px-6 py-4 text-left font-semibold text-slate-300 text-xs md:text-sm capitalize"
+                          onClick={() => handleSort(col)}
+                          className="px-4 md:px-6 py-4 text-left font-semibold text-slate-300 text-xs md:text-sm capitalize cursor-pointer hover:bg-white/10 transition-colors"
                           data-testid={`header-${col}`}
                         >
-                          {col}
+                          <div className="flex items-center gap-2">
+                            {col}
+                            {sortColumn === col && (
+                              <span>
+                                {sortDirection === "asc" ? (
+                                  <ArrowUp size={14} className="text-[#06b6d4]" />
+                                ) : (
+                                  <ArrowDown size={14} className="text-[#06b6d4]" />
+                                )}
+                              </span>
+                            )}
+                          </div>
                         </th>
                       ))}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
-                    {activeTabData.data.map((row, idx) => (
+                    {filteredAndSortedData.map((row, idx) => (
                       <tr
                         key={row.id}
                         className="hover:bg-white/5 transition-colors"
