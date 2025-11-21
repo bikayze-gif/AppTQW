@@ -43,6 +43,15 @@ const tableData = [
   { id: 4, actividad: "Tarea D", responsable: "Ana", estado: "Pendiente", fecha: "2025-01-12" },
   { id: 5, actividad: "Tarea E", responsable: "Pedro", estado: "Completado", fecha: "2025-01-11" },
   { id: 6, actividad: "Tarea F", responsable: "Laura", estado: "En Progreso", fecha: "2025-01-10" },
+  { id: 7, actividad: "Tarea G", responsable: "Luis", estado: "Completado", fecha: "2025-01-09" },
+  { id: 8, actividad: "Tarea H", responsable: "Sandra", estado: "Completado", fecha: "2025-01-08" },
+  { id: 9, actividad: "Tarea I", responsable: "Roberto", estado: "En Progreso", fecha: "2025-01-07" },
+  { id: 10, actividad: "Tarea J", responsable: "Mónica", estado: "Completado", fecha: "2025-01-06" },
+  { id: 11, actividad: "Tarea K", responsable: "Fernando", estado: "Pendiente", fecha: "2025-01-05" },
+  { id: 12, actividad: "Tarea L", responsable: "Beatriz", estado: "Completado", fecha: "2025-01-04" },
+  { id: 13, actividad: "Tarea M", responsable: "Diego", estado: "En Progreso", fecha: "2025-01-03" },
+  { id: 14, actividad: "Tarea N", responsable: "Cristina", estado: "Completado", fecha: "2025-01-02" },
+  { id: 15, actividad: "Tarea O", responsable: "Rodrigo", estado: "Completado", fecha: "2025-01-01" },
 ];
 
 const CustomDot = (props: any) => {
@@ -90,7 +99,23 @@ export default function Activity() {
   const filteredAndSortedData = useMemo(() => {
     let data = [...tableData];
     
-    // Filter
+    // Filter by day range
+    const today = new Date("2025-01-15");
+    let startDate = new Date(today);
+    if (dayFilter === 7) {
+      startDate.setDate(today.getDate() - 6);
+    } else if (dayFilter === 15) {
+      startDate.setDate(today.getDate() - 14);
+    } else {
+      startDate.setDate(today.getDate() - 29);
+    }
+    
+    data = data.filter((row) => {
+      const rowDate = new Date(row.fecha);
+      return rowDate >= startDate && rowDate <= today;
+    });
+    
+    // Filter by search text
     if (searchText) {
       data = data.filter((row) =>
         Object.values(row).some((val) =>
@@ -110,7 +135,7 @@ export default function Activity() {
     }
     
     return data;
-  }, [searchText, sortColumn, sortDirection]);
+  }, [searchText, sortColumn, sortDirection, dayFilter]);
 
   const handleSort = (column: string) => {
     if (sortColumn === column) {
