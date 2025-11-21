@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid } from "recharts";
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 import { Search, X, ArrowUp, ArrowDown } from "lucide-react";
 
 const chartData = [
@@ -120,6 +120,10 @@ export default function Activity() {
                     tickFormatter={(value) => `${value}`}
                     label={{ value: 'Actividad', angle: -90, position: 'insideLeft', fill: '#94a3b8', style: { textAnchor: 'middle' }, offset: 10 }}
                     width={50}
+                  />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(6, 182, 212, 0.3)', borderRadius: '8px', color: '#fff' }}
+                    labelStyle={{ color: '#06b6d4' }}
                   />
                   <Line 
                     type="monotone" 
