@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { ShoppingCart, FileText, Settings } from "lucide-react";
+import { ShoppingCart, FileText, Settings, Bot } from "lucide-react";
 
 interface AddMenuProps {
   isOpen: boolean;
@@ -7,6 +7,7 @@ interface AddMenuProps {
   onMaterialClick: () => void;
   onReportClick: () => void;
   onSettingsClick: () => void;
+  onAIClick: () => void;
 }
 
 export function AddMenu({
@@ -15,8 +16,15 @@ export function AddMenu({
   onMaterialClick,
   onReportClick,
   onSettingsClick,
+  onAIClick,
 }: AddMenuProps) {
   const menuItems = [
+    {
+      id: "ai",
+      label: "Asistente IA",
+      icon: Bot,
+      onClick: onAIClick,
+    },
     {
       id: "material",
       label: "Solicitud de Material",

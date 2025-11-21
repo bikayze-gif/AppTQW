@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { BottomNav } from "@/components/bottom-nav";
 import { AddMenu } from "@/components/add-menu";
 import { MaterialForm, type MaterialFormData } from "@/components/material-form";
+import { AIChat } from "@/components/ai-chat";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
 import PeriodInfo from "@/pages/period-info";
@@ -28,6 +29,7 @@ function Router() {
 function AppLayout() {
   const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
   const [isMaterialFormOpen, setIsMaterialFormOpen] = useState(false);
+  const [isAIChatOpen, setIsAIChatOpen] = useState(false);
 
   const handleMaterialSubmit = (data: MaterialFormData) => {
     console.log("Material request submitted:", data);
@@ -42,6 +44,10 @@ function AppLayout() {
     console.log("Configuración clicked");
   };
 
+  const handleAIClick = () => {
+    setIsAIChatOpen(true);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Router />
@@ -51,11 +57,16 @@ function AppLayout() {
         onMaterialClick={() => setIsMaterialFormOpen(true)}
         onReportClick={handleReportClick}
         onSettingsClick={handleSettingsClick}
+        onAIClick={handleAIClick}
       />
       <MaterialForm
         isOpen={isMaterialFormOpen}
         onClose={() => setIsMaterialFormOpen(false)}
         onSubmit={handleMaterialSubmit}
+      />
+      <AIChat
+        isOpen={isAIChatOpen}
+        onClose={() => setIsAIChatOpen(false)}
       />
       <BottomNav onAddClick={() => setIsAddMenuOpen(!isAddMenuOpen)} />
     </div>
