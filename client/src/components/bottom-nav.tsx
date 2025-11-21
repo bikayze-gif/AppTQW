@@ -16,10 +16,10 @@ export function BottomNav({ onAddClick }: BottomNavProps) {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-[#1A1F33] border-t border-white/5 px-4 pb-4 pt-3 z-40">
-      <div className="flex items-center justify-around md:justify-between md:max-w-none max-w-4xl mx-auto md:px-8 lg:px-16">
+      <div className="flex items-center justify-center max-w-full mx-auto">
         
-        {/* Left Group - 2.5 icons */}
-        <div className="flex gap-3 items-center md:flex-1 md:justify-start">
+        {/* Left Group - 3 icons */}
+        <div className="flex gap-4 items-center md:gap-6 lg:gap-8">
           <button 
             onClick={() => setLocation("/")}
             className={`p-2 rounded-lg relative hover:bg-white/5 transition-colors ${isPeriodInfo ? "text-[#06b6d4]" : "text-slate-400 hover:text-white"}`}
@@ -55,14 +55,14 @@ export function BottomNav({ onAddClick }: BottomNavProps) {
         {/* Center FAB - Integrated */}
         <button 
           onClick={onAddClick}
-          className="bg-[#06b6d4] hover:bg-[#0891b2] text-black rounded-full p-3 shadow-lg shadow-cyan-500/30 transition-all active:scale-95 flex-shrink-0 flex items-center justify-center"
+          className="bg-[#06b6d4] hover:bg-[#0891b2] text-black rounded-full p-3 shadow-lg shadow-cyan-500/30 transition-all active:scale-95 flex-shrink-0 flex items-center justify-center mx-6 md:mx-8 lg:mx-10"
           data-testid="button-add-material"
         >
           <Plus size={26} strokeWidth={3} />
         </button>
 
-        {/* Right Group - 2.5 icons */}
-        <div className="flex gap-3 items-center md:flex-1 md:justify-end">
+        {/* Right Group - 3 icons */}
+        <div className="flex gap-4 items-center md:gap-6 lg:gap-8">
           <button 
             onClick={() => setLocation("/analytics")}
             className={`p-2 rounded-lg relative hover:bg-white/5 transition-colors ${isAnalytics ? "text-[#06b6d4]" : "text-slate-400 hover:text-white"}`}
