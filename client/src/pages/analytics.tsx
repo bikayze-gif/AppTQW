@@ -209,21 +209,21 @@ export default function Analytics() {
                 // Special format for RECEPCIÓN, DIRECTA, REVERSA
                 <div>
                   {/* Header - Title Section */}
-                  <div className="bg-gradient-to-r from-[#06b6d4] to-[#0891b2] px-4 md:px-8 py-6 shadow-lg">
-                    <h3 className="text-2xl md:text-3xl font-black text-white uppercase tracking-wider drop-shadow-lg">{activeTabData.label}</h3>
-                    <div className="h-1 w-16 bg-white/30 rounded-full mt-3"></div>
+                  <div className="bg-[#06b6d4] px-4 md:px-8 py-5">
+                    <h3 className="text-xl md:text-2xl font-bold text-white uppercase">{activeTabData.label}</h3>
+                    <div className="h-0.5 w-12 bg-white mt-2"></div>
                   </div>
 
                   {/* Column Headers */}
-                  <div className="bg-gradient-to-r from-[#06b6d4] to-[#0891b2] px-4 md:px-8 py-5 flex items-center justify-between border-t border-white/10 shadow-md">
+                  <div className="bg-[#06b6d4] px-4 md:px-8 py-4 flex items-center justify-between">
                     <div className="flex-1">
-                      <p className="text-sm md:text-base font-black text-white uppercase tracking-wide">SERIE</p>
+                      <p className="text-sm font-bold text-white uppercase">SERIE</p>
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm md:text-base font-black text-white uppercase tracking-wide">ESTADO</p>
+                      <p className="text-sm font-bold text-white uppercase">ESTADO</p>
                     </div>
                     <div className="w-32">
-                      <p className="text-sm md:text-base font-black text-white uppercase tracking-wide text-center">ACCIONES</p>
+                      <p className="text-sm font-bold text-white uppercase text-center">ACCIONES</p>
                     </div>
                   </div>
 
@@ -232,35 +232,35 @@ export default function Analytics() {
                     {filteredAndSortedData.map((row, idx) => (
                       <div
                         key={row.id}
-                        className="px-4 md:px-8 py-5 flex items-center justify-between hover:bg-white/10 transition-colors border-b border-white/5 last:border-b-0 group"
+                        className="px-4 md:px-8 py-4 flex items-center justify-between hover:bg-white/5 transition-colors"
                         data-testid={`row-${activeTab}-${idx}`}
                       >
                         <div className="flex-1">
-                          <span className="text-slate-100 font-semibold text-sm md:text-base">{row.serie}</span>
+                          <span className="text-slate-200 text-sm">{row.serie}</span>
                         </div>
                         <div className="flex-1">
-                          <span className="inline-flex items-center px-4 py-1.5 rounded-lg text-xs md:text-sm font-bold bg-gradient-to-r from-yellow-500 to-yellow-600 text-black shadow-lg">
+                          <span className="inline-flex items-center px-3 py-1 rounded text-xs font-bold bg-yellow-500 text-black">
                             {row.estado}
                           </span>
                         </div>
-                        <div className="w-32 flex gap-3 justify-center">
+                        <div className="w-32 flex gap-2 justify-center">
                           <button
-                            className="p-2 border-2 border-yellow-500/60 rounded-lg text-yellow-400 hover:bg-yellow-500/20 hover:border-yellow-400 transition-all duration-200 hover:scale-110"
+                            className="p-2 border border-yellow-500 rounded text-yellow-400 hover:bg-yellow-500/10 transition-colors"
                             data-testid={`action-clock-${idx}`}
                           >
-                            <Clock size={20} strokeWidth={2} />
+                            <Clock size={18} />
                           </button>
                           <button
-                            className="p-2 border-2 border-green-500/60 rounded-lg text-green-400 hover:bg-green-500/20 hover:border-green-400 transition-all duration-200 hover:scale-110"
+                            className="p-2 border border-green-500 rounded text-green-400 hover:bg-green-500/10 transition-colors"
                             data-testid={`action-check-${idx}`}
                           >
-                            <Check size={20} strokeWidth={2} />
+                            <Check size={18} />
                           </button>
                           <button
-                            className="p-2 border-2 border-red-500/60 rounded-lg text-red-400 hover:bg-red-500/20 hover:border-red-400 transition-all duration-200 hover:scale-110"
+                            className="p-2 border border-red-500 rounded text-red-400 hover:bg-red-500/10 transition-colors"
                             data-testid={`action-trash-${idx}`}
                           >
-                            <Trash2 size={20} strokeWidth={2} />
+                            <Trash2 size={18} />
                           </button>
                         </div>
                       </div>
