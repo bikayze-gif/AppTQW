@@ -215,13 +215,13 @@ export default function Analytics() {
                 // Special format for RECEPCIÓN, DIRECTA, REVERSA
                 <div>
                   {/* Header - Title Section */}
-                  <div className="bg-[#06b6d4] px-4 md:px-6 py-5">
+                  <div className="bg-[#06b6d4] px-4 md:px-6 py-2">
                     <h3 className="text-xl md:text-2xl font-bold text-white uppercase">{activeTabData.label}</h3>
-                    <div className="h-0.5 w-12 bg-white mt-2"></div>
+                    <div className="h-0.5 w-12 bg-white mt-1"></div>
                   </div>
 
                   {/* Column Headers */}
-                  <div className="bg-[#06b6d4] px-4 md:px-6 py-4 grid grid-cols-12 gap-4 items-center">
+                  <div className="bg-[#06b6d4] px-4 md:px-6 py-2 grid grid-cols-12 gap-4 items-center">
                     <div className="col-span-4">
                       <p className="text-xs font-bold text-white uppercase">SERIE</p>
                     </div>
