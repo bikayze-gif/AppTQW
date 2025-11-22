@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowUp, ArrowDown, ChevronLeft } from "lucide-react";
+import { ArrowUp, ArrowDown, ChevronLeft, Search, X, FileText, Sheet } from "lucide-react";
 
 const evolutionData = [
   { month: "Dic 24", value: 88 },
@@ -194,6 +194,31 @@ export default function Dashboard() {
   const [selectedRecord, setSelectedRecord] = useState<TableRow | null>(null);
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [searchText, setSearchText] = useState("");
+  const [selectedMonth, setSelectedMonth] = useState("");
+
+  const months = [
+    { value: "01", label: "Enero 2025" },
+    { value: "02", label: "Febrero 2025" },
+    { value: "03", label: "Marzo 2025" },
+    { value: "04", label: "Abril 2025" },
+    { value: "05", label: "Mayo 2025" },
+    { value: "06", label: "Junio 2025" },
+    { value: "07", label: "Julio 2025" },
+    { value: "08", label: "Agosto 2025" },
+    { value: "09", label: "Septiembre 2025" },
+    { value: "10", label: "Octubre 2025" },
+    { value: "11", label: "Noviembre 2025" },
+    { value: "12", label: "Diciembre 2025" },
+  ];
+
+  const handleDownloadPDF = () => {
+    console.log(`Descargando reporte en PDF del mes ${selectedMonth}`);
+  };
+
+  const handleDownloadExcel = () => {
+    console.log(`Descargando reporte en Excel del mes ${selectedMonth}`);
+  };
 
   const sortedData = useMemo(() => {
     let data = [...tableData];
@@ -338,6 +363,66 @@ export default function Dashboard() {
           <div className="pt-4">
             <h3 className="text-base md:text-lg font-bold text-white mb-3 px-2">Detalle por Mes</h3>
             
+            {/* Filter and Download Section */}
+            <div className="flex flex-row gap-2 items-center mb-4">
+              {/* Search Bar */}
+              <div className="relative flex-1 min-w-0">
+                <Search className="absolute left-3 top-3 text-slate-400" size={18} />
+                <input
+                  type="text"
+                  placeholder="Buscar..."
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#06b6d4] text-sm"
+                  data-testid="search-input"
+                />
+                {searchText && (
+                  <button
+                    onClick={() => setSearchText("")}
+                    className="absolute right-3 top-3 text-slate-400 hover:text-white"
+                    data-testid="clear-search"
+                  >
+                    <X size={18} />
+                  </button>
+                )}
+              </div>
+
+              {/* Month Select */}
+              <select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="px-2 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-xs md:text-sm focus:outline-none focus:border-[#06b6d4] transition-colors cursor-pointer whitespace-nowrap"
+                data-testid="month-select"
+              >
+                <option value="" disabled className="bg-slate-900">
+                  Seleccionar mes
+                </option>
+                {months.map((month) => (
+                  <option key={month.value} value={month.value} className="bg-slate-900">
+                    {month.label}
+                  </option>
+                ))}
+              </select>
+
+              {/* Download Buttons */}
+              <button
+                onClick={handleDownloadPDF}
+                className="flex items-center justify-center p-2 bg-red-500/20 border border-red-500/50 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors flex-shrink-0"
+                data-testid="download-pdf"
+                title="Descargar en PDF"
+              >
+                <FileText size={16} />
+              </button>
+              <button
+                onClick={handleDownloadExcel}
+                className="flex items-center justify-center p-2 bg-green-500/20 border border-green-500/50 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors flex-shrink-0"
+                data-testid="download-excel"
+                title="Descargar en Excel"
+              >
+                <Sheet size={16} />
+              </button>
+            </div>
+            
             {/* Responsive Table Container */}
             <div className="overflow-x-auto">
               <Card className="bg-card border-none shadow-xl rounded-2xl md:rounded-3xl overflow-hidden">
@@ -448,4 +533,3 @@ export default function Dashboard() {
     </div>
   );
 }
-
