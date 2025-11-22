@@ -302,16 +302,16 @@ export default function Activity() {
         </Card>
 
         {/* Filter and Download Section */}
-        <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center">
+        <div className="flex flex-row gap-2 items-center">
           {/* Search Bar */}
-          <div className="relative flex-1">
+          <div className="relative flex-1 min-w-0">
             <Search className="absolute left-3 top-3 text-slate-400" size={18} />
             <input
               type="text"
-              placeholder="Buscar actividades..."
+              placeholder="Buscar..."
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#06b6d4]"
+              className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#06b6d4] text-sm"
               data-testid="search-input"
             />
             {searchText && (
@@ -329,7 +329,7 @@ export default function Activity() {
           <select
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(e.target.value)}
-            className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-[#06b6d4] transition-colors cursor-pointer"
+            className="px-2 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-xs md:text-sm focus:outline-none focus:border-[#06b6d4] transition-colors cursor-pointer whitespace-nowrap"
             data-testid="month-select"
           >
             <option value="" disabled className="bg-slate-900">
@@ -345,19 +345,19 @@ export default function Activity() {
           {/* Download Buttons */}
           <button
             onClick={handleDownloadPDF}
-            className="flex items-center gap-2 px-3 py-2 bg-red-500/20 border border-red-500/50 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors text-sm font-medium"
+            className="flex items-center justify-center p-2 bg-red-500/20 border border-red-500/50 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors flex-shrink-0"
             data-testid="download-pdf"
             title="Descargar en PDF"
           >
-            <FileText size={18} />
+            <FileText size={16} />
           </button>
           <button
             onClick={handleDownloadExcel}
-            className="flex items-center gap-2 px-3 py-2 bg-green-500/20 border border-green-500/50 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors text-sm font-medium"
+            className="flex items-center justify-center p-2 bg-green-500/20 border border-green-500/50 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors flex-shrink-0"
             data-testid="download-excel"
             title="Descargar en Excel"
           >
-            <Sheet size={18} />
+            <Sheet size={16} />
           </button>
         </div>
 
