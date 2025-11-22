@@ -244,15 +244,6 @@ export function MaterialForm({ isOpen, onClose, onSubmit }: MaterialFormProps) {
                       </motion.div>
                     ))}
                   </div>
-                  
-                  <div className="mt-4 pt-4 border-t border-[#06b6d4]/20 bg-[#06b6d4]/5 rounded-lg p-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-slate-300 font-semibold text-sm">Total de unidades:</span>
-                      <span className="bg-[#06b6d4] text-black font-bold text-lg px-3 py-1 rounded-lg">
-                        {cartItems.reduce((sum, item) => sum + item.cantidad, 0)}
-                      </span>
-                    </div>
-                  </div>
                 </motion.div>
               )}
             </div>
