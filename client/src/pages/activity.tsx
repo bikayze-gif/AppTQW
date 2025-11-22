@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
-import { Search, X, ArrowUp, ArrowDown, Eye, ChevronLeft } from "lucide-react";
+import { Search, X, ArrowUp, ArrowDown, Eye, ChevronLeft, Download } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const chartDataFull = [
@@ -113,6 +113,30 @@ export default function Activity() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [showDrawer, setShowDrawer] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedMonth, setSelectedMonth] = useState("01");
+
+  const months = [
+    { value: "01", label: "Enero 2025" },
+    { value: "02", label: "Febrero 2025" },
+    { value: "03", label: "Marzo 2025" },
+    { value: "04", label: "Abril 2025" },
+    { value: "05", label: "Mayo 2025" },
+    { value: "06", label: "Junio 2025" },
+    { value: "07", label: "Julio 2025" },
+    { value: "08", label: "Agosto 2025" },
+    { value: "09", label: "Septiembre 2025" },
+    { value: "10", label: "Octubre 2025" },
+    { value: "11", label: "Noviembre 2025" },
+    { value: "12", label: "Diciembre 2025" },
+  ];
+
+  const handleDownloadPDF = () => {
+    console.log(`Descargando reporte en PDF del mes ${selectedMonth}`);
+  };
+
+  const handleDownloadExcel = () => {
+    console.log(`Descargando reporte en Excel del mes ${selectedMonth}`);
+  };
 
   const chartData = useMemo(() => {
     if (dayFilter === 7) return chartDataFull.slice(-7);
@@ -277,26 +301,63 @@ export default function Activity() {
           </CardContent>
         </Card>
 
-        {/* Search Bar */}
-        <div className="relative">
-          <Search className="absolute left-3 top-3 text-slate-400" size={18} />
-          <input
-            type="text"
-            placeholder="Buscar actividades..."
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#06b6d4]"
-            data-testid="search-input"
-          />
-          {searchText && (
+        {/* Filter and Download Section */}
+        <div className="flex flex-col md:flex-row gap-3 items-start md:items-center">
+          {/* Search Bar */}
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-3 text-slate-400" size={18} />
+            <input
+              type="text"
+              placeholder="Buscar actividades..."
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#06b6d4]"
+              data-testid="search-input"
+            />
+            {searchText && (
+              <button
+                onClick={() => setSearchText("")}
+                className="absolute right-3 top-3 text-slate-400 hover:text-white"
+                data-testid="clear-search"
+              >
+                <X size={18} />
+              </button>
+            )}
+          </div>
+
+          {/* Month Select */}
+          <select
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+            className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-[#06b6d4] transition-colors cursor-pointer"
+            data-testid="month-select"
+          >
+            {months.map((month) => (
+              <option key={month.value} value={month.value} className="bg-slate-900">
+                {month.label}
+              </option>
+            ))}
+          </select>
+
+          {/* Download Buttons */}
+          <div className="flex gap-2">
             <button
-              onClick={() => setSearchText("")}
-              className="absolute right-3 top-3 text-slate-400 hover:text-white"
-              data-testid="clear-search"
+              onClick={handleDownloadPDF}
+              className="flex items-center gap-2 px-4 py-2 bg-red-500/20 border border-red-500/50 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors text-sm font-medium"
+              data-testid="download-pdf"
             >
-              <X size={18} />
+              <Download size={16} />
+              <span className="hidden md:inline">PDF</span>
             </button>
-          )}
+            <button
+              onClick={handleDownloadExcel}
+              className="flex items-center gap-2 px-4 py-2 bg-green-500/20 border border-green-500/50 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors text-sm font-medium"
+              data-testid="download-excel"
+            >
+              <Download size={16} />
+              <span className="hidden md:inline">Excel</span>
+            </button>
+          </div>
         </div>
 
         {/* Table */}
