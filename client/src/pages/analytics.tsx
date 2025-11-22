@@ -224,7 +224,7 @@ export default function Analytics() {
                   <div className="bg-[#06b6d4] px-4 md:px-6 py-2 grid grid-cols-12 gap-4 items-center">
                     <button
                       onClick={() => handleSort("serie")}
-                      className="col-span-4 text-left hover:bg-white/10 px-2 py-1 rounded transition-colors cursor-pointer"
+                      className="col-span-6 text-left hover:bg-white/10 px-2 py-1 rounded transition-colors cursor-pointer"
                       data-testid="header-serie"
                     >
                       <div className="flex items-center gap-2">
@@ -242,7 +242,7 @@ export default function Analytics() {
                     </button>
                     <button
                       onClick={() => handleSort("estado")}
-                      className="col-span-4 text-left hover:bg-white/10 px-2 py-1 rounded transition-colors cursor-pointer"
+                      className="col-span-3 text-left hover:bg-white/10 px-2 py-1 rounded transition-colors cursor-pointer"
                       data-testid="header-estado"
                     >
                       <div className="flex items-center gap-2">
@@ -258,7 +258,7 @@ export default function Analytics() {
                         )}
                       </div>
                     </button>
-                    <div className="col-span-4">
+                    <div className="col-span-3">
                       <p className="text-xs font-bold text-white uppercase text-center">ACCIONES</p>
                     </div>
                   </div>
@@ -271,15 +271,15 @@ export default function Analytics() {
                         className="px-4 md:px-6 py-4 grid grid-cols-12 gap-4 items-center hover:bg-white/5 transition-colors"
                         data-testid={`row-${activeTab}-${idx}`}
                       >
-                        <div className="col-span-4">
-                          <span className="text-slate-200 text-xs break-words">{row.serie}</span>
+                        <div className="col-span-6 overflow-hidden">
+                          <span className="text-slate-200 text-xs whitespace-nowrap overflow-ellipsis">{row.serie}</span>
                         </div>
-                        <div className="col-span-4">
+                        <div className="col-span-3">
                           <span className="inline-flex items-center px-3 py-1 rounded text-xs font-bold bg-yellow-500 text-black" style={{fontSize: '0.65rem'}}>
                             {row.estado}
                           </span>
                         </div>
-                        <div className="col-span-4 flex justify-center">
+                        <div className="col-span-3 flex justify-center">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <button
