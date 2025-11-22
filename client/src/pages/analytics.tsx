@@ -1,7 +1,13 @@
 import { useState, useMemo } from "react";
-import { ChevronLeft, Search, X, ArrowUp, ArrowDown, Clock, Check, Trash2 } from "lucide-react";
+import { ChevronLeft, Search, X, ArrowUp, ArrowDown, Clock, Check, Trash2, MoreVertical } from "lucide-react";
 import { useLocation } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const mockData1 = [
   { id: 1, nombre: "Técnico A", estado: "Activo", valor: "95%", fecha: "2025-01-15" },
@@ -243,25 +249,40 @@ export default function Analytics() {
                             {row.estado}
                           </span>
                         </div>
-                        <div className="col-span-4 flex gap-2 justify-center">
-                          <button
-                            className="p-2 border border-yellow-500 rounded text-yellow-400 hover:bg-yellow-500/10 transition-colors"
-                            data-testid={`action-clock-${idx}`}
-                          >
-                            <Clock size={18} />
-                          </button>
-                          <button
-                            className="p-2 border border-green-500 rounded text-green-400 hover:bg-green-500/10 transition-colors"
-                            data-testid={`action-check-${idx}`}
-                          >
-                            <Check size={18} />
-                          </button>
-                          <button
-                            className="p-2 border border-red-500 rounded text-red-400 hover:bg-red-500/10 transition-colors"
-                            data-testid={`action-trash-${idx}`}
-                          >
-                            <Trash2 size={18} />
-                          </button>
+                        <div className="col-span-4 flex justify-center">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button
+                                className="p-2 border border-slate-500 rounded text-slate-300 hover:bg-white/10 hover:border-white/50 transition-colors"
+                                data-testid={`action-menu-${idx}`}
+                              >
+                                <MoreVertical size={18} />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuItem
+                                className="flex items-center gap-2 cursor-pointer"
+                                data-testid={`action-clock-${idx}`}
+                              >
+                                <Clock size={16} className="text-yellow-400" />
+                                <span>Pendiente</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="flex items-center gap-2 cursor-pointer"
+                                data-testid={`action-check-${idx}`}
+                              >
+                                <Check size={16} className="text-green-400" />
+                                <span>Completado</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="flex items-center gap-2 cursor-pointer text-red-400"
+                                data-testid={`action-trash-${idx}`}
+                              >
+                                <Trash2 size={16} />
+                                <span>Eliminar</span>
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </div>
                     ))}
