@@ -34,9 +34,6 @@ export function BottomNav({ onAddClick }: BottomNavProps) {
             data-testid="button-nav-grid"
           >
             <LayoutGrid size={22} />
-            {isPeriodInfo && (
-              <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-[#06b6d4] rounded-full"></span>
-            )}
           </button>
           <button 
             onClick={() => setLocation("/activity")}
@@ -44,9 +41,6 @@ export function BottomNav({ onAddClick }: BottomNavProps) {
             data-testid="button-nav-activity"
           >
             <Activity size={22} />
-            {isActivity && (
-              <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-[#06b6d4] rounded-full"></span>
-            )}
           </button>
           <button 
             onClick={() => setLocation("/dashboard")}
@@ -54,9 +48,6 @@ export function BottomNav({ onAddClick }: BottomNavProps) {
             data-testid="button-nav-file"
           >
             <FileText size={22} />
-            {isDashboard && (
-              <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-[#06b6d4] rounded-full"></span>
-            )}
           </button>
         </div>
 
@@ -77,9 +68,6 @@ export function BottomNav({ onAddClick }: BottomNavProps) {
             data-testid="button-nav-ticket"
           >
             <Ticket size={22} />
-            {isAnalytics && (
-              <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-[#06b6d4] rounded-full"></span>
-            )}
           </button>
           <button className="text-slate-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/5" data-testid="button-nav-box">
             <Box size={22} />
