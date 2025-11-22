@@ -97,12 +97,12 @@ export function MaterialForm({ isOpen, onClose, onSubmit }: MaterialFormProps) {
                 <select
                   value={formData.tipo}
                   onChange={(e) => handleChange("tipo", e.target.value)}
-                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:border-[#06b6d4] transition-colors"
+                  className="w-full bg-slate-900/50 border border-[#06b6d4]/30 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-[#06b6d4] focus:ring-2 focus:ring-[#06b6d4]/20 transition-all cursor-pointer hover:border-[#06b6d4]/50"
                   data-testid="select-tipo-material"
                 >
-                  <option value="">Seleccione un tipo de material</option>
+                  <option value="" className="bg-slate-900">Seleccione un tipo de material</option>
                   {tiposMaterial.map((tipo) => (
-                    <option key={tipo} value={tipo}>
+                    <option key={tipo} value={tipo} className="bg-slate-900">
                       {tipo}
                     </option>
                   ))}
@@ -115,12 +115,12 @@ export function MaterialForm({ isOpen, onClose, onSubmit }: MaterialFormProps) {
                 <select
                   value={formData.familia}
                   onChange={(e) => handleChange("familia", e.target.value)}
-                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:border-[#06b6d4] transition-colors"
+                  className="w-full bg-slate-900/50 border border-[#06b6d4]/30 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-[#06b6d4] focus:ring-2 focus:ring-[#06b6d4]/20 transition-all cursor-pointer hover:border-[#06b6d4]/50"
                   data-testid="select-familia"
                 >
-                  <option value="">Seleccione una familia</option>
+                  <option value="" className="bg-slate-900">Seleccione una familia</option>
                   {familias.map((fam) => (
-                    <option key={fam} value={fam}>
+                    <option key={fam} value={fam} className="bg-slate-900">
                       {fam}
                     </option>
                   ))}
@@ -133,12 +133,12 @@ export function MaterialForm({ isOpen, onClose, onSubmit }: MaterialFormProps) {
                 <select
                   value={formData.subfamilia}
                   onChange={(e) => handleChange("subfamilia", e.target.value)}
-                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:border-[#06b6d4] transition-colors"
+                  className="w-full bg-slate-900/50 border border-[#06b6d4]/30 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-[#06b6d4] focus:ring-2 focus:ring-[#06b6d4]/20 transition-all cursor-pointer hover:border-[#06b6d4]/50"
                   data-testid="select-subfamilia"
                 >
-                  <option value="">Seleccione una subfamilia</option>
+                  <option value="" className="bg-slate-900">Seleccione una subfamilia</option>
                   {subfamilias.map((subfam) => (
-                    <option key={subfam} value={subfam}>
+                    <option key={subfam} value={subfam} className="bg-slate-900">
                       {subfam}
                     </option>
                   ))}
@@ -151,12 +151,12 @@ export function MaterialForm({ isOpen, onClose, onSubmit }: MaterialFormProps) {
                 <select
                   value={formData.material}
                   onChange={(e) => handleChange("material", e.target.value)}
-                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:border-[#06b6d4] transition-colors"
+                  className="w-full bg-slate-900/50 border border-[#06b6d4]/30 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-[#06b6d4] focus:ring-2 focus:ring-[#06b6d4]/20 transition-all cursor-pointer hover:border-[#06b6d4]/50"
                   data-testid="select-material"
                 >
-                  <option value="">Seleccione un material</option>
+                  <option value="" className="bg-slate-900">Seleccione un material</option>
                   {materiales.map((mat) => (
-                    <option key={mat} value={mat}>
+                    <option key={mat} value={mat} className="bg-slate-900">
                       {mat}
                     </option>
                   ))}
@@ -193,21 +193,27 @@ export function MaterialForm({ isOpen, onClose, onSubmit }: MaterialFormProps) {
                     <ShoppingCart size={16} />
                     CARRITO DE MATERIALES ({cartItems.length})
                   </h3>
-                  <div className="space-y-2">
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
                     {cartItems.map((item, idx) => (
                       <div
                         key={idx}
-                        className="bg-white/5 rounded-lg p-3 text-sm"
+                        className="bg-[#06b6d4]/10 border border-[#06b6d4]/30 rounded-lg p-3 text-sm hover:bg-[#06b6d4]/15 transition-colors"
                         data-testid={`cart-item-${idx}`}
                       >
-                        <div className="text-slate-300">
-                          <span className="font-semibold">{item.tipo}</span> - {item.familia}
+                        <div className="text-slate-200 font-medium">
+                          <span className="text-[#06b6d4]">{item.tipo}</span> • {item.familia}
                         </div>
                         <div className="text-slate-400 text-xs mt-1">
-                          {item.material} (Qty: {item.cantidad})
+                          {item.material}
+                        </div>
+                        <div className="text-[#06b6d4] text-xs font-semibold mt-1.5">
+                          Cantidad: {item.cantidad}
                         </div>
                       </div>
                     ))}
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-white/10">
+                    <p className="text-sm text-slate-300 font-semibold">Total: {cartItems.length} unidades</p>
                   </div>
                 </div>
               )}
