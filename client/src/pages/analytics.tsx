@@ -223,13 +223,13 @@ export default function Analytics() {
                   {/* Column Headers */}
                   <div className="bg-[#06b6d4] px-4 md:px-6 py-4 grid grid-cols-12 gap-4 items-center">
                     <div className="col-span-4">
-                      <p className="text-sm font-bold text-white uppercase">SERIE</p>
+                      <p className="text-xs font-bold text-white uppercase">SERIE</p>
                     </div>
                     <div className="col-span-4">
-                      <p className="text-sm font-bold text-white uppercase">ESTADO</p>
+                      <p className="text-xs font-bold text-white uppercase">ESTADO</p>
                     </div>
                     <div className="col-span-4">
-                      <p className="text-sm font-bold text-white uppercase text-center">ACCIONES</p>
+                      <p className="text-xs font-bold text-white uppercase text-center">ACCIONES</p>
                     </div>
                   </div>
 
@@ -242,10 +242,10 @@ export default function Analytics() {
                         data-testid={`row-${activeTab}-${idx}`}
                       >
                         <div className="col-span-4">
-                          <span className="text-slate-200 text-sm break-words">{row.serie}</span>
+                          <span className="text-slate-200 text-xs break-words">{row.serie}</span>
                         </div>
                         <div className="col-span-4">
-                          <span className="inline-flex items-center px-3 py-1 rounded text-xs font-bold bg-yellow-500 text-black">
+                          <span className="inline-flex items-center px-3 py-1 rounded text-xs font-bold bg-yellow-500 text-black" style={{fontSize: '0.65rem'}}>
                             {row.estado}
                           </span>
                         </div>
@@ -291,14 +291,14 @@ export default function Analytics() {
               ) : (
                 // Standard table format for FALTANTE
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
+                  <table className="w-full text-xs">
                     <thead>
                       <tr className="border-b border-white/5 bg-white/5">
                         {activeTabData.columns.map((col) => (
                           <th
                             key={col}
                             onClick={() => handleSort(col)}
-                            className="px-4 md:px-6 py-4 text-left font-semibold text-slate-300 text-xs md:text-sm capitalize cursor-pointer hover:bg-white/10 transition-colors"
+                            className="px-4 md:px-6 py-4 text-left font-semibold text-slate-300 text-xs capitalize cursor-pointer hover:bg-white/10 transition-colors"
                             data-testid={`header-${col}`}
                           >
                             <div className="flex items-center gap-2">
@@ -330,7 +330,7 @@ export default function Analytics() {
                             return (
                               <td
                                 key={`${row.id}-${col}`}
-                                className="px-4 md:px-6 py-4 text-xs md:text-sm"
+                                className="px-4 md:px-6 py-4 text-xs"
                                 data-testid={`cell-${col}-${idx}`}
                               >
                                 {isStatus && typeof value === "string" ? (
