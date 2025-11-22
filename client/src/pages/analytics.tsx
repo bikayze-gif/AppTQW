@@ -209,20 +209,20 @@ export default function Analytics() {
                 // Special format for RECEPCIÓN, DIRECTA, REVERSA
                 <div>
                   {/* Header - Title Section */}
-                  <div className="bg-[#06b6d4] px-4 md:px-8 py-5">
+                  <div className="bg-[#06b6d4] px-4 md:px-6 py-5">
                     <h3 className="text-xl md:text-2xl font-bold text-white uppercase">{activeTabData.label}</h3>
                     <div className="h-0.5 w-12 bg-white mt-2"></div>
                   </div>
 
                   {/* Column Headers */}
-                  <div className="bg-[#06b6d4] px-4 md:px-8 py-4 flex items-center justify-between">
-                    <div className="flex-1">
+                  <div className="bg-[#06b6d4] px-4 md:px-6 py-4 grid grid-cols-12 gap-4 items-center">
+                    <div className="col-span-4">
                       <p className="text-sm font-bold text-white uppercase">SERIE</p>
                     </div>
-                    <div className="flex-1">
+                    <div className="col-span-4">
                       <p className="text-sm font-bold text-white uppercase">ESTADO</p>
                     </div>
-                    <div className="w-32">
+                    <div className="col-span-4">
                       <p className="text-sm font-bold text-white uppercase text-center">ACCIONES</p>
                     </div>
                   </div>
@@ -232,18 +232,18 @@ export default function Analytics() {
                     {filteredAndSortedData.map((row, idx) => (
                       <div
                         key={row.id}
-                        className="px-4 md:px-8 py-4 flex items-center justify-between hover:bg-white/5 transition-colors"
+                        className="px-4 md:px-6 py-4 grid grid-cols-12 gap-4 items-center hover:bg-white/5 transition-colors"
                         data-testid={`row-${activeTab}-${idx}`}
                       >
-                        <div className="flex-1">
-                          <span className="text-slate-200 text-sm">{row.serie}</span>
+                        <div className="col-span-4">
+                          <span className="text-slate-200 text-sm break-words">{row.serie}</span>
                         </div>
-                        <div className="flex-1">
+                        <div className="col-span-4">
                           <span className="inline-flex items-center px-3 py-1 rounded text-xs font-bold bg-yellow-500 text-black">
                             {row.estado}
                           </span>
                         </div>
-                        <div className="w-32 flex gap-2 justify-center">
+                        <div className="col-span-4 flex gap-2 justify-center">
                           <button
                             className="p-2 border border-yellow-500 rounded text-yellow-400 hover:bg-yellow-500/10 transition-colors"
                             data-testid={`action-clock-${idx}`}
