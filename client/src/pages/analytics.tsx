@@ -222,12 +222,42 @@ export default function Analytics() {
 
                   {/* Column Headers */}
                   <div className="bg-[#06b6d4] px-4 md:px-6 py-2 grid grid-cols-12 gap-4 items-center">
-                    <div className="col-span-4">
-                      <p className="text-xs font-bold text-white uppercase">SERIE</p>
-                    </div>
-                    <div className="col-span-4">
-                      <p className="text-xs font-bold text-white uppercase">ESTADO</p>
-                    </div>
+                    <button
+                      onClick={() => handleSort("serie")}
+                      className="col-span-4 text-left hover:bg-white/10 px-2 py-1 rounded transition-colors cursor-pointer"
+                      data-testid="header-serie"
+                    >
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs font-bold text-white uppercase">SERIE</p>
+                        {sortColumn === "serie" && (
+                          <span>
+                            {sortDirection === "asc" ? (
+                              <ArrowUp size={12} className="text-white" />
+                            ) : (
+                              <ArrowDown size={12} className="text-white" />
+                            )}
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => handleSort("estado")}
+                      className="col-span-4 text-left hover:bg-white/10 px-2 py-1 rounded transition-colors cursor-pointer"
+                      data-testid="header-estado"
+                    >
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs font-bold text-white uppercase">ESTADO</p>
+                        {sortColumn === "estado" && (
+                          <span>
+                            {sortDirection === "asc" ? (
+                              <ArrowUp size={12} className="text-white" />
+                            ) : (
+                              <ArrowDown size={12} className="text-white" />
+                            )}
+                          </span>
+                        )}
+                      </div>
+                    </button>
                     <div className="col-span-4">
                       <p className="text-xs font-bold text-white uppercase text-center">ACCIONES</p>
                     </div>
