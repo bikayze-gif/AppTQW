@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
-import { Search, X, ArrowUp, ArrowDown, Eye, ChevronLeft, Download } from "lucide-react";
+import { Search, X, ArrowUp, ArrowDown, Eye, ChevronLeft, FileText, Sheet } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const chartDataFull = [
@@ -302,7 +302,7 @@ export default function Activity() {
         </Card>
 
         {/* Filter and Download Section */}
-        <div className="flex flex-col md:flex-row gap-3 items-start md:items-center">
+        <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center">
           {/* Search Bar */}
           <div className="relative flex-1">
             <Search className="absolute left-3 top-3 text-slate-400" size={18} />
@@ -332,6 +332,9 @@ export default function Activity() {
             className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-[#06b6d4] transition-colors cursor-pointer"
             data-testid="month-select"
           >
+            <option value="" disabled className="bg-slate-900">
+              Seleccionar mes
+            </option>
             {months.map((month) => (
               <option key={month.value} value={month.value} className="bg-slate-900">
                 {month.label}
@@ -340,24 +343,22 @@ export default function Activity() {
           </select>
 
           {/* Download Buttons */}
-          <div className="flex gap-2">
-            <button
-              onClick={handleDownloadPDF}
-              className="flex items-center gap-2 px-4 py-2 bg-red-500/20 border border-red-500/50 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors text-sm font-medium"
-              data-testid="download-pdf"
-            >
-              <Download size={16} />
-              <span className="hidden md:inline">PDF</span>
-            </button>
-            <button
-              onClick={handleDownloadExcel}
-              className="flex items-center gap-2 px-4 py-2 bg-green-500/20 border border-green-500/50 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors text-sm font-medium"
-              data-testid="download-excel"
-            >
-              <Download size={16} />
-              <span className="hidden md:inline">Excel</span>
-            </button>
-          </div>
+          <button
+            onClick={handleDownloadPDF}
+            className="flex items-center gap-2 px-3 py-2 bg-red-500/20 border border-red-500/50 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors text-sm font-medium"
+            data-testid="download-pdf"
+            title="Descargar en PDF"
+          >
+            <FileText size={18} />
+          </button>
+          <button
+            onClick={handleDownloadExcel}
+            className="flex items-center gap-2 px-3 py-2 bg-green-500/20 border border-green-500/50 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors text-sm font-medium"
+            data-testid="download-excel"
+            title="Descargar en Excel"
+          >
+            <Sheet size={18} />
+          </button>
         </div>
 
         {/* Table */}
