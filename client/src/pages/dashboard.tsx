@@ -31,15 +31,15 @@ const efficiencyData = [
 ];
 
 const tableData = [
-  { id: 1, mes: "Dic 24", totales: 73, cumple: 64, noCumple: 9 },
-  { id: 2, mes: "Mar 24", totales: 23, cumple: 23, noCumple: 0 },
-  { id: 3, mes: "Abr 24", totales: 41, cumple: 41, noCumple: 0 },
-  { id: 4, mes: "May 24", totales: 55, cumple: 50, noCumple: 5 },
-  { id: 5, mes: "Jun 24", totales: 67, cumple: 62, noCumple: 5 },
+  { id: 1, mes: "12-24", totales: 73, cumple: 64, noCumple: 9 },
+  { id: 2, mes: "03-24", totales: 23, cumple: 23, noCumple: 0 },
+  { id: 3, mes: "04-24", totales: 41, cumple: 41, noCumple: 0 },
+  { id: 4, mes: "05-24", totales: 55, cumple: 50, noCumple: 5 },
+  { id: 5, mes: "06-24", totales: 67, cumple: 62, noCumple: 5 },
 ];
 
 const detailData: Record<string, { todas: Array<{orden: string; estado: string; fecha: string}>; cumple: Array<{orden: string; estado: string; fecha: string}>; noCumple: Array<{orden: string; estado: string; fecha: string}> }> = {
-  "Dic 24": { 
+  "12-24": { 
     todas: [
       { orden: "1-36KUTNFZ", estado: "CUMPLE", fecha: "2024-12-01" },
       { orden: "1-36KMLHXJ", estado: "CUMPLE", fecha: "2024-12-02" },
@@ -63,7 +63,7 @@ const detailData: Record<string, { todas: Array<{orden: string; estado: string; 
       { orden: "1-36HJOQ9F", estado: "NO CUMPLE", fecha: "2024-12-10" },
     ]
   },
-  "Mar 24": { 
+  "03-24": { 
     todas: [
       { orden: "1-36KUTNFZ", estado: "CUMPLE", fecha: "2024-03-01" },
       { orden: "1-36KMLHXJ", estado: "CUMPLE", fecha: "2024-03-02" },
