@@ -103,7 +103,6 @@ export default function Analytics() {
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [searchText, setSearchText] = useState("");
-  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
 
   const activeTabData = tabs.find((tab) => tab.id === activeTab);
 
@@ -208,11 +207,6 @@ export default function Analytics() {
           </div>
         )}
 
-        {/* Dropdown Backdrop */}
-        {openDropdownId && (
-          <div className="fixed inset-0 backdrop-blur-sm bg-black/20 z-40" onClick={() => setOpenDropdownId(null)} />
-        )}
-
         {/* Table */}
         {activeTabData && (
           <Card className="bg-card border-none shadow-xl rounded-2xl md:rounded-3xl overflow-hidden">
@@ -256,7 +250,7 @@ export default function Analytics() {
                           </span>
                         </div>
                         <div className="col-span-4 flex justify-center">
-                          <DropdownMenu onOpenChange={(open) => setOpenDropdownId(open ? `dropdown-${idx}` : null)}>
+                          <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <button
                                 className="p-2 border border-slate-500 rounded text-slate-300 hover:bg-white/10 hover:border-white/50 transition-colors"
