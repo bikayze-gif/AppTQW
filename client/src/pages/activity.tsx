@@ -113,7 +113,7 @@ export default function Activity() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [showDrawer, setShowDrawer] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedMonth, setSelectedMonth] = useState("01");
+  const [selectedMonth, setSelectedMonth] = useState("");
 
   const months = [
     { value: "01", label: "Enero 2025" },
