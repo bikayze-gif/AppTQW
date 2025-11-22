@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Plus, ShoppingCart } from "lucide-react";
+import { X, Plus, ShoppingCart, Trash2 } from "lucide-react";
 
 interface MaterialFormProps {
   isOpen: boolean;
@@ -44,6 +44,10 @@ export function MaterialForm({ isOpen, onClose, onSubmit }: MaterialFormProps) {
       setCartItems((prev) => [...prev, { ...formData }]);
       setFormData({ tipo: "", familia: "", subfamilia: "", material: "", cantidad: 1 });
     }
+  };
+
+  const handleRemoveFromCart = (idx: number) => {
+    setCartItems((prev) => prev.filter((_, i) => i !== idx));
   };
 
   return (
@@ -188,34 +192,68 @@ export function MaterialForm({ isOpen, onClose, onSubmit }: MaterialFormProps) {
 
               {/* Cart Items */}
               {cartItems.length > 0 && (
-                <div className="mt-6 pt-6 border-t border-white/10">
-                  <h3 className="text-sm font-semibold text-[#06b6d4] mb-3 flex items-center gap-2">
-                    <ShoppingCart size={16} />
-                    CARRITO DE MATERIALES ({cartItems.length})
-                  </h3>
-                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                <motion.div 
+                  className="mt-8 pt-8 border-t border-[#06b6d4]/20"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                >
+                  <div className="flex items-center gap-2 mb-4">
+                    <ShoppingCart size={18} className="text-[#06b6d4]" />
+                    <h3 className="text-sm font-bold text-white">CARRITO DE MATERIALES</h3>
+                    <span className="ml-auto bg-[#06b6d4] text-black text-xs font-bold px-2.5 py-1 rounded-full">
+                      {cartItems.length}
+                    </span>
+                  </div>
+                  
+                  <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
                     {cartItems.map((item, idx) => (
-                      <div
+                      <motion.div
                         key={idx}
-                        className="bg-[#06b6d4]/10 border border-[#06b6d4]/30 rounded-lg p-3 text-sm hover:bg-[#06b6d4]/15 transition-colors"
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 10 }}
+                        className="group bg-gradient-to-br from-[#06b6d4]/15 to-[#0891b2]/5 border border-[#06b6d4]/40 rounded-lg p-3.5 hover:border-[#06b6d4]/70 transition-all hover:shadow-lg hover:shadow-[#06b6d4]/10"
                         data-testid={`cart-item-${idx}`}
                       >
-                        <div className="text-slate-200 font-medium">
-                          <span className="text-[#06b6d4]">{item.tipo}</span> • {item.familia}
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex-1">
+                            <div className="text-slate-100 font-semibold text-sm">
+                              <span className="text-[#06b6d4]">{item.tipo}</span>
+                              <span className="text-slate-400 mx-1.5">•</span>
+                              <span className="text-slate-300">{item.familia}</span>
+                            </div>
+                            <div className="text-slate-400 text-xs mt-1.5">
+                              {item.subfamilia} • {item.material}
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => handleRemoveFromCart(idx)}
+                            className="flex-shrink-0 ml-2 p-1.5 text-red-400 hover:bg-red-500/20 hover:text-red-300 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                            data-testid={`button-remove-item-${idx}`}
+                            title="Eliminar"
+                          >
+                            <Trash2 size={16} />
+                          </button>
                         </div>
-                        <div className="text-slate-400 text-xs mt-1">
-                          {item.material}
+                        <div className="flex items-center justify-between pt-2 border-t border-[#06b6d4]/20">
+                          <span className="text-[#06b6d4] text-xs font-bold">Cantidad:</span>
+                          <span className="bg-[#06b6d4]/20 text-[#06b6d4] text-xs font-bold px-2.5 py-1 rounded">
+                            {item.cantidad}
+                          </span>
                         </div>
-                        <div className="text-[#06b6d4] text-xs font-semibold mt-1.5">
-                          Cantidad: {item.cantidad}
-                        </div>
-                      </div>
+                      </motion.div>
                     ))}
                   </div>
-                  <div className="mt-3 pt-3 border-t border-white/10">
-                    <p className="text-sm text-slate-300 font-semibold">Total: {cartItems.length} unidades</p>
+                  
+                  <div className="mt-4 pt-4 border-t border-[#06b6d4]/20 bg-[#06b6d4]/5 rounded-lg p-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-300 font-semibold text-sm">Total de unidades:</span>
+                      <span className="bg-[#06b6d4] text-black font-bold text-lg px-3 py-1 rounded-lg">
+                        {cartItems.reduce((sum, item) => sum + item.cantidad, 0)}
+                      </span>
+                    </div>
                   </div>
-                </div>
+                </motion.div>
               )}
             </div>
 
