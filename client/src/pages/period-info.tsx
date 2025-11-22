@@ -52,10 +52,10 @@ export default function PeriodInfo() {
         <div className="space-y-3">
           <button
             onClick={() => toggleSection("tecnico")}
-            className="w-full flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-colors"
+            className="w-full flex items-center justify-between p-4 bg-[#06b6d4]/20 border border-[#06b6d4]/30 rounded-xl hover:bg-[#06b6d4]/30 transition-colors"
             data-testid="button-toggle-tecnico"
           >
-            <h3 className="text-base font-bold text-white">Información del Técnico</h3>
+            <h3 className="text-base font-bold text-[#06b6d4]">Información del Técnico</h3>
             <ChevronDown
               size={18}
               className={`transition-transform ${expandedSections.tecnico ? "rotate-180" : ""}`}
@@ -81,10 +81,10 @@ export default function PeriodInfo() {
         <div className="space-y-3">
           <button
             onClick={() => toggleSection("comisiones")}
-            className="w-full flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-colors"
+            className="w-full flex items-center justify-between p-4 bg-[#06b6d4]/20 border border-[#06b6d4]/30 rounded-xl hover:bg-[#06b6d4]/30 transition-colors"
             data-testid="button-toggle-comisiones"
           >
-            <h3 className="text-base font-bold text-white">Comisiones</h3>
+            <h3 className="text-base font-bold text-[#06b6d4]">Comisiones</h3>
             <ChevronDown
               size={18}
               className={`transition-transform ${expandedSections.comisiones ? "rotate-180" : ""}`}
@@ -111,10 +111,10 @@ export default function PeriodInfo() {
         <div className="space-y-3">
           <button
             onClick={() => toggleSection("produccion")}
-            className="w-full flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-colors"
+            className="w-full flex items-center justify-between p-4 bg-[#06b6d4]/20 border border-[#06b6d4]/30 rounded-xl hover:bg-[#06b6d4]/30 transition-colors"
             data-testid="button-toggle-produccion"
           >
-            <h3 className="text-base font-bold text-white">Producción</h3>
+            <h3 className="text-base font-bold text-[#06b6d4]">Producción</h3>
             <ChevronDown
               size={18}
               className={`transition-transform ${expandedSections.produccion ? "rotate-180" : ""}`}
@@ -152,10 +152,10 @@ export default function PeriodInfo() {
         <div className="space-y-3">
           <button
             onClick={() => toggleSection("indicadores")}
-            className="w-full flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-colors"
+            className="w-full flex items-center justify-between p-4 bg-[#06b6d4]/20 border border-[#06b6d4]/30 rounded-xl hover:bg-[#06b6d4]/30 transition-colors"
             data-testid="button-toggle-indicadores"
           >
-            <h3 className="text-base font-bold text-white">Indicadores de Calidad</h3>
+            <h3 className="text-base font-bold text-[#06b6d4]">Indicadores de Calidad</h3>
             <ChevronDown
               size={18}
               className={`transition-transform ${expandedSections.indicadores ? "rotate-180" : ""}`}
@@ -183,10 +183,10 @@ export default function PeriodInfo() {
         <div className="space-y-3">
           <button
             onClick={() => toggleSection("asistencia")}
-            className="w-full flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-colors"
+            className="w-full flex items-center justify-between p-4 bg-[#06b6d4]/20 border border-[#06b6d4]/30 rounded-xl hover:bg-[#06b6d4]/30 transition-colors"
             data-testid="button-toggle-asistencia"
           >
-            <h3 className="text-base font-bold text-white">Asistencia y Factores</h3>
+            <h3 className="text-base font-bold text-[#06b6d4]">Asistencia y Factores</h3>
             <ChevronDown
               size={18}
               className={`transition-transform ${expandedSections.asistencia ? "rotate-180" : ""}`}
