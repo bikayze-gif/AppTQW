@@ -265,9 +265,9 @@ export default function SupervisorNotes() {
           </div>
         </div>
 
-        <div className="flex gap-6">
+        <div className="flex gap-6 h-[calc(100vh-300px)]">
           {/* Sidebar */}
-          <div className="w-56 flex-shrink-0">
+          <div className="w-56 flex-shrink-0 overflow-y-auto">
             <nav className="space-y-1">
               {categories.map((cat) => {
                 const Icon = cat.icon;
@@ -295,7 +295,7 @@ export default function SupervisorNotes() {
           </div>
 
           {/* Main Content */}
-          <div className="flex-1">
+          <div className="flex-1 overflow-y-auto">
             {/* Create Note Form - Inline Expandable */}
             <motion.div 
               ref={formRef}
