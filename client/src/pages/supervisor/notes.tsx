@@ -147,6 +147,8 @@ export default function SupervisorNotes() {
           timestamp: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" }),
         };
         setNotes([newNote, ...notes]);
+        // Automatically select the category of the new note so it's visible
+        setSelectedCategory(formData.category);
       }
       setFormData({ title: "", content: "", category: "Notes" });
       setIsFormExpanded(false);
