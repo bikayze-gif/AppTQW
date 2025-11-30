@@ -149,6 +149,18 @@ export default function SupervisorNotes() {
     }
   }, [isFormExpanded]);
 
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === "Enter" && isFormExpanded) {
+        event.preventDefault();
+        handleSaveNote();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isFormExpanded, formData, editingNoteId, notes]);
+
   const handleSaveNote = () => {
     if (formData.title.trim()) {
       if (editingNoteId) {
