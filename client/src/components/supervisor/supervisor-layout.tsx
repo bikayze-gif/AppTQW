@@ -4,7 +4,7 @@ import {
   Calendar, MessageSquare, Users, ShoppingCart, Folder, 
   HelpCircle, Mail, FileText, Trello, CheckSquare, 
   User, Bell, Settings, Menu, ChevronRight, Search,
-  LogOut
+  LogOut, NotebookPen
 } from "lucide-react";
 import { 
   DropdownMenu,
@@ -27,6 +27,12 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
     setLocation("/login");
   };
 
+  const handleNavigation = (label: string) => {
+    if (label === "Notes") {
+      setLocation("/supervisor/notes");
+    }
+  };
+
   const menuItems = [
     { icon: Calendar, label: "Calendar", badge: "3 upcoming events" },
     { icon: MessageSquare, label: "Messenger" },
@@ -35,7 +41,7 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
     { icon: Folder, label: "File Manager" },
     { icon: HelpCircle, label: "Help Center", hasSubmenu: true },
     { icon: Mail, label: "Mail", badgeCount: 27 },
-    { icon: FileText, label: "Notes" },
+    { icon: NotebookPen, label: "Notes" },
     { icon: Trello, label: "Scrumboard" },
     { icon: CheckSquare, label: "Tasks", badge: "12 remaining tasks" },
     { icon: User, label: "Profile" },
@@ -75,7 +81,7 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
           <nav className="px-3 space-y-1">
             {menuItems.map((item, index) => (
               <div key={index} className="group">
-                <button className="w-full flex items-center px-3 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                <button onClick={() => handleNavigation(item.label)} className="w-full flex items-center px-3 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors group-hover:text-blue-600 dark:group-hover:text-blue-400">
                   <item.icon size={20} className="shrink-0" />
                   <div className={`ml-4 flex-1 flex flex-col items-start ${!isSidebarOpen && "hidden md:hidden"}`}>
                     <span className="font-medium text-sm">{item.label}</span>

@@ -16,11 +16,13 @@ import PeriodInfo from "@/pages/period-info";
 import Analytics from "@/pages/analytics";
 import Activity from "@/pages/activity";
 import SupervisorHome from "@/pages/supervisor/home";
+import SupervisorNotes from "@/pages/supervisor/notes";
 
 function Router() {
   return (
     <Switch>
       <Route path="/login" component={Login} />
+      <Route path="/supervisor/notes" component={SupervisorNotes} />
       <Route path="/supervisor" component={SupervisorHome} />
       <Route path="/" component={PeriodInfo} />
       <Route path="/dashboard" component={Dashboard} />
