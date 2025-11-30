@@ -1,7 +1,7 @@
 import { SupervisorLayout } from "@/components/supervisor/supervisor-layout";
 import { 
   MoreVertical, CheckCircle2, AlertCircle, Clock, 
-  FileText, TrendingUp, Calendar
+  FileText, TrendingUp, Calendar, Bell, Settings
 } from "lucide-react";
 
 export default function SupervisorHome() {
