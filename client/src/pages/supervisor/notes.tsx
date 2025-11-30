@@ -227,7 +227,7 @@ export default function SupervisorNotes() {
   };
 
   const filteredNotes = notes.filter((note) => {
-    const matchesCategory = selectedCategory === "All" || note.category === selectedCategory;
+    const matchesCategory = selectedCategory === "All" || selectedCategory === "Notes" || note.category === selectedCategory;
     const matchesSearch = note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          note.content.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
