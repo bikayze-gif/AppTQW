@@ -29,7 +29,7 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
 
   const handleNavigation = (label: string) => {
     if (label === "Notes") {
-      setLocation("/supervisor/notes");
+      setLocation("/supervisor");
     }
   };
 
