@@ -127,6 +127,7 @@ export default function SupervisorNotes() {
   const [notes, setNotes] = useState<Note[]>(mockNotes);
   const [selectedCategory, setSelectedCategory] = useState("Notes");
   const [isFormExpanded, setIsFormExpanded] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [formData, setFormData] = useState({ title: "", content: "", category: "Notes" });
   const [searchQuery, setSearchQuery] = useState("");
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
@@ -195,13 +196,15 @@ export default function SupervisorNotes() {
   const handleEditNote = (note: Note) => {
     setFormData({ title: note.title, content: note.content, category: note.category });
     setEditingNoteId(note.id);
-    setIsFormExpanded(true);
+    setIsEditModalOpen(true);
   };
 
   const handleCancelEdit = () => {
     setFormData({ title: "", content: "", category: "Notes" });
-    setIsFormExpanded(false);
+    setIsEditModalOpen(false);
     setEditingNoteId(null);
+    setIsReminderOpen(false);
+    setIsLabelOpen(false);
   };
 
   const getDaysInMonth = (date: Date) => {
@@ -578,6 +581,90 @@ export default function SupervisorNotes() {
                 )}
               </AnimatePresence>
             </motion.div>
+
+            {/* Edit Modal */}
+            <AnimatePresence>
+              {isEditModalOpen && (
+                <>
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    onClick={handleCancelEdit}
+                    className="fixed inset-0 bg-black/50 z-40"
+                  />
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                    className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto z-50"
+                  >
+                    <div className="space-y-4">
+                      <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-6">Edit Note</h2>
+                      
+                      <input
+                        type="text"
+                        placeholder="Title"
+                        value={formData.title}
+                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                        className="w-full text-lg font-medium bg-transparent border-b border-slate-200 dark:border-slate-700 focus:outline-none text-slate-800 dark:text-white placeholder-slate-400 pb-2"
+                      />
+                      
+                      <textarea
+                        placeholder="Take a note..."
+                        value={formData.content}
+                        onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                        className="w-full min-h-32 bg-transparent border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-600 dark:text-slate-300 placeholder-slate-400 resize-none p-3"
+                      />
+
+                      {formData.category && formData.category !== "Notes" && (
+                        <div className="flex gap-2">
+                          <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border ${categoryBadgeColors[formData.category] || "bg-slate-100 text-slate-800"} border-current border-opacity-30`}>
+                            <span className="text-sm font-medium">{formData.category}</span>
+                            <button
+                              onClick={() => setFormData({ ...formData, category: "Notes" })}
+                              className="text-current opacity-70 hover:opacity-100 transition-opacity"
+                            >
+                              <X size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div className="flex items-center gap-2 pt-4 border-t border-slate-100 dark:border-slate-700">
+                        <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors">
+                          <Bell size={18} />
+                        </button>
+                        <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors">
+                          <FileText size={18} />
+                        </button>
+                        <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors">
+                          <Edit3 size={18} />
+                        </button>
+                        <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors">
+                          <Flag size={18} />
+                        </button>
+                      </div>
+
+                      <div className="flex gap-3 pt-4">
+                        <button
+                          onClick={handleCancelEdit}
+                          className="flex-1 px-4 py-2.5 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 font-medium transition-colors"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={handleSaveNote}
+                          className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition-colors"
+                        >
+                          Update
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
 
             {/* Notes Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-12">
