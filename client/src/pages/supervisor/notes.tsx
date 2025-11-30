@@ -534,7 +534,7 @@ export default function SupervisorNotes() {
                                 initial={{ opacity: 0, scale: 0.95, y: 10 }}
                                 animate={{ opacity: 1, scale: 1, y: 0 }}
                                 exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                                className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 p-4 w-64 z-50"
+                                className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 p-4 w-64 z-[60]"
                               >
                                 <h4 className="font-semibold text-slate-800 dark:text-white mb-3">Labels</h4>
                                 <div className="space-y-2">
@@ -651,7 +651,7 @@ export default function SupervisorNotes() {
                                 initial={{ opacity: 0, scale: 0.95, y: 10 }}
                                 animate={{ opacity: 1, scale: 1, y: 0 }}
                                 exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                                className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 p-4 w-80 z-50"
+                                className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 p-4 w-80 z-[60]"
                               >
                                 <h4 className="font-semibold text-slate-800 dark:text-white mb-3">Set Reminder</h4>
                                 
@@ -796,7 +796,7 @@ export default function SupervisorNotes() {
                                 initial={{ opacity: 0, scale: 0.95, y: 10 }}
                                 animate={{ opacity: 1, scale: 1, y: 0 }}
                                 exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                                className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 p-4 w-64 z-50"
+                                className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 p-4 w-64 z-[60]"
                               >
                                 <h4 className="font-semibold text-slate-800 dark:text-white mb-3">Labels</h4>
                                 <div className="space-y-2">
