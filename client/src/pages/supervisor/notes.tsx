@@ -136,6 +136,8 @@ export default function SupervisorNotes() {
             ? { ...note, title: formData.title, content: formData.content, category: formData.category }
             : note
         ));
+        // Automatically select the category of the updated note so it's visible
+        setSelectedCategory(formData.category);
       } else {
         // Create new note
         const newNote: Note = {
