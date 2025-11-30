@@ -10,6 +10,7 @@ import { MaterialForm, type MaterialFormData } from "@/components/material-form"
 import { AIChat } from "@/components/ai-chat";
 import { ChatReporte } from "@/components/chat-reporte";
 import NotFound from "@/pages/not-found";
+import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
 import PeriodInfo from "@/pages/period-info";
 import Analytics from "@/pages/analytics";
@@ -18,6 +19,7 @@ import Activity from "@/pages/activity";
 function Router() {
   return (
     <Switch>
+      <Route path="/login" component={Login} />
       <Route path="/" component={PeriodInfo} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/activity" component={Activity} />
