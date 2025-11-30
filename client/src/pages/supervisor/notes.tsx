@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { SupervisorLayout } from "@/components/supervisor/supervisor-layout";
 import { FileText, Bell, Archive, Users, Briefcase, CheckSquare, Flag, User, Users2, Edit3, Search, X, Calendar, Clock, ChevronLeft, ChevronRight, Plus, Minus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -134,6 +134,20 @@ export default function SupervisorNotes() {
   const [isLabelOpen, setIsLabelOpen] = useState(false);
   const [reminder, setReminder] = useState({ date: "", time: "" });
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const formRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (formRef.current && !formRef.current.contains(event.target as Node)) {
+        setIsFormExpanded(false);
+      }
+    };
+
+    if (isFormExpanded) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [isFormExpanded]);
 
   const handleSaveNote = () => {
     if (formData.title.trim()) {
@@ -272,6 +286,7 @@ export default function SupervisorNotes() {
           <div className="flex-1">
             {/* Create Note Form - Inline Expandable */}
             <motion.div 
+              ref={formRef}
               className={`mb-8 rounded-xl transition-all duration-300 ${
                 isFormExpanded 
                   ? "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6 shadow-md" 
