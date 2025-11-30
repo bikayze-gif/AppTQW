@@ -122,7 +122,7 @@ const mockNotes: Note[] = [
 export default function SupervisorNotes() {
   const [notes, setNotes] = useState<Note[]>(mockNotes);
   const [selectedCategory, setSelectedCategory] = useState("Notes");
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isFormExpanded, setIsFormExpanded] = useState(false);
   const [formData, setFormData] = useState({ title: "", content: "", category: "Notes" });
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -138,7 +138,7 @@ export default function SupervisorNotes() {
       };
       setNotes([newNote, ...notes]);
       setFormData({ title: "", content: "", category: "Notes" });
-      setIsFormOpen(false);
+      setIsFormExpanded(false);
     }
   };
 
@@ -212,41 +212,91 @@ export default function SupervisorNotes() {
 
           {/* Main Content */}
           <div className="flex-1">
-            {/* Create Note Form */}
-            <div className="mb-8 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
+            {/* Create Note Form - Inline Expandable */}
+            <motion.div 
+              className="mb-8 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm"
+              animate={{ minHeight: isFormExpanded ? "auto" : "auto" }}
+            >
               <input
                 type="text"
                 placeholder="Title"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                onFocus={() => setIsFormExpanded(true)}
                 className="w-full text-lg font-medium bg-transparent border-none focus:outline-none text-slate-800 dark:text-white placeholder-slate-400 mb-4"
-                readOnly
-                onClick={() => setIsFormOpen(true)}
               />
-              <div
-                onClick={() => setIsFormOpen(true)}
-                className="w-full text-slate-500 bg-transparent border-none focus:outline-none placeholder-slate-400 cursor-pointer min-h-12 flex items-center"
-              >
-                Take a note...
-              </div>
-              <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-100 dark:border-slate-700">
-                <div className="flex gap-3">
-                  <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors">
-                    <Bell size={18} />
-                  </button>
-                  <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors">
-                    <FileText size={18} />
-                  </button>
-                  <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors">
-                    <Edit3 size={18} />
-                  </button>
-                  <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors">
-                    <Flag size={18} />
-                  </button>
-                  <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors">
-                    <X size={18} />
-                  </button>
-                </div>
-              </div>
-            </div>
+              
+              <AnimatePresence>
+                {!isFormExpanded ? (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    onClick={() => setIsFormExpanded(true)}
+                    className="w-full text-slate-500 bg-transparent border-none focus:outline-none placeholder-slate-400 cursor-pointer min-h-12 flex items-center"
+                  >
+                    Take a note...
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="space-y-4"
+                  >
+                    <textarea
+                      placeholder="Take a note..."
+                      value={formData.content}
+                      onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                      className="w-full min-h-24 bg-transparent border-none focus:outline-none text-slate-600 dark:text-slate-300 placeholder-slate-400 resize-none"
+                    />
+                    
+                    <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-700">
+                      <div className="flex gap-3">
+                        <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors">
+                          <Bell size={18} />
+                        </button>
+                        <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors">
+                          <FileText size={18} />
+                        </button>
+                        <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors">
+                          <Edit3 size={18} />
+                        </button>
+                        <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors">
+                          <Flag size={18} />
+                        </button>
+                        <button 
+                          onClick={() => setIsFormExpanded(false)}
+                          className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors"
+                        >
+                          <X size={18} />
+                        </button>
+                      </div>
+
+                      <div className="flex gap-3">
+                        <select
+                          value={formData.category}
+                          onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                          className="px-4 py-2 bg-slate-100 dark:bg-slate-700 border-none rounded-lg text-sm font-medium text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          {categories.map((cat) => (
+                            <option key={cat.name} value={cat.name}>
+                              {cat.name}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          onClick={handleCreateNote}
+                          className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition-colors"
+                        >
+                          Create
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
 
             {/* Notes Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-12">
@@ -281,79 +331,6 @@ export default function SupervisorNotes() {
           </div>
         </div>
 
-        {/* Create Note Modal */}
-        <AnimatePresence>
-          {isFormOpen && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center pb-12"
-              onClick={() => setIsFormOpen(false)}
-            >
-              <motion.div
-                initial={{ y: 100, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: 100, opacity: 0 }}
-                onClick={(e) => e.stopPropagation()}
-                className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-2xl p-8"
-              >
-                <div className="space-y-4 mb-6">
-                  <input
-                    type="text"
-                    placeholder="Title"
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="w-full text-2xl font-bold bg-transparent border-b border-slate-200 dark:border-slate-700 focus:outline-none text-slate-800 dark:text-white placeholder-slate-400 pb-2"
-                  />
-                  <textarea
-                    placeholder="Take a note..."
-                    value={formData.content}
-                    onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                    className="w-full min-h-32 bg-transparent border-none focus:outline-none text-slate-600 dark:text-slate-300 placeholder-slate-400 resize-none"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between pt-6 border-t border-slate-200 dark:border-slate-700">
-                  <div className="flex gap-3">
-                    <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors">
-                      <Bell size={18} />
-                    </button>
-                    <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors">
-                      <FileText size={18} />
-                    </button>
-                    <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors">
-                      <Edit3 size={18} />
-                    </button>
-                    <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors">
-                      <Flag size={18} />
-                    </button>
-                  </div>
-
-                  <div className="flex gap-3">
-                    <select
-                      value={formData.category}
-                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      className="px-4 py-2 bg-slate-100 dark:bg-slate-700 border-none rounded-lg text-sm font-medium text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      {categories.map((cat) => (
-                        <option key={cat.name} value={cat.name}>
-                          {cat.name}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      onClick={handleCreateNote}
-                      className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition-colors"
-                    >
-                      Create
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
     </SupervisorLayout>
   );
