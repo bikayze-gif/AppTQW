@@ -15,11 +15,13 @@ import Dashboard from "@/pages/dashboard";
 import PeriodInfo from "@/pages/period-info";
 import Analytics from "@/pages/analytics";
 import Activity from "@/pages/activity";
+import SupervisorHome from "@/pages/supervisor/home";
 
 function Router() {
   return (
     <Switch>
       <Route path="/login" component={Login} />
+      <Route path="/supervisor" component={SupervisorHome} />
       <Route path="/" component={PeriodInfo} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/activity" component={Activity} />
@@ -31,6 +33,13 @@ function Router() {
 
 function AppLayout() {
   const [currentPath] = useLocation();
+  const isSupervisorRoute = currentPath.startsWith("/supervisor");
+  
+  // Don't show the technician layout components on login or supervisor pages
+  if (currentPath === "/login" || isSupervisorRoute) {
+    return <Router />;
+  }
+
   const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
   const [isMaterialFormOpen, setIsMaterialFormOpen] = useState(false);
   const [isAIChatOpen, setIsAIChatOpen] = useState(false);

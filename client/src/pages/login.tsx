@@ -8,12 +8,17 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [role, setRole] = useState<"technician" | "supervisor">("technician");
 
   const handleSignIn = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Sign in:", { email, password, rememberMe });
-    // Mock login - redirect to home
-    setLocation("/");
+    console.log("Sign in:", { email, password, rememberMe, role });
+    
+    if (role === "supervisor") {
+      setLocation("/supervisor");
+    } else {
+      setLocation("/");
+    }
   };
 
   return (
@@ -21,7 +26,7 @@ export default function Login() {
       {/* Left Side - Login Form */}
       <div className="w-full md:w-1/2 flex flex-col justify-center px-8 md:px-12 lg:px-16 py-12">
         {/* Logo */}
-        <div className="mb-12 flex items-center gap-3">
+        <div className="mb-8 flex items-center gap-3">
           <div className="w-10 h-10 bg-gradient-to-br from-[#06b6d4] to-[#0891b2] rounded-lg flex items-center justify-center">
             <div className="w-6 h-6 border-2 border-white rounded-sm transform rotate-45" />
           </div>
@@ -29,7 +34,7 @@ export default function Login() {
         </div>
 
         {/* Sign In Title */}
-        <div className="mb-8">
+        <div className="mb-6">
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">Sign in</h1>
           <p className="text-slate-400 text-sm md:text-base">
             Don't have an account?{" "}
@@ -41,6 +46,32 @@ export default function Login() {
 
         {/* Form */}
         <form onSubmit={handleSignIn} className="space-y-6">
+          {/* Role Selection */}
+          <div className="grid grid-cols-2 gap-4 p-1 bg-white/5 rounded-lg border border-white/10">
+            <button
+              type="button"
+              onClick={() => setRole("technician")}
+              className={`py-2 rounded-md text-sm font-medium transition-all ${
+                role === "technician"
+                  ? "bg-[#06b6d4] text-black shadow-lg"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              Technician
+            </button>
+            <button
+              type="button"
+              onClick={() => setRole("supervisor")}
+              className={`py-2 rounded-md text-sm font-medium transition-all ${
+                role === "supervisor"
+                  ? "bg-[#06b6d4] text-black shadow-lg"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              Supervisor
+            </button>
+          </div>
+
           {/* Email Input */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-300">Email address</label>
