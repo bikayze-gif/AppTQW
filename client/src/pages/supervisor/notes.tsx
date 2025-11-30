@@ -314,7 +314,10 @@ export default function SupervisorNotes() {
                         {/* Reminder Button */}
                         <div className="relative">
                           <button 
-                            onClick={() => setIsReminderOpen(!isReminderOpen)}
+                            onClick={() => {
+                              setIsReminderOpen(!isReminderOpen);
+                              if (!isReminderOpen) setIsLabelOpen(false);
+                            }}
                             className={`p-2 rounded transition-colors ${reminder.date ? "text-blue-600 bg-blue-100 dark:bg-blue-900/30" : "text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700"}`}
                           >
                             <Bell size={18} />
@@ -392,7 +395,10 @@ export default function SupervisorNotes() {
                         {/* Label/Category Button */}
                         <div className="relative">
                           <button 
-                            onClick={() => setIsLabelOpen(!isLabelOpen)}
+                            onClick={() => {
+                              setIsLabelOpen(!isLabelOpen);
+                              if (!isLabelOpen) setIsReminderOpen(false);
+                            }}
                             className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors"
                           >
                             <Flag size={18} />
