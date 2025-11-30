@@ -136,6 +136,8 @@ export default function SupervisorNotes() {
   const [reminder, setReminder] = useState({ date: "", time: "" });
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const formRef = useRef<HTMLDivElement>(null);
+  const labelButtonRef = useRef<HTMLButtonElement>(null);
+  const [labelPopoverPos, setLabelPopoverPos] = useState({ top: 0, left: 0 });
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -777,10 +779,20 @@ export default function SupervisorNotes() {
                           <Edit3 size={18} />
                         </button>
                         
-                        {/* Label/Category Button */}
-                        <div className="relative">
+                        {/* Label/Category Button - Fixed positioning */}
+                        <div>
                           <button 
+                            ref={labelButtonRef}
                             onClick={() => {
+                              if (!isLabelOpen) {
+                                const rect = labelButtonRef.current?.getBoundingClientRect();
+                                if (rect) {
+                                  setLabelPopoverPos({
+                                    top: rect.bottom + 8,
+                                    left: rect.left + rect.width / 2 - 128
+                                  });
+                                }
+                              }
                               setIsLabelOpen(!isLabelOpen);
                               if (!isLabelOpen) setIsReminderOpen(false);
                             }}
@@ -789,14 +801,19 @@ export default function SupervisorNotes() {
                             <Flag size={18} />
                           </button>
                           
-                          {/* Label Popover */}
+                          {/* Label Popover - Fixed positioning to escape modal */}
                           <AnimatePresence>
                             {isLabelOpen && (
                               <motion.div
                                 initial={{ opacity: 0, scale: 0.95, y: 10 }}
                                 animate={{ opacity: 1, scale: 1, y: 0 }}
                                 exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                                className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 p-4 w-64 z-[60]"
+                                style={{
+                                  position: 'fixed',
+                                  top: `${labelPopoverPos.top}px`,
+                                  left: `${labelPopoverPos.left}px`,
+                                }}
+                                className="bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 p-4 w-64 z-[60]"
                               >
                                 <h4 className="font-semibold text-slate-800 dark:text-white mb-3">Labels</h4>
                                 <div className="space-y-2">
