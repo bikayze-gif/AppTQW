@@ -137,7 +137,9 @@ export default function SupervisorNotes() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const formRef = useRef<HTMLDivElement>(null);
   const labelButtonRef = useRef<HTMLButtonElement>(null);
+  const reminderButtonRef = useRef<HTMLButtonElement>(null);
   const [labelPopoverPos, setLabelPopoverPos] = useState({ top: 0, left: 0 });
+  const [reminderPopoverPos, setReminderPopoverPos] = useState({ top: 0, left: 0 });
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -634,9 +636,19 @@ export default function SupervisorNotes() {
                       
                       <div className="flex items-center gap-1 pt-4 border-t border-slate-100 dark:border-slate-700">
                         {/* Reminder Button */}
-                        <div className="relative">
+                        <div>
                           <button 
+                            ref={reminderButtonRef}
                             onClick={() => {
+                              if (!isReminderOpen) {
+                                const rect = reminderButtonRef.current?.getBoundingClientRect();
+                                if (rect) {
+                                  setReminderPopoverPos({
+                                    top: rect.top - 10,
+                                    left: rect.left + rect.width / 2 - 210
+                                  });
+                                }
+                              }
                               setIsReminderOpen(!isReminderOpen);
                               if (!isReminderOpen) setIsLabelOpen(false);
                             }}
@@ -645,14 +657,19 @@ export default function SupervisorNotes() {
                             <Bell size={18} />
                           </button>
                           
-                          {/* Reminder Popover */}
+                          {/* Reminder Popover - Fixed positioning to escape modal */}
                           <AnimatePresence>
                             {isReminderOpen && (
                               <motion.div
                                 initial={{ opacity: 0, scale: 0.95, y: 10 }}
                                 animate={{ opacity: 1, scale: 1, y: 0 }}
                                 exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                                className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 w-[420px] z-[60] overflow-hidden"
+                                style={{
+                                  position: 'fixed',
+                                  top: `${reminderPopoverPos.top}px`,
+                                  left: `${reminderPopoverPos.left}px`,
+                                }}
+                                className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 w-[420px] z-[100] overflow-hidden"
                               >
                                 <div className="flex gap-6 p-6">
                                   {/* Left: Calendar */}
