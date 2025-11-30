@@ -22,8 +22,8 @@ function Router() {
   return (
     <Switch>
       <Route path="/login" component={Login} />
-      <Route path="/supervisor/notes" component={SupervisorNotes} />
-      <Route path="/supervisor" component={SupervisorHome} />
+      <Route path="/supervisor" component={SupervisorNotes} />
+      <Route path="/supervisor/home" component={SupervisorHome} />
       <Route path="/" component={PeriodInfo} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/activity" component={Activity} />
