@@ -302,14 +302,13 @@ export default function SupervisorNotes() {
           {/* Main Content */}
           <div className="flex-1 overflow-y-auto">
             {/* Create Note Form - Inline Expandable */}
-            <motion.div 
+            <div 
               ref={formRef}
               className={`mb-8 rounded-xl transition-all duration-300 ${
                 isFormExpanded 
                   ? "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6 shadow-md" 
                   : "bg-transparent border-b-2 border-slate-200 dark:border-slate-600"
               }`}
-              animate={{ minHeight: isFormExpanded ? "auto" : "auto" }}
             >
               <AnimatePresence mode="wait">
                 {!isFormExpanded ? (
@@ -408,8 +407,8 @@ export default function SupervisorNotes() {
 
                                 {/* Calendar Grid */}
                                 <div className="grid grid-cols-7 gap-1 mb-4">
-                                  {["S", "M", "T", "W", "T", "F", "S"].map((day) => (
-                                    <div key={day} className="text-center text-xs font-semibold text-slate-500 py-2">
+                                  {["S", "M", "T", "W", "T", "F", "S"].map((day, idx) => (
+                                    <div key={`${day}-${idx}`} className="text-center text-xs font-semibold text-slate-500 py-2">
                                       {day}
                                     </div>
                                   ))}
@@ -582,7 +581,7 @@ export default function SupervisorNotes() {
                   </motion.div>
                 )}
               </AnimatePresence>
-            </motion.div>
+            </div>
 
             {/* Edit Modal */}
             <AnimatePresence>
@@ -678,7 +677,7 @@ export default function SupervisorNotes() {
                                   {/* Calendar Grid */}
                                   <div className="grid grid-cols-7 gap-1 mb-6">
                                     {["S", "M", "T", "W", "T", "F", "S"].map((day, idx) => (
-                                      <div key={`${day}-${idx}`} className="text-center text-xs font-bold text-slate-400 dark:text-slate-500 py-2">
+                                      <div key={`day-${idx}`} className="text-center text-xs font-bold text-slate-400 dark:text-slate-500 py-2">
                                         {day}
                                       </div>
                                     ))}
