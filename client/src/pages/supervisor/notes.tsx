@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { SupervisorLayout } from "@/components/supervisor/supervisor-layout";
-import { FileText, Bell, Archive, Users, Briefcase, CheckSquare, Flag, User, Users2, Edit3, Search, X, Calendar, Clock, ChevronLeft, ChevronRight } from "lucide-react";
+import { FileText, Bell, Archive, Users, Briefcase, CheckSquare, Flag, User, Users2, Edit3, Search, X, Calendar, Clock, ChevronLeft, ChevronRight, Plus, Minus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface Note {
@@ -370,15 +370,81 @@ export default function SupervisorNotes() {
                                 </div>
 
                                 {/* Time Selection */}
-                                <div className="flex items-center gap-2 mb-4">
-                                  <input type="number" min="00" max="23" value={reminder.time.split(":")[0] || "12"} onChange={(e) => setReminder({ ...reminder, time: `${e.target.value.padStart(2, "0")}:${reminder.time.split(":")[1] || "00"}` })} className="w-12 px-2 py-1 border rounded text-sm" />
-                                  <span>:</span>
-                                  <input type="number" min="00" max="59" value={reminder.time.split(":")[1] || "00"} onChange={(e) => setReminder({ ...reminder, time: `${reminder.time.split(":")[0] || "12"}:${e.target.value.padStart(2, "0")}` })} className="w-12 px-2 py-1 border rounded text-sm" />
+                                <div className="mb-6 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+                                  <div className="text-center mb-4">
+                                    <div className="text-4xl font-bold text-slate-800 dark:text-white font-mono">
+                                      {(reminder.time.split(":")[0] || "12").padStart(2, "0")}:{(reminder.time.split(":")[1] || "00").padStart(2, "0")}
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="flex items-center justify-center gap-6">
+                                    {/* Hours */}
+                                    <div className="flex flex-col items-center gap-2">
+                                      <button 
+                                        onClick={() => {
+                                          const h = parseInt(reminder.time.split(":")[0] || "12");
+                                          const newH = h === 23 ? 0 : h + 1;
+                                          setReminder({ ...reminder, time: `${String(newH).padStart(2, "0")}:${reminder.time.split(":")[1] || "00"}` });
+                                        }}
+                                        className="p-1 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded"
+                                      >
+                                        <Plus size={20} />
+                                      </button>
+                                      <span className="text-xs text-slate-500 font-semibold">HH</span>
+                                      <button 
+                                        onClick={() => {
+                                          const h = parseInt(reminder.time.split(":")[0] || "12");
+                                          const newH = h === 0 ? 23 : h - 1;
+                                          setReminder({ ...reminder, time: `${String(newH).padStart(2, "0")}:${reminder.time.split(":")[1] || "00"}` });
+                                        }}
+                                        className="p-1 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded"
+                                      >
+                                        <Minus size={20} />
+                                      </button>
+                                    </div>
+
+                                    <div className="text-2xl font-bold text-slate-400">:</div>
+
+                                    {/* Minutes */}
+                                    <div className="flex flex-col items-center gap-2">
+                                      <button 
+                                        onClick={() => {
+                                          const m = parseInt(reminder.time.split(":")[1] || "00");
+                                          const newM = m === 59 ? 0 : m + 1;
+                                          setReminder({ ...reminder, time: `${reminder.time.split(":")[0] || "12"}:${String(newM).padStart(2, "0")}` });
+                                        }}
+                                        className="p-1 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded"
+                                      >
+                                        <Plus size={20} />
+                                      </button>
+                                      <span className="text-xs text-slate-500 font-semibold">MM</span>
+                                      <button 
+                                        onClick={() => {
+                                          const m = parseInt(reminder.time.split(":")[1] || "00");
+                                          const newM = m === 0 ? 59 : m - 1;
+                                          setReminder({ ...reminder, time: `${reminder.time.split(":")[0] || "12"}:${String(newM).padStart(2, "0")}` });
+                                        }}
+                                        className="p-1 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded"
+                                      >
+                                        <Minus size={20} />
+                                      </button>
+                                    </div>
+                                  </div>
                                 </div>
 
                                 <div className="flex gap-2">
-                                  <button onClick={() => setReminder({ date: "", time: "" })} className="flex-1 px-3 py-2 text-sm border rounded hover:bg-slate-50 dark:hover:bg-slate-700">Clear</button>
-                                  <button onClick={() => setIsReminderOpen(false)} className="flex-1 px-3 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-500">Done</button>
+                                  <button 
+                                    onClick={() => setReminder({ date: "", time: "" })} 
+                                    className="flex-1 px-4 py-2.5 text-sm font-medium border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                                  >
+                                    Clear
+                                  </button>
+                                  <button 
+                                    onClick={() => setIsReminderOpen(false)} 
+                                    className="flex-1 px-4 py-2.5 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors shadow-md"
+                                  >
+                                    Done
+                                  </button>
                                 </div>
                               </motion.div>
                             )}
