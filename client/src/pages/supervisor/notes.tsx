@@ -704,6 +704,43 @@ export default function SupervisorNotes() {
               )}
             </AnimatePresence>
 
+            {/* Label Popover - Rendered outside modal */}
+            <AnimatePresence>
+              {isLabelOpen && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                  style={{
+                    position: 'fixed',
+                    top: `${labelPopoverPos.top}px`,
+                    left: `${labelPopoverPos.left}px`,
+                  }}
+                  className="bg-white dark:bg-slate-800 rounded-lg shadow-2xl border border-slate-200 dark:border-slate-700 p-4 w-64 z-[100]"
+                >
+                  <h4 className="font-semibold text-slate-800 dark:text-white mb-3">Labels</h4>
+                  <div className="space-y-2">
+                    {categories.slice(3).map((cat) => {
+                      const Icon = cat.icon;
+                      return (
+                        <button
+                          key={cat.name}
+                          onClick={() => {
+                            setFormData({ ...formData, category: cat.name });
+                            setIsLabelOpen(false);
+                          }}
+                          className={`w-full flex items-center gap-3 px-4 py-2 rounded transition-colors ${formData.category === cat.name ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300" : "hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300"}`}
+                        >
+                          <Icon size={16} />
+                          <span className="text-sm">{cat.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             {/* Edit Modal */}
             <AnimatePresence>
               {isEditModalOpen && (
@@ -782,65 +819,26 @@ export default function SupervisorNotes() {
                           <Edit3 size={18} />
                         </button>
                         
-                        {/* Label/Category Button - Fixed positioning */}
-                        <div>
-                          <button 
-                            ref={labelButtonRef}
-                            onClick={() => {
-                              if (!isLabelOpen) {
-                                const rect = labelButtonRef.current?.getBoundingClientRect();
-                                if (rect) {
-                                  setLabelPopoverPos({
-                                    top: rect.bottom + 8,
-                                    left: rect.left + rect.width / 2 - 128
-                                  });
-                                }
+                        {/* Label/Category Button */}
+                        <button 
+                          ref={labelButtonRef}
+                          onClick={() => {
+                            if (!isLabelOpen) {
+                              const rect = labelButtonRef.current?.getBoundingClientRect();
+                              if (rect) {
+                                setLabelPopoverPos({
+                                  top: rect.bottom + 8,
+                                  left: rect.left + rect.width / 2 - 128
+                                });
                               }
-                              setIsLabelOpen(!isLabelOpen);
-                              if (!isLabelOpen) setIsReminderOpen(false);
-                            }}
-                            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors"
-                          >
-                            <Flag size={18} />
-                          </button>
-                          
-                          {/* Label Popover - Fixed positioning to escape modal */}
-                          <AnimatePresence>
-                            {isLabelOpen && (
-                              <motion.div
-                                initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                                animate={{ opacity: 1, scale: 1, y: 0 }}
-                                exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                                style={{
-                                  position: 'fixed',
-                                  top: `${labelPopoverPos.top}px`,
-                                  left: `${labelPopoverPos.left}px`,
-                                }}
-                                className="bg-white dark:bg-slate-800 rounded-lg shadow-2xl border border-slate-200 dark:border-slate-700 p-4 w-64 z-[100]"
-                              >
-                                <h4 className="font-semibold text-slate-800 dark:text-white mb-3">Labels</h4>
-                                <div className="space-y-2">
-                                  {categories.slice(3).map((cat) => {
-                                    const Icon = cat.icon;
-                                    return (
-                                      <button
-                                        key={cat.name}
-                                        onClick={() => {
-                                          setFormData({ ...formData, category: cat.name });
-                                          setIsLabelOpen(false);
-                                        }}
-                                        className={`w-full flex items-center gap-3 px-4 py-2 rounded transition-colors ${formData.category === cat.name ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300" : "hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300"}`}
-                                      >
-                                        <Icon size={16} />
-                                        <span className="text-sm">{cat.name}</span>
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </div>
+                            }
+                            setIsLabelOpen(!isLabelOpen);
+                            if (!isLabelOpen) setIsReminderOpen(false);
+                          }}
+                          className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors"
+                        >
+                          <Flag size={18} />
+                        </button>
                       </div>
 
                       <div className="flex gap-3 pt-4">
