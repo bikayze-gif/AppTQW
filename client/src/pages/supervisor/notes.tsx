@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { SupervisorLayout } from "@/components/supervisor/supervisor-layout";
-import { FileText, Bell, Archive, Users, Briefcase, CheckSquare, Flag, User, Users2, Edit3, Search, X } from "lucide-react";
+import { FileText, Bell, Archive, Users, Briefcase, CheckSquare, Flag, User, Users2, Edit3, Search, X, Calendar, Clock, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface Note {
@@ -11,6 +11,10 @@ interface Note {
   color: string;
   timestamp: string;
   image?: string;
+  reminder?: {
+    date: string;
+    time: string;
+  };
 }
 
 const categories = [
@@ -126,6 +130,10 @@ export default function SupervisorNotes() {
   const [formData, setFormData] = useState({ title: "", content: "", category: "Notes" });
   const [searchQuery, setSearchQuery] = useState("");
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [isReminderOpen, setIsReminderOpen] = useState(false);
+  const [isLabelOpen, setIsLabelOpen] = useState(false);
+  const [reminder, setReminder] = useState({ date: "", time: "" });
+  const [currentMonth, setCurrentMonth] = useState(new Date());
 
   const handleSaveNote = () => {
     if (formData.title.trim()) {
@@ -168,6 +176,28 @@ export default function SupervisorNotes() {
     setFormData({ title: "", content: "", category: "Notes" });
     setIsFormExpanded(false);
     setEditingNoteId(null);
+  };
+
+  const getDaysInMonth = (date: Date) => {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  };
+
+  const getFirstDayOfMonth = (date: Date) => {
+    return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+  };
+
+  const generateCalendarDays = () => {
+    const daysInMonth = getDaysInMonth(currentMonth);
+    const firstDay = getFirstDayOfMonth(currentMonth);
+    const days = [];
+    
+    for (let i = 0; i < firstDay; i++) {
+      days.push(null);
+    }
+    for (let i = 1; i <= daysInMonth; i++) {
+      days.push(i);
+    }
+    return days;
   };
 
   const filteredNotes = notes.filter((note) => {
@@ -280,19 +310,127 @@ export default function SupervisorNotes() {
                     />
                     
                     <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-700">
-                      <div className="flex gap-3">
-                        <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors">
-                          <Bell size={18} />
-                        </button>
+                      <div className="flex gap-1 relative">
+                        {/* Reminder Button */}
+                        <div className="relative">
+                          <button 
+                            onClick={() => setIsReminderOpen(!isReminderOpen)}
+                            className={`p-2 rounded transition-colors ${reminder.date ? "text-blue-600 bg-blue-100 dark:bg-blue-900/30" : "text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700"}`}
+                          >
+                            <Bell size={18} />
+                          </button>
+                          
+                          {/* Reminder Popover */}
+                          <AnimatePresence>
+                            {isReminderOpen && (
+                              <motion.div
+                                initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                                className="absolute bottom-full mb-2 left-0 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 p-4 w-80 z-50"
+                              >
+                                <h4 className="font-semibold text-slate-800 dark:text-white mb-3">Set Reminder</h4>
+                                
+                                {/* Month Navigation */}
+                                <div className="flex items-center justify-between mb-4">
+                                  <button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}>
+                                    <ChevronLeft size={18} />
+                                  </button>
+                                  <span className="text-sm font-medium">{currentMonth.toLocaleDateString("en-US", { month: "long", year: "numeric" })}</span>
+                                  <button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}>
+                                    <ChevronRight size={18} />
+                                  </button>
+                                </div>
+
+                                {/* Calendar Grid */}
+                                <div className="grid grid-cols-7 gap-1 mb-4">
+                                  {["S", "M", "T", "W", "T", "F", "S"].map((day) => (
+                                    <div key={day} className="text-center text-xs font-semibold text-slate-500 py-2">
+                                      {day}
+                                    </div>
+                                  ))}
+                                  {generateCalendarDays().map((day, i) => (
+                                    <button
+                                      key={i}
+                                      onClick={() => {
+                                        if (day) {
+                                          const dateStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+                                          setReminder({ ...reminder, date: dateStr });
+                                        }
+                                      }}
+                                      disabled={!day}
+                                      className={`text-sm py-1 rounded ${!day ? "text-slate-200" : reminder.date?.includes(String(day)) ? "bg-blue-500 text-white font-bold" : "hover:bg-slate-100 dark:hover:bg-slate-700"}`}
+                                    >
+                                      {day}
+                                    </button>
+                                  ))}
+                                </div>
+
+                                {/* Time Selection */}
+                                <div className="flex items-center gap-2 mb-4">
+                                  <input type="number" min="00" max="23" value={reminder.time.split(":")[0] || "12"} onChange={(e) => setReminder({ ...reminder, time: `${e.target.value.padStart(2, "0")}:${reminder.time.split(":")[1] || "00"}` })} className="w-12 px-2 py-1 border rounded text-sm" />
+                                  <span>:</span>
+                                  <input type="number" min="00" max="59" value={reminder.time.split(":")[1] || "00"} onChange={(e) => setReminder({ ...reminder, time: `${reminder.time.split(":")[0] || "12"}:${e.target.value.padStart(2, "0")}` })} className="w-12 px-2 py-1 border rounded text-sm" />
+                                </div>
+
+                                <div className="flex gap-2">
+                                  <button onClick={() => setReminder({ date: "", time: "" })} className="flex-1 px-3 py-2 text-sm border rounded hover:bg-slate-50 dark:hover:bg-slate-700">Clear</button>
+                                  <button onClick={() => setIsReminderOpen(false)} className="flex-1 px-3 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-500">Done</button>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+
                         <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors">
                           <FileText size={18} />
                         </button>
                         <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors">
                           <Edit3 size={18} />
                         </button>
-                        <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors">
-                          <Flag size={18} />
-                        </button>
+                        
+                        {/* Label/Category Button */}
+                        <div className="relative">
+                          <button 
+                            onClick={() => setIsLabelOpen(!isLabelOpen)}
+                            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors"
+                          >
+                            <Flag size={18} />
+                          </button>
+                          
+                          {/* Label Popover */}
+                          <AnimatePresence>
+                            {isLabelOpen && (
+                              <motion.div
+                                initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                                className="absolute bottom-full mb-2 left-0 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 p-4 w-64 z-50"
+                              >
+                                <h4 className="font-semibold text-slate-800 dark:text-white mb-3">Labels</h4>
+                                <div className="space-y-2">
+                                  {categories.slice(3).map((cat) => {
+                                    const Icon = cat.icon;
+                                    return (
+                                      <button
+                                        key={cat.name}
+                                        onClick={() => {
+                                          setFormData({ ...formData, category: cat.name });
+                                          setIsLabelOpen(false);
+                                        }}
+                                        className={`w-full flex items-center gap-3 px-4 py-2 rounded transition-colors ${formData.category === cat.name ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300" : "hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300"}`}
+                                      >
+                                        <Icon size={16} />
+                                        <span className="text-sm">{cat.name}</span>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+
                         <button 
                           onClick={handleCancelEdit}
                           className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors"
@@ -302,17 +440,6 @@ export default function SupervisorNotes() {
                       </div>
 
                       <div className="flex gap-3">
-                        <select
-                          value={formData.category}
-                          onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                          className="px-4 py-2 bg-slate-100 dark:bg-slate-700 border-none rounded-lg text-sm font-medium text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                          {categories.map((cat) => (
-                            <option key={cat.name} value={cat.name}>
-                              {cat.name}
-                            </option>
-                          ))}
-                        </select>
                         <button
                           onClick={handleSaveNote}
                           className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition-colors"
