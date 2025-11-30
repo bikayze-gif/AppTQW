@@ -370,63 +370,61 @@ export default function SupervisorNotes() {
                                 </div>
 
                                 {/* Time Selection */}
-                                <div className="mb-6 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
-                                  <div className="text-center mb-4">
-                                    <div className="text-4xl font-bold text-slate-800 dark:text-white font-mono">
-                                      {(reminder.time.split(":")[0] || "12").padStart(2, "0")}:{(reminder.time.split(":")[1] || "00").padStart(2, "0")}
-                                    </div>
+                                <div className="mb-6 p-6 bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-700/30 dark:to-slate-700/50 rounded-lg text-center">
+                                  <div className="text-5xl font-bold text-slate-900 dark:text-white font-mono mb-6 tracking-tight">
+                                    {(reminder.time.split(":")[0] || "12").padStart(2, "0")}:{(reminder.time.split(":")[1] || "00").padStart(2, "0")}
                                   </div>
                                   
-                                  <div className="flex items-center justify-center gap-6">
+                                  <div className="flex items-center justify-center gap-12">
                                     {/* Hours */}
-                                    <div className="flex flex-col items-center gap-2">
+                                    <div className="flex flex-col items-center">
                                       <button 
                                         onClick={() => {
                                           const h = parseInt(reminder.time.split(":")[0] || "12");
                                           const newH = h === 23 ? 0 : h + 1;
                                           setReminder({ ...reminder, time: `${String(newH).padStart(2, "0")}:${reminder.time.split(":")[1] || "00"}` });
                                         }}
-                                        className="p-1 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded"
+                                        className="text-blue-500 hover:text-blue-600 mb-2 transition-colors"
                                       >
-                                        <Plus size={20} />
+                                        <Plus size={24} />
                                       </button>
-                                      <span className="text-xs text-slate-500 font-semibold">HH</span>
+                                      <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold mb-3">HH</span>
                                       <button 
                                         onClick={() => {
                                           const h = parseInt(reminder.time.split(":")[0] || "12");
                                           const newH = h === 0 ? 23 : h - 1;
                                           setReminder({ ...reminder, time: `${String(newH).padStart(2, "0")}:${reminder.time.split(":")[1] || "00"}` });
                                         }}
-                                        className="p-1 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded"
+                                        className="text-blue-500 hover:text-blue-600 transition-colors"
                                       >
-                                        <Minus size={20} />
+                                        <Minus size={24} />
                                       </button>
                                     </div>
 
-                                    <div className="text-2xl font-bold text-slate-400">:</div>
+                                    <div className="text-3xl font-bold text-slate-400 dark:text-slate-500">:</div>
 
                                     {/* Minutes */}
-                                    <div className="flex flex-col items-center gap-2">
+                                    <div className="flex flex-col items-center">
                                       <button 
                                         onClick={() => {
                                           const m = parseInt(reminder.time.split(":")[1] || "00");
                                           const newM = m === 59 ? 0 : m + 1;
                                           setReminder({ ...reminder, time: `${reminder.time.split(":")[0] || "12"}:${String(newM).padStart(2, "0")}` });
                                         }}
-                                        className="p-1 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded"
+                                        className="text-blue-500 hover:text-blue-600 mb-2 transition-colors"
                                       >
-                                        <Plus size={20} />
+                                        <Plus size={24} />
                                       </button>
-                                      <span className="text-xs text-slate-500 font-semibold">MM</span>
+                                      <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold mb-3">MM</span>
                                       <button 
                                         onClick={() => {
                                           const m = parseInt(reminder.time.split(":")[1] || "00");
                                           const newM = m === 0 ? 59 : m - 1;
                                           setReminder({ ...reminder, time: `${reminder.time.split(":")[0] || "12"}:${String(newM).padStart(2, "0")}` });
                                         }}
-                                        className="p-1 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded"
+                                        className="text-blue-500 hover:text-blue-600 transition-colors"
                                       >
-                                        <Minus size={20} />
+                                        <Minus size={24} />
                                       </button>
                                     </div>
                                   </div>
