@@ -138,6 +138,7 @@ export default function SupervisorNotes() {
   const formRef = useRef<HTMLDivElement>(null);
   const labelButtonRef = useRef<HTMLButtonElement>(null);
   const reminderButtonRef = useRef<HTMLButtonElement>(null);
+  const reminderPopoverRef = useRef<HTMLDivElement>(null);
   const [labelPopoverPos, setLabelPopoverPos] = useState({ top: 0, left: 0 });
   const [reminderPopoverPos, setReminderPopoverPos] = useState({ top: 0, left: 0 });
 
@@ -153,6 +154,20 @@ export default function SupervisorNotes() {
       return () => document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [isFormExpanded]);
+
+  useEffect(() => {
+    const handleClickOutsideReminder = (event: MouseEvent) => {
+      if (reminderPopoverRef.current && !reminderPopoverRef.current.contains(event.target as Node) && 
+          !reminderButtonRef.current?.contains(event.target as Node)) {
+        setIsReminderOpen(false);
+      }
+    };
+
+    if (isReminderOpen) {
+      document.addEventListener("mousedown", handleClickOutsideReminder);
+      return () => document.removeEventListener("mousedown", handleClickOutsideReminder);
+    }
+  }, [isReminderOpen]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -589,6 +604,7 @@ export default function SupervisorNotes() {
             <AnimatePresence>
               {isReminderOpen && (
                 <motion.div
+                  ref={reminderPopoverRef}
                   initial={{ opacity: 0, scale: 0.95, y: 10 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -625,7 +641,7 @@ export default function SupervisorNotes() {
                           </div>
                         ))}
                         {generateCalendarDays().map((day, i) => {
-                          const isSelected = day && reminder.date?.includes(String(day).padStart(2, "0"));
+                          const isSelected = day && reminder.date === `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
                           return (
                             <button
                               key={i}
@@ -633,6 +649,7 @@ export default function SupervisorNotes() {
                                 if (day) {
                                   const dateStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
                                   setReminder({ ...reminder, date: dateStr });
+                                  setIsReminderOpen(false);
                                 }
                               }}
                               disabled={!day}
@@ -776,8 +793,21 @@ export default function SupervisorNotes() {
                         className="w-full min-h-32 bg-transparent border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-600 dark:text-slate-300 placeholder-slate-400 resize-none p-3"
                       />
 
-                      {formData.category && formData.category !== "Notes" && (
-                        <div className="flex gap-2">
+                      <div className="flex gap-2 flex-wrap">
+                        {reminder.date && (
+                          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-300/50 dark:border-blue-700/50">
+                            <span className="text-sm font-medium">
+                              {new Date(reminder.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                            </span>
+                            <button
+                              onClick={() => setReminder({ ...reminder, date: "" })}
+                              className="text-current opacity-70 hover:opacity-100 transition-opacity"
+                            >
+                              <X size={16} />
+                            </button>
+                          </div>
+                        )}
+                        {formData.category && formData.category !== "Notes" && (
                           <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border ${categoryBadgeColors[formData.category] || "bg-slate-100 text-slate-800"} border-current border-opacity-30`}>
                             <span className="text-sm font-medium">{formData.category}</span>
                             <button
@@ -787,8 +817,8 @@ export default function SupervisorNotes() {
                               <X size={16} />
                             </button>
                           </div>
-                        </div>
-                      )}
+                        )}
+                      </div>
                       
                       <div className="flex items-center gap-1 pt-4 border-t border-slate-100 dark:border-slate-700">
                         {/* Reminder Button */}
