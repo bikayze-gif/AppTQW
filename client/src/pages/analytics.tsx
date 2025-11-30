@@ -214,21 +214,15 @@ export default function Analytics() {
               {activeTabData.isSpecialFormat ? (
                 // Special format for RECEPCIÓN, DIRECTA, REVERSA
                 <div>
-                  {/* Header - Title Section */}
-                  <div className="bg-[#06b6d4] px-4 md:px-6 py-2">
-                    <h3 className="text-xl md:text-2xl font-bold text-white uppercase">{activeTabData.label}</h3>
-                    <div className="h-0.5 w-12 bg-white mt-1"></div>
-                  </div>
-
                   {/* Column Headers */}
-                  <div className="bg-[#06b6d4] px-4 md:px-6 py-2 grid grid-cols-12 gap-4 items-center">
+                  <div className="bg-gradient-to-r from-[#06b6d4]/20 to-[#06b6d4]/10 border-b-2 border-[#06b6d4]/50 px-4 md:px-6 py-4 grid grid-cols-12 gap-4 items-center">
                     <button
                       onClick={() => handleSort("serie")}
                       className="col-span-6 text-left hover:bg-white/10 px-2 py-1 rounded transition-colors cursor-pointer"
                       data-testid="header-serie"
                     >
                       <div className="flex items-center gap-2">
-                        <p className="text-xs font-bold text-white uppercase">SERIE</p>
+                        <p className="text-xs font-bold text-[#06b6d4] uppercase tracking-wide">SERIE</p>
                         {sortColumn === "serie" && (
                           <span>
                             {sortDirection === "asc" ? (
@@ -246,7 +240,7 @@ export default function Analytics() {
                       data-testid="header-estado"
                     >
                       <div className="flex items-center gap-2">
-                        <p className="text-xs font-bold text-white uppercase">ESTADO</p>
+                        <p className="text-xs font-bold text-[#06b6d4] uppercase tracking-wide">ESTADO</p>
                         {sortColumn === "estado" && (
                           <span>
                             {sortDirection === "asc" ? (
@@ -259,7 +253,7 @@ export default function Analytics() {
                       </div>
                     </button>
                     <div className="col-span-3">
-                      <p className="text-xs font-bold text-white uppercase text-center">ACCIONES</p>
+                      <p className="text-xs font-bold text-[#06b6d4] uppercase text-center tracking-wide">ACCIONES</p>
                     </div>
                   </div>
 
@@ -323,12 +317,12 @@ export default function Analytics() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs">
                     <thead>
-                      <tr className="border-b border-white/5 bg-white/5">
+                      <tr className="border-b-2 border-[#06b6d4]/50 bg-gradient-to-r from-[#06b6d4]/20 to-[#06b6d4]/10">
                         {activeTabData.columns.map((col) => (
                           <th
                             key={col}
                             onClick={() => handleSort(col)}
-                            className="px-4 md:px-6 py-4 text-left font-semibold text-slate-300 text-xs capitalize cursor-pointer hover:bg-white/10 transition-colors"
+                            className="px-4 md:px-6 py-4 text-left font-semibold text-[#06b6d4] text-xs uppercase cursor-pointer hover:bg-white/10 transition-colors tracking-wide"
                             data-testid={`header-${col}`}
                           >
                             <div className="flex items-center gap-2">
