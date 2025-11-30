@@ -308,17 +308,24 @@ export default function SupervisorNotes() {
             >
               <AnimatePresence mode="wait">
                 {!isFormExpanded ? (
-                  <motion.input
+                  <motion.div
                     key="collapsed"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.2 }}
-                    type="text"
-                    placeholder="Take a note..."
                     onClick={() => setIsFormExpanded(true)}
-                    className="w-full text-slate-500 dark:text-slate-400 bg-transparent border-none focus:outline-none placeholder-slate-400 py-4 cursor-pointer text-base"
-                  />
+                    className="w-full flex items-center justify-between gap-4 py-4 cursor-pointer"
+                  >
+                    <span className="text-slate-500 dark:text-slate-400 text-base">
+                      {editingNoteId ? formData.title || "Take a note..." : "Take a note..."}
+                    </span>
+                    {editingNoteId && (
+                      <span className={`text-xs px-3 py-1 rounded-full font-semibold flex-shrink-0 ${categoryBadgeColors[formData.category] || "bg-slate-100 text-slate-800"}`}>
+                        {formData.category}
+                      </span>
+                    )}
+                  </motion.div>
                 ) : (
                   <motion.div
                     key="expanded"
@@ -328,13 +335,18 @@ export default function SupervisorNotes() {
                     transition={{ duration: 0.2 }}
                     className="space-y-4"
                   >
-                    <input
-                      type="text"
-                      placeholder="Title"
-                      value={formData.title}
-                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      className="w-full text-lg font-medium bg-transparent border-none focus:outline-none text-slate-800 dark:text-white placeholder-slate-400"
-                    />
+                    <div className="flex items-center justify-between gap-4 mb-2">
+                      <input
+                        type="text"
+                        placeholder="Title"
+                        value={formData.title}
+                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                        className="flex-1 text-lg font-medium bg-transparent border-none focus:outline-none text-slate-800 dark:text-white placeholder-slate-400"
+                      />
+                      <span className={`text-xs px-3 py-1 rounded-full font-semibold flex-shrink-0 ${categoryBadgeColors[formData.category] || "bg-slate-100 text-slate-800"}`}>
+                        {formData.category}
+                      </span>
+                    </div>
                     
                     <textarea
                       placeholder="Take a note..."
