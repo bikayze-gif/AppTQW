@@ -134,6 +134,7 @@ export default function SupervisorNotes() {
   const [isReminderOpen, setIsReminderOpen] = useState(false);
   const [isLabelOpen, setIsLabelOpen] = useState(false);
   const [reminder, setReminder] = useState({ date: "", time: "" });
+  const [tempReminderDate, setTempReminderDate] = useState("");
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const formRef = useRef<HTMLDivElement>(null);
   const labelButtonRef = useRef<HTMLButtonElement>(null);
@@ -641,15 +642,14 @@ export default function SupervisorNotes() {
                           </div>
                         ))}
                         {generateCalendarDays().map((day, i) => {
-                          const isSelected = day && reminder.date === `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+                          const dateStr = day ? `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}` : "";
+                          const isSelected = day && tempReminderDate === dateStr;
                           return (
                             <button
                               key={i}
                               onClick={() => {
                                 if (day) {
-                                  const dateStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-                                  setReminder({ ...reminder, date: dateStr });
-                                  setIsReminderOpen(false);
+                                  setTempReminderDate(dateStr);
                                 }
                               }}
                               disabled={!day}
@@ -705,13 +705,19 @@ export default function SupervisorNotes() {
                   {/* Footer Buttons */}
                   <div className="flex gap-3 px-6 py-4 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-700">
                     <button 
-                      onClick={() => setReminder({ date: "", time: "" })} 
+                      onClick={() => {
+                        setReminder({ date: "", time: "" });
+                        setTempReminderDate("");
+                      }} 
                       className="flex-1 px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                     >
                       Clear
                     </button>
                     <button 
-                      onClick={() => setIsReminderOpen(false)} 
+                      onClick={() => {
+                        setReminder({ ...reminder, date: tempReminderDate });
+                        setIsReminderOpen(false);
+                      }} 
                       className="flex-1 px-4 py-2.5 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors shadow-md"
                     >
                       Save
@@ -833,6 +839,9 @@ export default function SupervisorNotes() {
                                   left: rect.left + rect.width / 2 - 210
                                 });
                               }
+                            }
+                            if (!isReminderOpen) {
+                              setTempReminderDate(reminder.date);
                             }
                             setIsReminderOpen(!isReminderOpen);
                             if (!isReminderOpen) setIsLabelOpen(false);
