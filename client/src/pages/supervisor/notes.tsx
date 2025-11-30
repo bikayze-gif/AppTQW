@@ -272,36 +272,43 @@ export default function SupervisorNotes() {
           <div className="flex-1">
             {/* Create Note Form - Inline Expandable */}
             <motion.div 
-              className="mb-8 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm"
+              className={`mb-8 rounded-xl transition-all duration-300 ${
+                isFormExpanded 
+                  ? "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6 shadow-md" 
+                  : "bg-transparent border-b-2 border-slate-200 dark:border-slate-600"
+              }`}
               animate={{ minHeight: isFormExpanded ? "auto" : "auto" }}
             >
-              <input
-                type="text"
-                placeholder="Title"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                onFocus={() => setIsFormExpanded(true)}
-                className="w-full text-lg font-medium bg-transparent border-none focus:outline-none text-slate-800 dark:text-white placeholder-slate-400 mb-4"
-              />
-              
-              <AnimatePresence>
+              <AnimatePresence mode="wait">
                 {!isFormExpanded ? (
-                  <motion.div
+                  <motion.input
+                    key="collapsed"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    type="text"
+                    placeholder="Take a note..."
                     onClick={() => setIsFormExpanded(true)}
-                    className="w-full text-slate-500 bg-transparent border-none focus:outline-none placeholder-slate-400 cursor-pointer min-h-12 flex items-center"
-                  >
-                    Take a note...
-                  </motion.div>
+                    className="w-full text-slate-500 dark:text-slate-400 bg-transparent border-none focus:outline-none placeholder-slate-400 py-4 cursor-pointer text-base"
+                  />
                 ) : (
                   <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
+                    key="expanded"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
                     className="space-y-4"
                   >
+                    <input
+                      type="text"
+                      placeholder="Title"
+                      value={formData.title}
+                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                      className="w-full text-lg font-medium bg-transparent border-none focus:outline-none text-slate-800 dark:text-white placeholder-slate-400"
+                    />
+                    
                     <textarea
                       placeholder="Take a note..."
                       value={formData.content}
