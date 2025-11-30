@@ -804,6 +804,7 @@ export default function SupervisorNotes() {
                           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-300/50 dark:border-blue-700/50">
                             <span className="text-sm font-medium">
                               {new Date(reminder.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                              {reminder.time && `, ${reminder.time}`}
                             </span>
                             <button
                               onClick={() => setReminder({ ...reminder, date: "" })}
