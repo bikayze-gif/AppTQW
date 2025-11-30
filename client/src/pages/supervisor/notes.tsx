@@ -714,7 +714,7 @@ export default function SupervisorNotes() {
                       onClick={() => setIsReminderOpen(false)} 
                       className="flex-1 px-4 py-2.5 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors shadow-md"
                     >
-                      Today
+                      Save
                     </button>
                   </div>
                 </motion.div>
