@@ -125,21 +125,45 @@ export default function SupervisorNotes() {
   const [isFormExpanded, setIsFormExpanded] = useState(false);
   const [formData, setFormData] = useState({ title: "", content: "", category: "Notes" });
   const [searchQuery, setSearchQuery] = useState("");
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
 
-  const handleCreateNote = () => {
+  const handleSaveNote = () => {
     if (formData.title.trim()) {
-      const newNote: Note = {
-        id: Date.now().toString(),
-        title: formData.title,
-        content: formData.content,
-        category: formData.category,
-        color: categoryColors[formData.category] || "bg-slate-50",
-        timestamp: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-      };
-      setNotes([newNote, ...notes]);
+      if (editingNoteId) {
+        // Update existing note
+        setNotes(notes.map(note => 
+          note.id === editingNoteId 
+            ? { ...note, title: formData.title, content: formData.content, category: formData.category }
+            : note
+        ));
+      } else {
+        // Create new note
+        const newNote: Note = {
+          id: Date.now().toString(),
+          title: formData.title,
+          content: formData.content,
+          category: formData.category,
+          color: categoryColors[formData.category] || "bg-slate-50",
+          timestamp: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+        };
+        setNotes([newNote, ...notes]);
+      }
       setFormData({ title: "", content: "", category: "Notes" });
       setIsFormExpanded(false);
+      setEditingNoteId(null);
     }
+  };
+
+  const handleEditNote = (note: Note) => {
+    setFormData({ title: note.title, content: note.content, category: note.category });
+    setEditingNoteId(note.id);
+    setIsFormExpanded(true);
+  };
+
+  const handleCancelEdit = () => {
+    setFormData({ title: "", content: "", category: "Notes" });
+    setIsFormExpanded(false);
+    setEditingNoteId(null);
   };
 
   const filteredNotes = notes.filter((note) => {
@@ -266,7 +290,7 @@ export default function SupervisorNotes() {
                           <Flag size={18} />
                         </button>
                         <button 
-                          onClick={() => setIsFormExpanded(false)}
+                          onClick={handleCancelEdit}
                           className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors"
                         >
                           <X size={18} />
@@ -286,10 +310,10 @@ export default function SupervisorNotes() {
                           ))}
                         </select>
                         <button
-                          onClick={handleCreateNote}
+                          onClick={handleSaveNote}
                           className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition-colors"
                         >
-                          Create
+                          {editingNoteId ? "Update" : "Create"}
                         </button>
                       </div>
                     </div>
@@ -307,7 +331,8 @@ export default function SupervisorNotes() {
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.9 }}
-                    className={`rounded-2xl border-2 p-6 cursor-pointer hover:shadow-lg transition-shadow ${categoryColors[note.category] || "bg-slate-50 border-slate-200"}`}
+                    onClick={() => handleEditNote(note)}
+                    className={`rounded-2xl border-2 p-6 cursor-pointer hover:shadow-lg transition-shadow ${categoryColors[note.category] || "bg-slate-50 border-slate-200"} ${editingNoteId === note.id ? "ring-2 ring-blue-500" : ""}`}
                   >
                     {note.image && (
                       <div className="mb-4 -mx-6 -mt-6">
