@@ -19,7 +19,7 @@ export function BottomNav({ onAddClick }: BottomNavProps) {
 
   const handleLogout = () => {
     setShowLogoutModal(false);
-    window.location.href = "/";
+    window.location.href = "/login";
   };
 
   return (
