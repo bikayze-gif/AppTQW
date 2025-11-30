@@ -585,6 +585,125 @@ export default function SupervisorNotes() {
               </AnimatePresence>
             </div>
 
+            {/* Reminder Popover - Rendered outside modal */}
+            <AnimatePresence>
+              {isReminderOpen && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                  style={{
+                    position: 'fixed',
+                    top: `${reminderPopoverPos.top}px`,
+                    left: `${reminderPopoverPos.left}px`,
+                  }}
+                  className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 w-[420px] z-[100] overflow-hidden"
+                >
+                  <div className="flex gap-6 p-6">
+                    {/* Left: Calendar */}
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-4">
+                        <button 
+                          onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}
+                          className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors"
+                        >
+                          <ChevronLeft size={18} className="text-slate-600 dark:text-slate-300" />
+                        </button>
+                        <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{currentMonth.toLocaleDateString("en-US", { month: "short", year: "numeric" })}</span>
+                        <button 
+                          onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}
+                          className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors"
+                        >
+                          <ChevronRight size={18} className="text-slate-600 dark:text-slate-300" />
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-7 gap-1.5">
+                        {["S", "M", "T", "W", "T", "F", "S"].map((day, idx) => (
+                          <div key={`day-${idx}`} className="text-center text-xs font-bold text-slate-400 dark:text-slate-500 py-1.5">
+                            {day}
+                          </div>
+                        ))}
+                        {generateCalendarDays().map((day, i) => {
+                          const isSelected = day && reminder.date?.includes(String(day).padStart(2, "0"));
+                          return (
+                            <button
+                              key={i}
+                              onClick={() => {
+                                if (day) {
+                                  const dateStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+                                  setReminder({ ...reminder, date: dateStr });
+                                }
+                              }}
+                              disabled={!day}
+                              className={`text-xs py-1.5 rounded-lg font-medium transition-all ${!day ? "invisible" : ""} ${isSelected ? "bg-blue-600 text-white shadow-md font-bold" : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"}`}
+                            >
+                              {day}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Divider */}
+                    <div className="w-px bg-slate-200 dark:bg-slate-600" />
+
+                    {/* Right: Time Picker */}
+                    <div className="flex flex-col items-center justify-center min-w-[80px]">
+                      <button 
+                        onClick={() => {
+                          const h = parseInt(reminder.time.split(":")[0] || "0");
+                          const newH = h === 23 ? 0 : h + 1;
+                          setReminder({ ...reminder, time: `${String(newH).padStart(2, "0")}:${reminder.time.split(":")[1] || "00"}` });
+                        }}
+                        className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors mb-2"
+                      >
+                        <Plus size={22} />
+                      </button>
+                      <div className="text-2xl font-bold text-slate-900 dark:text-white font-mono mb-2">
+                        {(reminder.time.split(":")[0] || "00").padStart(2, "0")}
+                      </div>
+                      <button 
+                        onClick={() => {
+                          const h = parseInt(reminder.time.split(":")[0] || "0");
+                          const newH = h === 0 ? 23 : h - 1;
+                          setReminder({ ...reminder, time: `${String(newH).padStart(2, "0")}:${reminder.time.split(":")[1] || "00"}` });
+                        }}
+                        className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+                      >
+                        <Minus size={22} />
+                      </button>
+
+                      <div className="flex flex-col gap-2 ml-2 mt-4">
+                        <button className="px-4 py-1.5 text-xs font-bold bg-blue-600 text-white rounded-full hover:bg-blue-500 transition-colors shadow-md">
+                          AM
+                        </button>
+                        <button className="px-4 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors">
+                          PM
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Footer Buttons */}
+                  <div className="flex gap-3 px-6 py-4 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-700">
+                    <button 
+                      onClick={() => setReminder({ date: "", time: "" })} 
+                      className="flex-1 px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                    >
+                      Clear
+                    </button>
+                    <button 
+                      onClick={() => setIsReminderOpen(false)} 
+                      className="flex-1 px-4 py-2.5 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors shadow-md"
+                    >
+                      Today
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             {/* Edit Modal */}
             <AnimatePresence>
               {isEditModalOpen && (
@@ -636,146 +755,25 @@ export default function SupervisorNotes() {
                       
                       <div className="flex items-center gap-1 pt-4 border-t border-slate-100 dark:border-slate-700">
                         {/* Reminder Button */}
-                        <div>
-                          <button 
-                            ref={reminderButtonRef}
-                            onClick={() => {
-                              if (!isReminderOpen) {
-                                const rect = reminderButtonRef.current?.getBoundingClientRect();
-                                if (rect) {
-                                  setReminderPopoverPos({
-                                    top: rect.top - 10,
-                                    left: rect.left + rect.width / 2 - 210
-                                  });
-                                }
+                        <button 
+                          ref={reminderButtonRef}
+                          onClick={() => {
+                            if (!isReminderOpen) {
+                              const rect = reminderButtonRef.current?.getBoundingClientRect();
+                              if (rect) {
+                                setReminderPopoverPos({
+                                  top: rect.top - 10,
+                                  left: rect.left + rect.width / 2 - 210
+                                });
                               }
-                              setIsReminderOpen(!isReminderOpen);
-                              if (!isReminderOpen) setIsLabelOpen(false);
-                            }}
-                            className={`p-2 rounded transition-colors ${reminder.date ? "text-blue-600 bg-blue-100 dark:bg-blue-900/30" : "text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700"}`}
-                          >
-                            <Bell size={18} />
-                          </button>
-                          
-                          {/* Reminder Popover - Fixed positioning to escape modal */}
-                          <AnimatePresence>
-                            {isReminderOpen && (
-                              <motion.div
-                                initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                                animate={{ opacity: 1, scale: 1, y: 0 }}
-                                exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                                style={{
-                                  position: 'fixed',
-                                  top: `${reminderPopoverPos.top}px`,
-                                  left: `${reminderPopoverPos.left}px`,
-                                }}
-                                className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 w-[420px] z-[100] overflow-hidden"
-                              >
-                                <div className="flex gap-6 p-6">
-                                  {/* Left: Calendar */}
-                                  <div className="flex-1">
-                                    <div className="flex items-center justify-between mb-4">
-                                      <button 
-                                        onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}
-                                        className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors"
-                                      >
-                                        <ChevronLeft size={18} className="text-slate-600 dark:text-slate-300" />
-                                      </button>
-                                      <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{currentMonth.toLocaleDateString("en-US", { month: "short", year: "numeric" })}</span>
-                                      <button 
-                                        onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}
-                                        className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors"
-                                      >
-                                        <ChevronRight size={18} className="text-slate-600 dark:text-slate-300" />
-                                      </button>
-                                    </div>
-
-                                    <div className="grid grid-cols-7 gap-1.5">
-                                      {["S", "M", "T", "W", "T", "F", "S"].map((day, idx) => (
-                                        <div key={`day-${idx}`} className="text-center text-xs font-bold text-slate-400 dark:text-slate-500 py-1.5">
-                                          {day}
-                                        </div>
-                                      ))}
-                                      {generateCalendarDays().map((day, i) => {
-                                        const isSelected = day && reminder.date?.includes(String(day).padStart(2, "0"));
-                                        return (
-                                          <button
-                                            key={i}
-                                            onClick={() => {
-                                              if (day) {
-                                                const dateStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-                                                setReminder({ ...reminder, date: dateStr });
-                                              }
-                                            }}
-                                            disabled={!day}
-                                            className={`text-xs py-1.5 rounded-lg font-medium transition-all ${!day ? "invisible" : ""} ${isSelected ? "bg-blue-600 text-white shadow-md font-bold" : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"}`}
-                                          >
-                                            {day}
-                                          </button>
-                                        );
-                                      })}
-                                    </div>
-                                  </div>
-
-                                  {/* Divider */}
-                                  <div className="w-px bg-slate-200 dark:bg-slate-600" />
-
-                                  {/* Right: Time Picker */}
-                                  <div className="flex flex-col items-center justify-center min-w-[80px]">
-                                    <button 
-                                      onClick={() => {
-                                        const h = parseInt(reminder.time.split(":")[0] || "0");
-                                        const newH = h === 23 ? 0 : h + 1;
-                                        setReminder({ ...reminder, time: `${String(newH).padStart(2, "0")}:${reminder.time.split(":")[1] || "00"}` });
-                                      }}
-                                      className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors mb-2"
-                                    >
-                                      <Plus size={22} />
-                                    </button>
-                                    <div className="text-2xl font-bold text-slate-900 dark:text-white font-mono mb-2">
-                                      {(reminder.time.split(":")[0] || "00").padStart(2, "0")}
-                                    </div>
-                                    <button 
-                                      onClick={() => {
-                                        const h = parseInt(reminder.time.split(":")[0] || "0");
-                                        const newH = h === 0 ? 23 : h - 1;
-                                        setReminder({ ...reminder, time: `${String(newH).padStart(2, "0")}:${reminder.time.split(":")[1] || "00"}` });
-                                      }}
-                                      className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
-                                    >
-                                      <Minus size={22} />
-                                    </button>
-
-                                    <div className="flex flex-col gap-2 ml-2 mt-4">
-                                      <button className="px-4 py-1.5 text-xs font-bold bg-blue-600 text-white rounded-full hover:bg-blue-500 transition-colors shadow-md">
-                                        AM
-                                      </button>
-                                      <button className="px-4 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors">
-                                        PM
-                                      </button>
-                                    </div>
-                                  </div>
-                                </div>
-
-                                {/* Footer Buttons */}
-                                <div className="flex gap-3 px-6 py-4 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-700">
-                                  <button 
-                                    onClick={() => setReminder({ date: "", time: "" })} 
-                                    className="flex-1 px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-                                  >
-                                    Clear
-                                  </button>
-                                  <button 
-                                    onClick={() => setIsReminderOpen(false)} 
-                                    className="flex-1 px-4 py-2.5 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors shadow-md"
-                                  >
-                                    Today
-                                  </button>
-                                </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </div>
+                            }
+                            setIsReminderOpen(!isReminderOpen);
+                            if (!isReminderOpen) setIsLabelOpen(false);
+                          }}
+                          className={`p-2 rounded transition-colors ${reminder.date ? "text-blue-600 bg-blue-100 dark:bg-blue-900/30" : "text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700"}`}
+                        >
+                          <Bell size={18} />
+                        </button>
 
                         <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors">
                           <FileText size={18} />
