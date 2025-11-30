@@ -335,18 +335,13 @@ export default function SupervisorNotes() {
                     transition={{ duration: 0.2 }}
                     className="space-y-4"
                   >
-                    <div className="flex items-center justify-between gap-4 mb-2">
-                      <input
-                        type="text"
-                        placeholder="Title"
-                        value={formData.title}
-                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                        className="flex-1 text-lg font-medium bg-transparent border-none focus:outline-none text-slate-800 dark:text-white placeholder-slate-400"
-                      />
-                      <span className={`text-xs px-3 py-1 rounded-full font-semibold flex-shrink-0 ${categoryBadgeColors[formData.category] || "bg-slate-100 text-slate-800"}`}>
-                        {formData.category}
-                      </span>
-                    </div>
+                    <input
+                      type="text"
+                      placeholder="Title"
+                      value={formData.title}
+                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                      className="w-full text-lg font-medium bg-transparent border-none focus:outline-none text-slate-800 dark:text-white placeholder-slate-400"
+                    />
                     
                     <textarea
                       placeholder="Take a note..."
@@ -354,6 +349,21 @@ export default function SupervisorNotes() {
                       onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                       className="w-full min-h-24 bg-transparent border-none focus:outline-none text-slate-600 dark:text-slate-300 placeholder-slate-400 resize-none"
                     />
+
+                    {/* Label Tag */}
+                    {formData.category && formData.category !== "Notes" && (
+                      <div className="flex gap-2">
+                        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border ${categoryBadgeColors[formData.category] || "bg-slate-100 text-slate-800"} border-current border-opacity-30`}>
+                          <span className="text-sm font-medium">{formData.category}</span>
+                          <button
+                            onClick={() => setFormData({ ...formData, category: "Notes" })}
+                            className="text-current opacity-70 hover:opacity-100 transition-opacity"
+                          >
+                            <X size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    )}
                     
                     <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-700">
                       <div className="flex gap-1 relative">
