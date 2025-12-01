@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { ChevronLeft, Search, X, ArrowUp, ArrowDown, Clock, Check, Trash2, MoreVertical } from "lucide-react";
+import { ChevronLeft, Search, X, ArrowUp, ArrowDown, Clock, Check, Trash2, MoreVertical, History, CheckSquare, Send } from "lucide-react";
 import { useLocation } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -59,13 +59,38 @@ const getStatusColor = (status: string) => {
   }
 };
 
+interface TableAction {
+  label: string;
+  icon: any;
+  color: string;
+}
+
 interface Tab {
   id: string;
   label: string;
   data: any[];
   columns: string[];
   isSpecialFormat?: boolean;
+  actions?: TableAction[];
 }
+
+const tableActions: Record<string, TableAction[]> = {
+  recepcion: [
+    { label: "Pendiente", icon: Clock, color: "yellow-400" },
+    { label: "Completado", icon: Check, color: "green-400" },
+    { label: "Eliminar", icon: Trash2, color: "red-400" }
+  ],
+  directa: [
+    { label: "Historial", icon: History, color: "blue-400" },
+    { label: "Declarar", icon: CheckSquare, color: "green-400" },
+    { label: "Transferir", icon: Send, color: "purple-400" }
+  ],
+  reversa: [
+    { label: "Revisar", icon: Check, color: "green-400" },
+    { label: "Rechazar", icon: X, color: "red-400" },
+    { label: "Enviar", icon: Send, color: "blue-400" }
+  ]
+};
 
 const tabs: Tab[] = [
   {
@@ -80,6 +105,7 @@ const tabs: Tab[] = [
     data: mockData2,
     columns: ["serie", "estado"],
     isSpecialFormat: true,
+    actions: tableActions.recepcion,
   },
   {
     id: "directa",
@@ -87,6 +113,7 @@ const tabs: Tab[] = [
     data: mockData3,
     columns: ["serie", "estado"],
     isSpecialFormat: true,
+    actions: tableActions.directa,
   },
   {
     id: "reversa",
@@ -94,6 +121,7 @@ const tabs: Tab[] = [
     data: mockData4,
     columns: ["serie", "estado"],
     isSpecialFormat: true,
+    actions: tableActions.reversa,
   },
 ];
 
@@ -276,27 +304,25 @@ export default function Analytics() {
                               </button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-48">
-                              <DropdownMenuItem
-                                className="flex items-center gap-2 cursor-pointer"
-                                data-testid={`action-clock-${idx}`}
-                              >
-                                <Clock size={16} className="text-yellow-400" />
-                                <span>Pendiente</span>
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                className="flex items-center gap-2 cursor-pointer"
-                                data-testid={`action-check-${idx}`}
-                              >
-                                <Check size={16} className="text-green-400" />
-                                <span>Completado</span>
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                className="flex items-center gap-2 cursor-pointer text-red-400"
-                                data-testid={`action-trash-${idx}`}
-                              >
-                                <Trash2 size={16} />
-                                <span>Eliminar</span>
-                              </DropdownMenuItem>
+                              {activeTabData?.actions?.map((action, actionIdx) => {
+                                const ActionIcon = action.icon;
+                                const colorClass = action.color === "red-400" ? "text-red-400" : 
+                                                   action.color === "green-400" ? "text-green-400" :
+                                                   action.color === "blue-400" ? "text-blue-400" :
+                                                   action.color === "yellow-400" ? "text-yellow-400" :
+                                                   action.color === "purple-400" ? "text-purple-400" : "text-slate-300";
+                                const itemColorClass = action.color === "red-400" ? "text-red-400" : "";
+                                return (
+                                  <DropdownMenuItem
+                                    key={actionIdx}
+                                    className={`flex items-center gap-2 cursor-pointer ${itemColorClass}`}
+                                    data-testid={`action-${action.label.toLowerCase()}-${idx}`}
+                                  >
+                                    <ActionIcon size={16} className={colorClass} />
+                                    <span>{action.label}</span>
+                                  </DropdownMenuItem>
+                                );
+                              })}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
