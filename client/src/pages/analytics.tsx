@@ -142,6 +142,14 @@ export default function Analytics() {
   const [rutCliente, setRutCliente] = useState("");
   const [observations, setObservations] = useState("");
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
+  
+  const [isTransferOpen, setIsTransferOpen] = useState(false);
+  const [transferSerie, setTransferSerie] = useState<string>("");
+  const [escalamientoSupervisor, setEscalamientoSupervisor] = useState<string | null>(null);
+  const [escalamientoBodega, setEscalamientoBodega] = useState<string | null>(null);
+  const [transferTecnico, setTransferTecnico] = useState<string>("");
+  const [transferFoto, setTransferFoto] = useState<string | null>(null);
+  const [transferMotivo, setTransferMotivo] = useState<string>("");
 
   const activeTabData = tabs.find((tab) => tab.id === activeTab);
 
@@ -201,6 +209,30 @@ export default function Analytics() {
     if (workOrder.trim()) {
       console.log("Declarar instalada:", { selectedSerie, workOrder, rutCliente, observations, selectedFile });
       setIsDeclareOpen(false);
+    }
+  };
+
+  const handleTransferClick = (serie: string) => {
+    setTransferSerie(serie);
+    setEscalamientoSupervisor(null);
+    setEscalamientoBodega(null);
+    setTransferTecnico("");
+    setTransferFoto(null);
+    setTransferMotivo("");
+    setIsTransferOpen(true);
+  };
+
+  const handleTransferSubmit = () => {
+    if (transferMotivo.trim()) {
+      const escalamiento = escalamientoSupervisor || escalamientoBodega;
+      console.log("Transferencia:", {
+        transferSerie,
+        escalamiento,
+        transferTecnico: escalamientoSupervisor ? null : transferTecnico,
+        transferFoto,
+        transferMotivo
+      });
+      setIsTransferOpen(false);
     }
   };
 
@@ -348,6 +380,9 @@ export default function Analytics() {
                                       if (action.label === "Declarar" && activeTab === "directa") {
                                         handleDeclareClick(row.serie);
                                       }
+                                      if (action.label === "Transferir" && activeTab === "directa") {
+                                        handleTransferClick(row.serie);
+                                      }
                                     }}
                                   >
                                     <ActionIcon size={16} className={colorClass} />
@@ -431,6 +466,188 @@ export default function Analytics() {
           </Card>
         )}
       </main>
+
+      {/* Transfer Dialog */}
+      <Sheet open={isTransferOpen} onOpenChange={setIsTransferOpen}>
+        <SheetContent side="right" className="w-full sm:w-96 p-0 bg-slate-900 border-l border-white/10">
+          {/* Header */}
+          <div className="h-16 border-b border-white/10 flex items-center px-6">
+            <SheetClose asChild>
+              <button className="p-2 hover:bg-white/10 rounded-lg transition-colors -ml-2">
+                <ArrowLeft size={20} className="text-slate-400" />
+              </button>
+            </SheetClose>
+            <h2 className="text-lg font-semibold text-white ml-4">
+              Canal de requerimientos
+            </h2>
+          </div>
+
+          {/* Content */}
+          <div className="overflow-y-auto h-[calc(100vh-64px)]">
+            <div className="p-6 space-y-6">
+              {/* Serie Seleccionada */}
+              <div>
+                <label className="block text-sm font-semibold text-white mb-3">
+                  SERIE SELECCIONADA
+                </label>
+                <input
+                  type="text"
+                  value={transferSerie}
+                  readOnly
+                  className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-lg text-white focus:outline-none cursor-not-allowed"
+                  data-testid="input-transfer-serie"
+                />
+              </div>
+
+              {/* Escalamiento a Supervisor */}
+              <div>
+                <label className="block text-sm font-semibold text-white mb-3 uppercase">
+                  Escalamiento a Supervisor
+                </label>
+                <div className="space-y-2">
+                  {["Validación supervisor", "PROBLEMA SISTEMICO", "Equipo serie incorrecta"].map((option) => (
+                    <button
+                      key={option}
+                      onClick={() => {
+                        setEscalamientoSupervisor(option);
+                        setEscalamientoBodega(null);
+                        setTransferTecnico("");
+                      }}
+                      className={`w-full px-4 py-3 rounded-lg font-medium transition-colors flex items-center gap-2 text-left ${
+                        escalamientoSupervisor === option
+                          ? "bg-cyan-500 text-black"
+                          : "bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30"
+                      }`}
+                      data-testid={`button-escalamiento-supervisor-${option.toLowerCase().replace(/\s/g, "-")}`}
+                    >
+                      <Send size={18} />
+                      {option}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Escalamiento a Bodega */}
+              <div>
+                <label className="block text-sm font-semibold text-white mb-3 uppercase">
+                  Escalamiento a Bodega
+                </label>
+                <div className="space-y-2">
+                  {["Equipo con desperfecto", "Serie no aparece en TOA", "Serie a regularizar por cierre de inventario", "Devuelto a bodega"].map((option) => (
+                    <button
+                      key={option}
+                      onClick={() => {
+                        setEscalamientoBodega(option);
+                        setEscalamientoSupervisor(null);
+                        setTransferTecnico("");
+                      }}
+                      className={`w-full px-4 py-3 rounded-lg font-medium transition-colors flex items-center gap-2 text-left ${
+                        escalamientoBodega === option
+                          ? "bg-red-600 text-white"
+                          : "bg-red-500/20 text-red-400 hover:bg-red-500/30"
+                      }`}
+                      data-testid={`button-escalamiento-bodega-${option.toLowerCase().replace(/\s/g, "-")}`}
+                    >
+                      <Send size={18} />
+                      {option}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Transferencia Entre Tecnicos */}
+              {!escalamientoSupervisor && !escalamientoBodega && (
+                <div>
+                  <label className="block text-sm font-semibold text-white mb-3 uppercase">
+                    Transferencia Entre Tecnicos
+                  </label>
+                  <button className="w-full px-4 py-3 bg-amber-400 hover:bg-amber-500 text-black font-medium rounded-lg transition-colors flex items-center gap-2 justify-center">
+                    <Send size={18} />
+                    Transferencia a otro tecnico
+                  </button>
+
+                  {/* Tecnico a quien transfiere */}
+                  <div className="mt-4">
+                    <label className="block text-sm font-semibold text-white mb-3">
+                      Técnico a quien transfiere <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={transferTecnico}
+                      onChange={(e) => setTransferTecnico(e.target.value)}
+                      className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                      data-testid="select-transfer-tecnico"
+                    >
+                      <option value="">Seleccione el técnico a transferir</option>
+                      <option value="tecnico1">Técnico 1</option>
+                      <option value="tecnico2">Técnico 2</option>
+                      <option value="tecnico3">Técnico 3</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {/* Cargar Foto */}
+              <div>
+                <label className="block text-sm font-semibold text-white mb-3">
+                  Cargar Foto
+                </label>
+                <div className="flex gap-3 mb-2">
+                  <button
+                    onClick={() => {
+                      const input = document.createElement("input");
+                      input.type = "file";
+                      input.accept = ".jpg,.png,.pdf,.doc,.docx";
+                      input.onchange = (e: any) => {
+                        const file = e.target.files[0];
+                        if (file && file.size <= 5 * 1024 * 1024) {
+                          setTransferFoto(file.name);
+                        }
+                      };
+                      input.click();
+                    }}
+                    className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white hover:bg-slate-700 transition-colors text-sm font-medium"
+                    data-testid="button-transfer-select-file"
+                  >
+                    Seleccionar archivo
+                  </button>
+                  <div className="flex-1 px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-slate-400 text-sm flex items-center">
+                    {transferFoto ? transferFoto : "Ningún arc... eleccionado"}
+                  </div>
+                </div>
+                <p className="text-xs text-slate-400">
+                  Formatos permitidos: JPG, PNG, PDF, DOC, DOCX<br/>
+                  Tamaño máximo: 5MB
+                </p>
+              </div>
+
+              {/* Motivo */}
+              <div>
+                <label className="block text-sm font-semibold text-white mb-3">
+                  MOTIVO <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  placeholder=""
+                  value={transferMotivo}
+                  onChange={(e) => setTransferMotivo(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 resize-none"
+                  rows={4}
+                  data-testid="input-transfer-motivo"
+                />
+              </div>
+
+              {/* Enviar Button */}
+              <button
+                onClick={handleTransferSubmit}
+                disabled={!transferMotivo.trim()}
+                className="w-full py-3 bg-green-600 hover:bg-green-700 disabled:bg-green-600/50 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors mt-8"
+                data-testid="button-enviar-requerimiento"
+              >
+                Enviar requerimiento
+              </button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* Declare Dialog */}
       <Sheet open={isDeclareOpen} onOpenChange={setIsDeclareOpen}>
