@@ -32,6 +32,8 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
       setLocation("/supervisor");
     } else if (label === "Messenger") {
       setLocation("/supervisor/messenger");
+    } else if (label === "Scrumboard") {
+      setLocation("/supervisor/scrumboard");
     }
   };
 
