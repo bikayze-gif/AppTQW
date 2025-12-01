@@ -82,8 +82,8 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
           <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-200 mb-3">
             <img src="https://i.pravatar.cc/150?img=33" alt="User" className="w-full h-full object-cover" />
           </div>
-          <h3 className={`font-semibold text-slate-800 dark:text-white ${!isSidebarOpen && "hidden"}`}>Abbott Keitch</h3>
-          <p className={`text-xs text-slate-500 ${!isSidebarOpen && "hidden"}`}>admin@fusetheme.com</p>
+          <h3 className={`font-semibold text-slate-800 dark:text-white ${!isSidebarOpen && "hidden"}`}>Nicolas Cornejo</h3>
+          <p className={`text-xs text-slate-500 ${!isSidebarOpen && "hidden"}`}>nicolas.cornejo@telqway.cl</p>
         </div>
 
         {/* Navigation */}
@@ -162,7 +162,7 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
                   <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-200">
                     <img src="https://i.pravatar.cc/150?img=33" alt="User" className="w-full h-full object-cover" />
                   </div>
-                  <span className="hidden md:block text-sm font-medium text-slate-700 dark:text-slate-200">Abbott Keitch</span>
+                  <span className="hidden md:block text-sm font-medium text-slate-700 dark:text-slate-200">Nicolas Cornejo</span>
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
