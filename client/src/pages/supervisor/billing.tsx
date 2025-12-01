@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { SupervisorLayout } from "@/components/supervisor/supervisor-layout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ArrowUpDown, Download, Plus, Search, Edit, FileText, Mail, X } from "lucide-react";
+import { ArrowUpDown, Download, Plus, Search, Edit, FileText, Mail, X, Upload } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -341,51 +341,85 @@ function EditBillingModal({
             />
           </div>
 
-          {/* Archivo Detalle */}
+          {/* Archivo Detalle - File Upload */}
           <div>
             <Label htmlFor="archivo_detalle" className="text-slate-700">Archivo Detalle</Label>
-            <Input
-              id="archivo_detalle"
-              value={formData.archivo_detalle}
-              onChange={(e) =>
-                setFormData({ ...formData, archivo_detalle: e.target.value })
-              }
-              className="mt-1 bg-white border-slate-300 text-slate-900"
-              data-testid="input-archivo_detalle"
-            />
+            <div className="mt-1 flex items-center gap-2">
+              <label className="flex-1 relative cursor-pointer">
+                <div className="bg-white border-2 border-dashed border-slate-300 rounded-lg p-4 hover:border-blue-400 transition-colors text-center flex items-center justify-center gap-2">
+                  <Upload className="w-4 h-4 text-slate-500" />
+                  <span className="text-sm text-slate-600">
+                    {formData.archivo_detalle || "Seleccionar archivo"}
+                  </span>
+                </div>
+                <input
+                  id="archivo_detalle"
+                  type="file"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setFormData({ ...formData, archivo_detalle: file.name });
+                    }
+                  }}
+                  data-testid="input-archivo_detalle"
+                />
+              </label>
+            </div>
           </div>
 
-          {/* Correo Enviado */}
+          {/* Correo Enviado - File Upload */}
           <div>
             <Label htmlFor="correo_enviado" className="text-slate-700">Correo Enviado</Label>
-            <Input
-              id="correo_enviado"
-              type="email"
-              value={formData.correo_enviado}
-              onChange={(e) =>
-                setFormData({ ...formData, correo_enviado: e.target.value })
-              }
-              className="mt-1 bg-white border-slate-300 text-slate-900"
-              data-testid="input-correo_enviado"
-            />
+            <div className="mt-1 flex items-center gap-2">
+              <label className="flex-1 relative cursor-pointer">
+                <div className="bg-white border-2 border-dashed border-slate-300 rounded-lg p-4 hover:border-blue-400 transition-colors text-center flex items-center justify-center gap-2">
+                  <Upload className="w-4 h-4 text-slate-500" />
+                  <span className="text-sm text-slate-600">
+                    {formData.correo_enviado || "Seleccionar archivo"}
+                  </span>
+                </div>
+                <input
+                  id="correo_enviado"
+                  type="file"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setFormData({ ...formData, correo_enviado: file.name });
+                    }
+                  }}
+                  data-testid="input-correo_enviado"
+                />
+              </label>
+            </div>
           </div>
 
-          {/* Correo Recepcionado */}
+          {/* Correo Recepcionado - File Upload */}
           <div>
             <Label htmlFor="correo_recepcionado" className="text-slate-700">Correo Recepcionado</Label>
-            <Input
-              id="correo_recepcionado"
-              type="email"
-              value={formData.correo_recepcionado}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  correo_recepcionado: e.target.value,
-                })
-              }
-              className="mt-1 bg-white border-slate-300 text-slate-900"
-              data-testid="input-correo_recepcionado"
-            />
+            <div className="mt-1 flex items-center gap-2">
+              <label className="flex-1 relative cursor-pointer">
+                <div className="bg-white border-2 border-dashed border-slate-300 rounded-lg p-4 hover:border-blue-400 transition-colors text-center flex items-center justify-center gap-2">
+                  <Upload className="w-4 h-4 text-slate-500" />
+                  <span className="text-sm text-slate-600">
+                    {formData.correo_recepcionado || "Seleccionar archivo"}
+                  </span>
+                </div>
+                <input
+                  id="correo_recepcionado"
+                  type="file"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setFormData({ ...formData, correo_recepcionado: file.name });
+                    }
+                  }}
+                  data-testid="input-correo_recepcionado"
+                />
+              </label>
+            </div>
           </div>
         </div>
 
