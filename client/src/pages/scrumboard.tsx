@@ -88,28 +88,27 @@ export default function ScrumBoard() {
     todo: {
       id: "todo",
       title: "Por Hacer",
-      color: "from-blue-50 to-blue-100/50",
+      color: "bg-blue-50",
       tasks: mockTasks.todo,
       icon: <AlertCircle className="w-5 h-5 text-blue-600" />,
     },
     inProgress: {
       id: "inProgress",
       title: "En Progreso",
-      color: "from-amber-50 to-amber-100/50",
+      color: "bg-amber-50",
       tasks: mockTasks.inProgress,
       icon: <Clock className="w-5 h-5 text-amber-600" />,
     },
     done: {
       id: "done",
       title: "Completado",
-      color: "from-green-50 to-green-100/50",
+      color: "bg-green-50",
       tasks: mockTasks.done,
       icon: <CheckCircle2 className="w-5 h-5 text-green-600" />,
     },
   });
 
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -125,18 +124,17 @@ export default function ScrumBoard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800">
+    <div className="min-h-screen bg-white pb-24">
       {/* Header */}
-      <div className="border-b border-slate-700/50 backdrop-blur-md bg-slate-900/50">
+      <div className="border-b border-slate-200 bg-white sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-white mb-2">Scrum Board</h1>
-              <p className="text-slate-400">Sprint 42 - Diciembre 2025</p>
+              <h1 className="text-3xl font-bold text-slate-900 mb-2">Scrum Board</h1>
+              <p className="text-slate-500">Sprint 42 - Diciembre 2025</p>
             </div>
             <Button
-              onClick={() => setIsNewTaskOpen(true)}
-              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg shadow-lg hover:shadow-xl transition-all"
+              className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md"
               data-testid="button-create-task"
             >
               <Plus className="w-5 h-5 mr-2" />
@@ -152,10 +150,10 @@ export default function ScrumBoard() {
           {Object.values(columns).map((column) => (
             <div
               key={column.id}
-              className="flex flex-col h-[calc(100vh-200px)] rounded-xl bg-gradient-to-b from-slate-800/50 to-slate-800/20 border border-slate-700/50 overflow-hidden backdrop-blur-sm"
+              className="flex flex-col bg-white rounded-lg border border-slate-200 overflow-hidden"
             >
               {/* Column Header */}
-              <div className={`bg-gradient-to-r ${column.color} border-b border-slate-700/30 px-4 py-4`}>
+              <div className={`${column.color} border-b border-slate-200 px-4 py-4`}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     {column.icon}
@@ -164,7 +162,7 @@ export default function ScrumBoard() {
                       <p className="text-xs text-slate-600 mt-1">{column.tasks.length} tareas</p>
                     </div>
                   </div>
-                  <span className="bg-white/60 text-slate-700 px-2 py-1 rounded-full text-xs font-semibold">
+                  <span className="bg-white text-slate-700 px-2 py-1 rounded-full text-xs font-semibold border border-slate-300">
                     {column.tasks.length}
                   </span>
                 </div>
@@ -172,11 +170,11 @@ export default function ScrumBoard() {
 
               {/* Tasks Container */}
               <div
-                className="flex-1 overflow-y-auto space-y-3 p-4"
+                className="flex-1 overflow-y-auto space-y-3 p-4 min-h-96"
                 data-testid={`column-${column.id}`}
               >
                 {column.tasks.length === 0 ? (
-                  <div className="flex items-center justify-center h-32 text-slate-500">
+                  <div className="flex items-center justify-center h-32 text-slate-400">
                     <p className="text-center">No hay tareas</p>
                   </div>
                 ) : (
@@ -184,21 +182,21 @@ export default function ScrumBoard() {
                     <Card
                       key={task.id}
                       onClick={() => setSelectedTask(task)}
-                      className="p-4 bg-gradient-to-br from-slate-700/80 to-slate-800/60 hover:from-slate-700 hover:to-slate-800 border border-slate-600/50 hover:border-slate-500 cursor-pointer transition-all duration-200 group shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                      className="p-4 bg-white border border-slate-200 hover:border-slate-300 hover:shadow-md cursor-pointer transition-all duration-200 group"
                       data-testid={`card-task-${task.id}`}
                     >
                       {/* Task Header */}
                       <div className="flex items-start justify-between mb-3">
-                        <h3 className="font-semibold text-white text-sm group-hover:text-blue-300 transition-colors flex-1 pr-2">
+                        <h3 className="font-semibold text-slate-900 text-sm group-hover:text-blue-600 transition-colors flex-1 pr-2">
                           {task.title}
                         </h3>
-                        <button className="p-1 hover:bg-slate-600/50 rounded opacity-0 group-hover:opacity-100 transition-all">
+                        <button className="p-1 hover:bg-slate-100 rounded opacity-0 group-hover:opacity-100 transition-all">
                           <MoreHorizontal className="w-4 h-4 text-slate-400" />
                         </button>
                       </div>
 
                       {/* Description */}
-                      <p className="text-xs text-slate-400 mb-3 line-clamp-2">{task.description}</p>
+                      <p className="text-xs text-slate-600 mb-3 line-clamp-2">{task.description}</p>
 
                       {/* Tags */}
                       {task.tags.length > 0 && (
@@ -206,7 +204,7 @@ export default function ScrumBoard() {
                           {task.tags.map((tag) => (
                             <Badge
                               key={tag}
-                              className="bg-slate-600/50 text-slate-200 text-xs hover:bg-slate-600 transition-colors"
+                              className="bg-slate-100 text-slate-700 text-xs hover:bg-slate-200 transition-colors"
                               data-testid={`tag-${tag}`}
                             >
                               {tag}
@@ -225,15 +223,15 @@ export default function ScrumBoard() {
                               : "Baja"}
                         </Badge>
                         {task.dueDate && (
-                          <span className="text-xs text-slate-400">{task.dueDate}</span>
+                          <span className="text-xs text-slate-500">{task.dueDate}</span>
                         )}
                       </div>
 
                       {/* Assignees */}
                       {task.assignees.length > 0 && (
-                        <div className="mt-3 pt-3 border-t border-slate-600/30 flex items-center gap-2">
+                        <div className="mt-3 pt-3 border-t border-slate-200 flex items-center gap-2">
                           <Users className="w-3 h-3 text-slate-500" />
-                          <span className="text-xs text-slate-400">
+                          <span className="text-xs text-slate-600">
                             {task.assignees.join(", ")}
                           </span>
                         </div>
@@ -244,11 +242,10 @@ export default function ScrumBoard() {
               </div>
 
               {/* Add Task Button */}
-              <div className="border-t border-slate-700/30 p-4">
+              <div className="border-t border-slate-200 p-4">
                 <Button
                   variant="outline"
-                  className="w-full text-slate-300 border-slate-600 hover:bg-slate-700/50 hover:text-slate-100 transition-all"
-                  onClick={() => setIsNewTaskOpen(true)}
+                  className="w-full text-slate-700 border-slate-300 hover:bg-slate-50"
                   data-testid={`button-add-task-${column.id}`}
                 >
                   <Plus className="w-4 h-4 mr-2" />
@@ -263,17 +260,17 @@ export default function ScrumBoard() {
       {/* Task Detail Modal */}
       {selectedTask && (
         <Dialog open={!!selectedTask} onOpenChange={() => setSelectedTask(null)}>
-          <DialogContent className="bg-slate-800 border border-slate-700 text-white">
+          <DialogContent className="bg-white border border-slate-200 text-slate-900">
             <DialogHeader>
-              <DialogTitle className="text-white">{selectedTask.title}</DialogTitle>
+              <DialogTitle className="text-slate-900">{selectedTask.title}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div>
-                <h3 className="text-sm font-semibold text-slate-300 mb-2">Descripción</h3>
-                <p className="text-slate-400">{selectedTask.description}</p>
+                <h3 className="text-sm font-semibold text-slate-700 mb-2">Descripción</h3>
+                <p className="text-slate-600">{selectedTask.description}</p>
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-slate-300 mb-2">Prioridad</h3>
+                <h3 className="text-sm font-semibold text-slate-700 mb-2">Prioridad</h3>
                 <Badge className={`${getPriorityColor(selectedTask.priority)}`}>
                   {selectedTask.priority === "high"
                     ? "Alta"
@@ -283,23 +280,23 @@ export default function ScrumBoard() {
                 </Badge>
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-slate-300 mb-2">Asignados</h3>
-                <p className="text-slate-400">{selectedTask.assignees.join(", ")}</p>
+                <h3 className="text-sm font-semibold text-slate-700 mb-2">Asignados</h3>
+                <p className="text-slate-600">{selectedTask.assignees.join(", ")}</p>
               </div>
               {selectedTask.dueDate && (
                 <div>
-                  <h3 className="text-sm font-semibold text-slate-300 mb-2">Fecha límite</h3>
-                  <p className="text-slate-400">{selectedTask.dueDate}</p>
+                  <h3 className="text-sm font-semibold text-slate-700 mb-2">Fecha límite</h3>
+                  <p className="text-slate-600">{selectedTask.dueDate}</p>
                 </div>
               )}
               {selectedTask.tags.length > 0 && (
                 <div>
-                  <h3 className="text-sm font-semibold text-slate-300 mb-2">Etiquetas</h3>
+                  <h3 className="text-sm font-semibold text-slate-700 mb-2">Etiquetas</h3>
                   <div className="flex flex-wrap gap-2">
                     {selectedTask.tags.map((tag) => (
                       <Badge
                         key={tag}
-                        className="bg-slate-600 text-slate-100"
+                        className="bg-slate-100 text-slate-700"
                         data-testid={`modal-tag-${tag}`}
                       >
                         {tag}
