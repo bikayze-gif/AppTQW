@@ -76,6 +76,7 @@ export function TaskDetailModal({ task, onClose, open }: TaskDetailModalProps) {
   const [newComment, setNewComment] = useState("");
   const [activePanel, setActivePanel] = useState<string | null>(null);
   const [comments, setComments] = useState(mockComments);
+  const [attachments, setAttachments] = useState(mockAttachments);
 
   if (!task) return null;
 
@@ -153,6 +154,10 @@ export function TaskDetailModal({ task, onClose, open }: TaskDetailModalProps) {
       e.preventDefault();
       handleSaveComment();
     }
+  };
+
+  const handleDeleteAttachment = (id: string) => {
+    setAttachments(attachments.filter((attachment) => attachment.id !== id));
   };
 
   const completedCount = checklistItems.filter((item) => item.completed).length;
@@ -260,14 +265,21 @@ export function TaskDetailModal({ task, onClose, open }: TaskDetailModalProps) {
               <div>
                 <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Attachments</h3>
                 <div className="grid grid-cols-2 gap-4">
-                  {mockAttachments.map((attachment) => (
+                  {attachments.map((attachment) => (
                     <div
                       key={attachment.id}
-                      className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden hover:shadow-md transition-shadow"
+                      className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden hover:shadow-md transition-shadow group relative"
                       data-testid={`attachment-${attachment.id}`}
                     >
-                      <div className="h-24 bg-gradient-to-br from-slate-400 to-slate-600 flex items-center justify-center">
+                      <div className="h-24 bg-gradient-to-br from-slate-400 to-slate-600 flex items-center justify-center relative">
                         <Paperclip className="w-6 h-6 text-white" />
+                        <button
+                          onClick={() => handleDeleteAttachment(attachment.id)}
+                          className="absolute top-1 right-1 p-1.5 bg-red-500 hover:bg-red-600 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                          data-testid={`btn-delete-attachment-${attachment.id}`}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
                       <div className="p-3">
                         <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{attachment.name}</p>
@@ -492,14 +504,23 @@ export function TaskDetailModal({ task, onClose, open }: TaskDetailModalProps) {
                   Add File
                 </Button>
                 <div className="mt-4 space-y-2">
-                  {mockAttachments.map((attachment) => (
+                  {attachments.map((attachment) => (
                     <div
                       key={attachment.id}
-                      className="p-2 bg-white dark:bg-slate-700 rounded border border-slate-200 dark:border-slate-600"
+                      className="p-2 bg-white dark:bg-slate-700 rounded border border-slate-200 dark:border-slate-600 flex items-center justify-between group hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors"
                       data-testid={`attachment-panel-${attachment.id}`}
                     >
-                      <p className="text-xs font-medium text-slate-900 dark:text-white truncate">{attachment.name}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{attachment.date}</p>
+                      <div>
+                        <p className="text-xs font-medium text-slate-900 dark:text-white truncate">{attachment.name}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{attachment.date}</p>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteAttachment(attachment.id)}
+                        className="ml-2 p-1.5 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 rounded opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
+                        data-testid={`btn-delete-attachment-panel-${attachment.id}`}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   ))}
                 </div>
