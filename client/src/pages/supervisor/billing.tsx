@@ -175,10 +175,10 @@ function EditBillingModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white text-slate-900">
         <DialogHeader>
-          <DialogTitle>Editar Facturación - {formData.proyecto}</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-slate-900">Editar Facturación - {formData.proyecto}</DialogTitle>
+          <DialogDescription className="text-slate-600">
             Modifica los detalles de la factura y guarda los cambios
           </DialogDescription>
         </DialogHeader>
@@ -186,63 +186,63 @@ function EditBillingModal({
         <div className="grid grid-cols-2 gap-4">
           {/* Período */}
           <div>
-            <Label htmlFor="periodo">Período</Label>
+            <Label htmlFor="periodo" className="text-slate-700">Período</Label>
             <Input
               id="periodo"
               value={formData.periodo}
               onChange={(e) =>
                 setFormData({ ...formData, periodo: e.target.value })
               }
-              className="mt-1"
+              className="mt-1 bg-white border-slate-300 text-slate-900"
               data-testid="input-periodo"
             />
           </div>
 
           {/* Línea */}
           <div>
-            <Label htmlFor="linea">Línea</Label>
+            <Label htmlFor="linea" className="text-slate-700">Línea</Label>
             <Input
               id="linea"
               value={formData.linea}
               onChange={(e) =>
                 setFormData({ ...formData, linea: e.target.value })
               }
-              className="mt-1"
+              className="mt-1 bg-white border-slate-300 text-slate-900"
               data-testid="input-linea"
             />
           </div>
 
           {/* Proyecto */}
           <div className="col-span-2">
-            <Label htmlFor="proyecto">Proyecto</Label>
+            <Label htmlFor="proyecto" className="text-slate-700">Proyecto</Label>
             <Input
               id="proyecto"
               value={formData.proyecto}
               onChange={(e) =>
                 setFormData({ ...formData, proyecto: e.target.value })
               }
-              className="mt-1"
+              className="mt-1 bg-white border-slate-300 text-slate-900"
               data-testid="input-proyecto"
             />
           </div>
 
           {/* Observación */}
           <div className="col-span-2">
-            <Label htmlFor="observacion">Observación</Label>
+            <Label htmlFor="observacion" className="text-slate-700">Observación</Label>
             <Textarea
               id="observacion"
               value={formData.observacion}
               onChange={(e) =>
                 setFormData({ ...formData, observacion: e.target.value })
               }
-              className="mt-1"
+              className="mt-1 bg-white border-slate-300 text-slate-900"
               data-testid="textarea-observacion"
             />
           </div>
 
           {/* Cantidad */}
           <div>
-            <Label htmlFor="cantidad">Cantidad</Label>
+            <Label htmlFor="cantidad" className="text-slate-700">Cantidad</Label>
             <Input
               id="cantidad"
               type="number"
@@ -250,14 +250,14 @@ function EditBillingModal({
               onChange={(e) =>
                 setFormData({ ...formData, cantidad: parseInt(e.target.value) })
               }
-              className="mt-1"
+              className="mt-1 bg-white border-slate-300 text-slate-900"
               data-testid="input-cantidad"
             />
           </div>
 
           {/* Valorización */}
           <div>
-            <Label htmlFor="valorizacion">Valorización</Label>
+            <Label htmlFor="valorizacion" className="text-slate-700">Valorización</Label>
             <Input
               id="valorizacion"
               type="number"
@@ -266,14 +266,14 @@ function EditBillingModal({
               onChange={(e) =>
                 setFormData({ ...formData, valorizacion: parseFloat(e.target.value) })
               }
-              className="mt-1"
+              className="mt-1 bg-white border-slate-300 text-slate-900"
               data-testid="input-valorizacion"
             />
           </div>
 
           {/* Fecha Gestión */}
           <div>
-            <Label htmlFor="fecha_gestion">Fecha de Gestión</Label>
+            <Label htmlFor="fecha_gestion" className="text-slate-700">Fecha de Gestión</Label>
             <Input
               id="fecha_gestion"
               type="date"
@@ -281,28 +281,28 @@ function EditBillingModal({
               onChange={(e) =>
                 setFormData({ ...formData, fecha_gestion: e.target.value })
               }
-              className="mt-1"
+              className="mt-1 bg-white border-slate-300 text-slate-900"
               data-testid="input-fecha_gestion"
             />
           </div>
 
           {/* Responsable */}
           <div>
-            <Label htmlFor="responsable">Responsable</Label>
+            <Label htmlFor="responsable" className="text-slate-700">Responsable</Label>
             <Input
               id="responsable"
               value={formData.responsable}
               onChange={(e) =>
                 setFormData({ ...formData, responsable: e.target.value })
               }
-              className="mt-1"
+              className="mt-1 bg-white border-slate-300 text-slate-900"
               data-testid="input-responsable"
             />
           </div>
 
           {/* Estado */}
           <div>
-            <Label htmlFor="estado">Estado</Label>
+            <Label htmlFor="estado" className="text-slate-700">Estado</Label>
             <Select
               value={formData.estado}
               onValueChange={(value) =>
@@ -312,7 +312,7 @@ function EditBillingModal({
                 })
               }
             >
-              <SelectTrigger className="mt-1" data-testid="select-estado">
+              <SelectTrigger className="mt-1 bg-white border-slate-300 text-slate-900" data-testid="select-estado">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -326,7 +326,7 @@ function EditBillingModal({
 
           {/* Observación Gestión */}
           <div className="col-span-2">
-            <Label htmlFor="observacion_gestion">Observación de Gestión</Label>
+            <Label htmlFor="observacion_gestion" className="text-slate-700">Observación de Gestión</Label>
             <Textarea
               id="observacion_gestion"
               value={formData.observacion_gestion}
@@ -336,28 +336,28 @@ function EditBillingModal({
                   observacion_gestion: e.target.value,
                 })
               }
-              className="mt-1"
+              className="mt-1 bg-white border-slate-300 text-slate-900"
               data-testid="textarea-observacion_gestion"
             />
           </div>
 
           {/* Archivo Detalle */}
           <div>
-            <Label htmlFor="archivo_detalle">Archivo Detalle</Label>
+            <Label htmlFor="archivo_detalle" className="text-slate-700">Archivo Detalle</Label>
             <Input
               id="archivo_detalle"
               value={formData.archivo_detalle}
               onChange={(e) =>
                 setFormData({ ...formData, archivo_detalle: e.target.value })
               }
-              className="mt-1"
+              className="mt-1 bg-white border-slate-300 text-slate-900"
               data-testid="input-archivo_detalle"
             />
           </div>
 
           {/* Correo Enviado */}
           <div>
-            <Label htmlFor="correo_enviado">Correo Enviado</Label>
+            <Label htmlFor="correo_enviado" className="text-slate-700">Correo Enviado</Label>
             <Input
               id="correo_enviado"
               type="email"
@@ -365,14 +365,14 @@ function EditBillingModal({
               onChange={(e) =>
                 setFormData({ ...formData, correo_enviado: e.target.value })
               }
-              className="mt-1"
+              className="mt-1 bg-white border-slate-300 text-slate-900"
               data-testid="input-correo_enviado"
             />
           </div>
 
           {/* Correo Recepcionado */}
           <div>
-            <Label htmlFor="correo_recepcionado">Correo Recepcionado</Label>
+            <Label htmlFor="correo_recepcionado" className="text-slate-700">Correo Recepcionado</Label>
             <Input
               id="correo_recepcionado"
               type="email"
@@ -383,7 +383,7 @@ function EditBillingModal({
                   correo_recepcionado: e.target.value,
                 })
               }
-              className="mt-1"
+              className="mt-1 bg-white border-slate-300 text-slate-900"
               data-testid="input-correo_recepcionado"
             />
           </div>
