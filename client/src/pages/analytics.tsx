@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { ChevronLeft, Search, X, ArrowUp, ArrowDown, Clock, Check, Trash2, MoreVertical, History, CheckSquare, Send } from "lucide-react";
+import { ChevronLeft, Search, X, ArrowUp, ArrowDown, Clock, Check, Trash2, MoreVertical, History, CheckSquare, Send, ArrowLeft, Upload } from "lucide-react";
 import { useLocation } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -8,6 +8,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetClose,
+} from "@/components/ui/sheet";
 
 const mockData1 = [
   { id: 1, nombre: "Técnico A", estado: "Activo", valor: "95%", fecha: "2025-01-15" },
@@ -131,6 +136,12 @@ export default function Analytics() {
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [searchText, setSearchText] = useState("");
+  const [isDeclareOpen, setIsDeclareOpen] = useState(false);
+  const [selectedSerie, setSelectedSerie] = useState<string>("");
+  const [workOrder, setWorkOrder] = useState("");
+  const [rutCliente, setRutCliente] = useState("");
+  const [observations, setObservations] = useState("");
+  const [selectedFile, setSelectedFile] = useState<string | null>(null);
 
   const activeTabData = tabs.find((tab) => tab.id === activeTab);
 
@@ -175,6 +186,22 @@ export default function Analytics() {
       value.includes("%") ||
       ["Activo", "Pendiente", "Inactivo", "Pausado", "Alta", "Media", "Baja"].includes(value)
     );
+  };
+
+  const handleDeclareClick = (serie: string) => {
+    setSelectedSerie(serie);
+    setWorkOrder("");
+    setRutCliente("");
+    setObservations("");
+    setSelectedFile(null);
+    setIsDeclareOpen(true);
+  };
+
+  const handleDeclareSubmit = () => {
+    if (workOrder.trim()) {
+      console.log("Declarar instalada:", { selectedSerie, workOrder, rutCliente, observations, selectedFile });
+      setIsDeclareOpen(false);
+    }
   };
 
   return (
@@ -317,6 +344,11 @@ export default function Analytics() {
                                     key={actionIdx}
                                     className={`flex items-center gap-2 cursor-pointer ${itemColorClass}`}
                                     data-testid={`action-${action.label.toLowerCase()}-${idx}`}
+                                    onClick={() => {
+                                      if (action.label === "Declarar" && activeTab === "directa") {
+                                        handleDeclareClick(row.serie);
+                                      }
+                                    }}
                                   >
                                     <ActionIcon size={16} className={colorClass} />
                                     <span>{action.label}</span>
@@ -399,6 +431,135 @@ export default function Analytics() {
           </Card>
         )}
       </main>
+
+      {/* Declare Dialog */}
+      <Sheet open={isDeclareOpen} onOpenChange={setIsDeclareOpen}>
+        <SheetContent side="right" className="w-full sm:w-96 p-0 bg-slate-900 border-l border-white/10">
+          {/* Header */}
+          <div className="h-16 border-b border-white/10 flex items-center px-6">
+            <SheetClose asChild>
+              <button className="p-2 hover:bg-white/10 rounded-lg transition-colors -ml-2">
+                <ArrowLeft size={20} className="text-slate-400" />
+              </button>
+            </SheetClose>
+            <h2 className="text-lg font-semibold text-white ml-4">
+              declara la serie instalada
+            </h2>
+          </div>
+
+          {/* Content */}
+          <div className="overflow-y-auto h-[calc(100vh-64px)]">
+            <div className="p-6 space-y-6">
+              {/* Serie Seleccionada */}
+              <div>
+                <label className="block text-sm font-semibold text-white mb-3">
+                  SERIE SELECCIONADA
+                </label>
+                <input
+                  type="text"
+                  value={selectedSerie}
+                  readOnly
+                  className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-lg text-white focus:outline-none cursor-not-allowed"
+                  data-testid="input-serie-selected"
+                />
+              </div>
+
+              {/* Orden de trabajo */}
+              <div>
+                <label className="block text-sm font-semibold text-white mb-3">
+                  Orden de trabajo <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ingrese la orden de trabajo"
+                  value={workOrder}
+                  onChange={(e) => setWorkOrder(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500"
+                  data-testid="input-work-order"
+                />
+              </div>
+
+              {/* RUT cliente */}
+              <div>
+                <label className="block text-sm font-semibold text-white mb-3">
+                  RUT cliente
+                </label>
+                <input
+                  type="text"
+                  placeholder=""
+                  value={rutCliente}
+                  onChange={(e) => setRutCliente(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500"
+                  data-testid="input-rut-cliente"
+                />
+              </div>
+
+              {/* Observaciones */}
+              <div>
+                <label className="block text-sm font-semibold text-white mb-3">
+                  Observaciones
+                </label>
+                <textarea
+                  placeholder="Describa los detalles de la instalación (opcional)"
+                  value={observations}
+                  onChange={(e) => setObservations(e.target.value.substring(0, 500))}
+                  maxLength={500}
+                  rows={5}
+                  className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 resize-none"
+                  data-testid="input-observations"
+                />
+                <p className="text-xs text-slate-400 mt-2">
+                  Campo opcional, máximo 500 caracteres
+                </p>
+              </div>
+
+              {/* Cargar Archivo */}
+              <div>
+                <label className="block text-sm font-semibold text-white mb-3">
+                  Cargar Archivo
+                </label>
+                <div className="flex gap-3 mb-2">
+                  <button
+                    onClick={() => {
+                      const input = document.createElement("input");
+                      input.type = "file";
+                      input.accept = ".jpg,.png,.pdf,.doc,.docx";
+                      input.onchange = (e: any) => {
+                        const file = e.target.files[0];
+                        if (file && file.size <= 5 * 1024 * 1024) {
+                          setSelectedFile(file.name);
+                        }
+                      };
+                      input.click();
+                    }}
+                    className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white hover:bg-slate-700 transition-colors text-sm font-medium"
+                    data-testid="button-select-file"
+                  >
+                    Seleccionar archivo
+                  </button>
+                  <div className="flex-1 px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-slate-400 text-sm flex items-center">
+                    {selectedFile ? selectedFile : "Ningún archi... seleccionado"}
+                  </div>
+                </div>
+                <p className="text-xs text-slate-400">
+                  Formatos permitidos: JPG, PNG, PDF, DOC, DOCX<br/>
+                  Tamaño máximo: 5MB
+                </p>
+              </div>
+
+              {/* Declarar Button */}
+              <button
+                onClick={handleDeclareSubmit}
+                disabled={!workOrder.trim()}
+                className="w-full py-3 bg-green-600 hover:bg-green-700 disabled:bg-green-600/50 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors mt-8"
+                data-testid="button-declare"
+              >
+                Declarar instalada
+              </button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
