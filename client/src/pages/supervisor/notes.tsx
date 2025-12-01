@@ -193,6 +193,8 @@ export default function SupervisorNotes() {
         ));
         // Automatically select the category of the updated note so it's visible
         setSelectedCategory(formData.category);
+        // Close modal after update
+        setIsEditModalOpen(false);
       } else {
         // Create new note
         const newNote: Note = {
