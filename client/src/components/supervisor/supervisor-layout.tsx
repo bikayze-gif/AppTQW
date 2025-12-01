@@ -64,7 +64,7 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
       {/* Sidebar */}
       <aside 
         className={`${
-          isSidebarOpen ? "w-72" : "w-0 md:w-20"
+          isSidebarOpen ? "w-60" : "w-0 md:w-20"
         } bg-white dark:bg-[#1e293b] border-r border-slate-200 dark:border-slate-800 flex flex-col transition-all duration-300 z-20`}
       >
         {/* Logo Area */}
