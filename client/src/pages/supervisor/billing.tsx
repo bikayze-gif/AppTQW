@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { SupervisorLayout } from "@/components/supervisor/supervisor-layout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -159,6 +159,12 @@ function EditBillingModal({
   record: BillingRecord | null;
 }) {
   const [formData, setFormData] = useState<BillingRecord | null>(record);
+
+  useEffect(() => {
+    if (record) {
+      setFormData(record);
+    }
+  }, [record, isOpen]);
 
   const handleSave = () => {
     console.log("Guardando:", formData);
