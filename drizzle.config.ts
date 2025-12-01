@@ -1,14 +1,15 @@
-import { defineConfig } from "drizzle-kit";
 
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL, ensure the database is provisioned");
-}
+import { defineConfig } from "drizzle-kit";
 
 export default defineConfig({
   out: "./migrations",
   schema: "./shared/schema.ts",
-  dialect: "postgresql",
+  dialect: "mysql",
   dbCredentials: {
-    url: process.env.DATABASE_URL,
+    host: "170.239.85.233",
+    port: 3306,
+    user: "ncornejo",
+    password: "N1c0l7as17",
+    database: "ncornejo", // ajusta el nombre de tu base de datos
   },
 });
