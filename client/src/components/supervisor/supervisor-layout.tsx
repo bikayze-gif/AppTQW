@@ -4,7 +4,7 @@ import {
   Calendar, MessageSquare, Users, ShoppingCart, Folder, 
   HelpCircle, Mail, FileText, Trello, CheckSquare, 
   User, Bell, Settings, Menu, ChevronRight, Search,
-  LogOut, NotebookPen
+  LogOut, NotebookPen, BarChart3
 } from "lucide-react";
 import { 
   DropdownMenu,
@@ -34,6 +34,8 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
       setLocation("/supervisor/messenger");
     } else if (label === "Scrumboard") {
       setLocation("/supervisor/scrumboard");
+    } else if (label === "Monitoring") {
+      setLocation("/supervisor/monitoring");
     }
   };
 
@@ -47,6 +49,7 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
     { icon: Mail, label: "Mail", badgeCount: 27 },
     { icon: NotebookPen, label: "Notes" },
     { icon: Trello, label: "Scrumboard" },
+    { icon: BarChart3, label: "Monitoring" },
     { icon: CheckSquare, label: "Tasks", badge: "12 remaining tasks" },
     { icon: User, label: "Profile" },
     { icon: Bell, label: "Notifications" },
