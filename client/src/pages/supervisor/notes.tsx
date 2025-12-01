@@ -172,7 +172,7 @@ export default function SupervisorNotes() {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if ((event.ctrlKey || event.metaKey) && event.key === "Enter" && isFormExpanded) {
+      if ((event.ctrlKey || event.metaKey) && event.key === "Enter" && (isFormExpanded || isEditModalOpen)) {
         event.preventDefault();
         handleSaveNote();
       }
@@ -180,7 +180,7 @@ export default function SupervisorNotes() {
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isFormExpanded, formData, editingNoteId, notes]);
+  }, [isFormExpanded, isEditModalOpen, formData, editingNoteId, notes]);
 
   const handleSaveNote = () => {
     if (formData.title.trim()) {
