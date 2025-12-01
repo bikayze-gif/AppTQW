@@ -20,6 +20,7 @@ import SupervisorNotes from "@/pages/supervisor/notes";
 import SupervisorMessenger from "@/pages/supervisor/messenger";
 import SupervisorScrumboard from "@/pages/supervisor/scrumboard";
 import SupervisorMonitoring from "@/pages/supervisor/monitoring";
+import SupervisorBilling from "@/pages/supervisor/billing";
 
 function Router() {
   return (
@@ -30,6 +31,7 @@ function Router() {
       <Route path="/supervisor/messenger" component={SupervisorMessenger} />
       <Route path="/supervisor/scrumboard" component={SupervisorScrumboard} />
       <Route path="/supervisor/monitoring" component={SupervisorMonitoring} />
+      <Route path="/supervisor/billing" component={SupervisorBilling} />
       <Route path="/" component={PeriodInfo} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/activity" component={Activity} />
