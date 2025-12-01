@@ -30,6 +30,8 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
   const handleNavigation = (label: string) => {
     if (label === "Notes") {
       setLocation("/supervisor");
+    } else if (label === "Messenger") {
+      setLocation("/supervisor/messenger");
     }
   };
 
