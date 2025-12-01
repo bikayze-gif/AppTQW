@@ -16,7 +16,6 @@ export function BottomNav({ onAddClick }: BottomNavProps) {
   const isDashboard = currentPath === "/dashboard";
   const isActivity = currentPath === "/activity";
   const isAnalytics = currentPath === "/analytics";
-  const isScrumboard = currentPath === "/scrumboard";
 
   const handleLogout = () => {
     setShowLogoutModal(false);
@@ -70,11 +69,7 @@ export function BottomNav({ onAddClick }: BottomNavProps) {
           >
             <Ticket size={22} />
           </button>
-          <button 
-            onClick={() => setLocation("/scrumboard")}
-            className={`p-2 rounded-lg relative hover:bg-white/5 transition-colors ${isScrumboard ? "text-[#06b6d4]" : "text-slate-400 hover:text-white"}`}
-            data-testid="button-nav-scrumboard"
-          >
+          <button className="text-slate-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/5" data-testid="button-nav-box">
             <Box size={22} />
           </button>
           <button 
