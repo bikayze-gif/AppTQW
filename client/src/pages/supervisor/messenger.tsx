@@ -1,7 +1,19 @@
 import { useState } from "react";
 import { SupervisorLayout } from "@/components/supervisor/supervisor-layout";
-import { Search, Send, Paperclip, Smile, MoreVertical, Phone, Video } from "lucide-react";
+import { Search, Send, Paperclip, Smile, MoreVertical, Phone, Video, ArrowLeft, User, Mail, MessageSquare, Radio, AlertCircle } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetClose,
+} from "@/components/ui/sheet";
+import { useLocation } from "wouter";
 
 interface Chat {
   id: string;
@@ -21,9 +33,12 @@ interface Message {
 }
 
 export default function SupervisorMessenger() {
+  const [, setLocation] = useLocation();
   const [selectedChat, setSelectedChat] = useState<string>("1");
   const [searchQuery, setSearchQuery] = useState("");
   const [messageInput, setMessageInput] = useState("");
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [profileStatus, setProfileStatus] = useState<"online" | "away" | "disturb">("online");
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
@@ -289,9 +304,22 @@ export default function SupervisorMessenger() {
                   <button className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
                     <Video size={18} className="text-slate-500" />
                   </button>
-                  <button className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
-                    <MoreVertical size={18} className="text-slate-500" />
-                  </button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                        <MoreVertical size={18} className="text-slate-500" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => setIsProfileOpen(true)} data-testid="menu-profile">
+                        <User size={16} className="mr-2" />
+                        Profile
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setLocation("/login")} data-testid="menu-logout">
+                        Logout
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
 
@@ -368,6 +396,136 @@ export default function SupervisorMessenger() {
             </>
           )}
         </div>
+
+        {/* Profile Drawer */}
+        <Sheet open={isProfileOpen} onOpenChange={setIsProfileOpen}>
+          <SheetContent side="left" className="w-full sm:w-96 p-0">
+            {/* Header */}
+            <div className="h-16 border-b border-slate-100 dark:border-slate-800 flex items-center px-6">
+              <SheetClose asChild>
+                <button className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors -ml-2">
+                  <ArrowLeft size={20} className="text-slate-600 dark:text-slate-400" />
+                </button>
+              </SheetClose>
+              <h2 className="text-lg font-semibold text-slate-800 dark:text-white ml-4">
+                Profile
+              </h2>
+            </div>
+
+            {/* Profile Content */}
+            <div className="overflow-y-auto h-[calc(100vh-64px)]">
+              {/* Avatar Section */}
+              <div className="p-6 flex flex-col items-center border-b border-slate-100 dark:border-slate-800">
+                <div className="relative">
+                  <Avatar className="h-32 w-32 mb-4">
+                    <AvatarImage src="https://i.pravatar.cc/150?img=33" />
+                    <AvatarFallback>BH</AvatarFallback>
+                  </Avatar>
+                  <div className={`absolute bottom-4 right-0 w-5 h-5 rounded-full border-4 border-white dark:border-[#1e293b] ${
+                    profileStatus === "online" ? "bg-green-500" : 
+                    profileStatus === "away" ? "bg-yellow-500" : "bg-red-500"
+                  }`}></div>
+                </div>
+              </div>
+
+              {/* Form Fields */}
+              <div className="p-6 space-y-6">
+                {/* Name */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Name
+                  </label>
+                  <div className="flex items-center gap-3 px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg">
+                    <User size={18} className="text-slate-500" />
+                    <input
+                      type="text"
+                      defaultValue="Brian Hughes"
+                      className="flex-1 bg-transparent text-slate-800 dark:text-white focus:outline-none text-sm"
+                      data-testid="input-name"
+                    />
+                  </div>
+                </div>
+
+                {/* Email */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Email
+                  </label>
+                  <div className="flex items-center gap-3 px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg">
+                    <Mail size={18} className="text-slate-500" />
+                    <input
+                      type="email"
+                      defaultValue="hughes.brian@company.com"
+                      className="flex-1 bg-transparent text-slate-800 dark:text-white focus:outline-none text-sm"
+                      data-testid="input-email"
+                    />
+                  </div>
+                </div>
+
+                {/* About */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    About
+                  </label>
+                  <div className="flex gap-3 px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg">
+                    <MessageSquare size={18} className="text-slate-500 mt-0.5 shrink-0" />
+                    <textarea
+                      defaultValue="Hi there! I'm using FuseChat."
+                      className="flex-1 bg-transparent text-slate-800 dark:text-white focus:outline-none text-sm resize-none"
+                      rows={3}
+                      data-testid="input-about"
+                    />
+                  </div>
+                </div>
+
+                {/* Status */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
+                    Status
+                  </label>
+                  <div className="space-y-3">
+                    <label className="flex items-center gap-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 p-2 rounded-lg transition-colors">
+                      <input
+                        type="radio"
+                        name="status"
+                        checked={profileStatus === "online"}
+                        onChange={() => setProfileStatus("online")}
+                        className="w-4 h-4 accent-green-500"
+                        data-testid="radio-online"
+                      />
+                      <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                      <span className="text-sm text-slate-700 dark:text-slate-300 font-medium">Online</span>
+                    </label>
+                    <label className="flex items-center gap-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 p-2 rounded-lg transition-colors">
+                      <input
+                        type="radio"
+                        name="status"
+                        checked={profileStatus === "away"}
+                        onChange={() => setProfileStatus("away")}
+                        className="w-4 h-4 accent-yellow-500"
+                        data-testid="radio-away"
+                      />
+                      <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                      <span className="text-sm text-slate-700 dark:text-slate-300 font-medium">Away</span>
+                    </label>
+                    <label className="flex items-center gap-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 p-2 rounded-lg transition-colors">
+                      <input
+                        type="radio"
+                        name="status"
+                        checked={profileStatus === "disturb"}
+                        onChange={() => setProfileStatus("disturb")}
+                        className="w-4 h-4 accent-red-500"
+                        data-testid="radio-disturb"
+                      />
+                      <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                      <span className="text-sm text-slate-700 dark:text-slate-300 font-medium">Do not disturb</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
     </SupervisorLayout>
   );
