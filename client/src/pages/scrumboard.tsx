@@ -3,7 +3,7 @@ import { Plus, MoreHorizontal, Users, CheckCircle2, Clock, AlertCircle } from "l
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { TaskDetailModal } from "@/components/task-detail-modal";
 
 interface Task {
   id: string;
@@ -258,57 +258,7 @@ export default function ScrumBoard() {
       </div>
 
       {/* Task Detail Modal */}
-      {selectedTask && (
-        <Dialog open={!!selectedTask} onOpenChange={() => setSelectedTask(null)}>
-          <DialogContent className="bg-white border border-slate-200 text-slate-900">
-            <DialogHeader>
-              <DialogTitle className="text-slate-900">{selectedTask.title}</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div>
-                <h3 className="text-sm font-semibold text-slate-700 mb-2">Descripción</h3>
-                <p className="text-slate-600">{selectedTask.description}</p>
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold text-slate-700 mb-2">Prioridad</h3>
-                <Badge className={`${getPriorityColor(selectedTask.priority)}`}>
-                  {selectedTask.priority === "high"
-                    ? "Alta"
-                    : selectedTask.priority === "medium"
-                      ? "Media"
-                      : "Baja"}
-                </Badge>
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold text-slate-700 mb-2">Asignados</h3>
-                <p className="text-slate-600">{selectedTask.assignees.join(", ")}</p>
-              </div>
-              {selectedTask.dueDate && (
-                <div>
-                  <h3 className="text-sm font-semibold text-slate-700 mb-2">Fecha límite</h3>
-                  <p className="text-slate-600">{selectedTask.dueDate}</p>
-                </div>
-              )}
-              {selectedTask.tags.length > 0 && (
-                <div>
-                  <h3 className="text-sm font-semibold text-slate-700 mb-2">Etiquetas</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedTask.tags.map((tag) => (
-                      <Badge
-                        key={tag}
-                        className="bg-slate-100 text-slate-700"
-                        data-testid={`modal-tag-${tag}`}
-                      >
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
+      <TaskDetailModal task={selectedTask} onClose={() => setSelectedTask(null)} open={!!selectedTask} />
     </div>
   );
 }
