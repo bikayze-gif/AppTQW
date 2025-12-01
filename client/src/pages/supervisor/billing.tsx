@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { SupervisorLayout } from "@/components/supervisor/supervisor-layout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ArrowUpDown, Download, Plus, Search } from "lucide-react";
+import { ArrowUpDown, Download, Plus, Search, Edit, FileText, Mail, X } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -18,6 +18,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 interface BillingRecord {
   id: number;
@@ -139,11 +148,306 @@ const mockData: BillingRecord[] = [
 type SortField = keyof BillingRecord;
 type SortOrder = "asc" | "desc";
 
+// Modal de Edición
+function EditBillingModal({
+  isOpen,
+  onClose,
+  record,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  record: BillingRecord | null;
+}) {
+  const [formData, setFormData] = useState<BillingRecord | null>(record);
+
+  const handleSave = () => {
+    console.log("Guardando:", formData);
+    onClose();
+  };
+
+  if (!formData) return null;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Editar Facturación - {formData.proyecto}</DialogTitle>
+          <DialogDescription>
+            Modifica los detalles de la factura y guarda los cambios
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="grid grid-cols-2 gap-4">
+          {/* Período */}
+          <div>
+            <Label htmlFor="periodo">Período</Label>
+            <Input
+              id="periodo"
+              value={formData.periodo}
+              onChange={(e) =>
+                setFormData({ ...formData, periodo: e.target.value })
+              }
+              className="mt-1"
+              data-testid="input-periodo"
+            />
+          </div>
+
+          {/* Línea */}
+          <div>
+            <Label htmlFor="linea">Línea</Label>
+            <Input
+              id="linea"
+              value={formData.linea}
+              onChange={(e) =>
+                setFormData({ ...formData, linea: e.target.value })
+              }
+              className="mt-1"
+              data-testid="input-linea"
+            />
+          </div>
+
+          {/* Proyecto */}
+          <div className="col-span-2">
+            <Label htmlFor="proyecto">Proyecto</Label>
+            <Input
+              id="proyecto"
+              value={formData.proyecto}
+              onChange={(e) =>
+                setFormData({ ...formData, proyecto: e.target.value })
+              }
+              className="mt-1"
+              data-testid="input-proyecto"
+            />
+          </div>
+
+          {/* Observación */}
+          <div className="col-span-2">
+            <Label htmlFor="observacion">Observación</Label>
+            <Textarea
+              id="observacion"
+              value={formData.observacion}
+              onChange={(e) =>
+                setFormData({ ...formData, observacion: e.target.value })
+              }
+              className="mt-1"
+              data-testid="textarea-observacion"
+            />
+          </div>
+
+          {/* Cantidad */}
+          <div>
+            <Label htmlFor="cantidad">Cantidad</Label>
+            <Input
+              id="cantidad"
+              type="number"
+              value={formData.cantidad}
+              onChange={(e) =>
+                setFormData({ ...formData, cantidad: parseInt(e.target.value) })
+              }
+              className="mt-1"
+              data-testid="input-cantidad"
+            />
+          </div>
+
+          {/* Valorización */}
+          <div>
+            <Label htmlFor="valorizacion">Valorización</Label>
+            <Input
+              id="valorizacion"
+              type="number"
+              step="0.01"
+              value={formData.valorizacion}
+              onChange={(e) =>
+                setFormData({ ...formData, valorizacion: parseFloat(e.target.value) })
+              }
+              className="mt-1"
+              data-testid="input-valorizacion"
+            />
+          </div>
+
+          {/* Fecha Gestión */}
+          <div>
+            <Label htmlFor="fecha_gestion">Fecha de Gestión</Label>
+            <Input
+              id="fecha_gestion"
+              type="date"
+              value={formData.fecha_gestion}
+              onChange={(e) =>
+                setFormData({ ...formData, fecha_gestion: e.target.value })
+              }
+              className="mt-1"
+              data-testid="input-fecha_gestion"
+            />
+          </div>
+
+          {/* Responsable */}
+          <div>
+            <Label htmlFor="responsable">Responsable</Label>
+            <Input
+              id="responsable"
+              value={formData.responsable}
+              onChange={(e) =>
+                setFormData({ ...formData, responsable: e.target.value })
+              }
+              className="mt-1"
+              data-testid="input-responsable"
+            />
+          </div>
+
+          {/* Estado */}
+          <div>
+            <Label htmlFor="estado">Estado</Label>
+            <Select
+              value={formData.estado}
+              onValueChange={(value) =>
+                setFormData({
+                  ...formData,
+                  estado: value as BillingRecord["estado"],
+                })
+              }
+            >
+              <SelectTrigger className="mt-1" data-testid="select-estado">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Completado">Completado</SelectItem>
+                <SelectItem value="En Proceso">En Proceso</SelectItem>
+                <SelectItem value="Pendiente">Pendiente</SelectItem>
+                <SelectItem value="Rechazado">Rechazado</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Observación Gestión */}
+          <div className="col-span-2">
+            <Label htmlFor="observacion_gestion">Observación de Gestión</Label>
+            <Textarea
+              id="observacion_gestion"
+              value={formData.observacion_gestion}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  observacion_gestion: e.target.value,
+                })
+              }
+              className="mt-1"
+              data-testid="textarea-observacion_gestion"
+            />
+          </div>
+
+          {/* Archivo Detalle */}
+          <div>
+            <Label htmlFor="archivo_detalle">Archivo Detalle</Label>
+            <Input
+              id="archivo_detalle"
+              value={formData.archivo_detalle}
+              onChange={(e) =>
+                setFormData({ ...formData, archivo_detalle: e.target.value })
+              }
+              className="mt-1"
+              data-testid="input-archivo_detalle"
+            />
+          </div>
+
+          {/* Correo Enviado */}
+          <div>
+            <Label htmlFor="correo_enviado">Correo Enviado</Label>
+            <Input
+              id="correo_enviado"
+              type="email"
+              value={formData.correo_enviado}
+              onChange={(e) =>
+                setFormData({ ...formData, correo_enviado: e.target.value })
+              }
+              className="mt-1"
+              data-testid="input-correo_enviado"
+            />
+          </div>
+
+          {/* Correo Recepcionado */}
+          <div>
+            <Label htmlFor="correo_recepcionado">Correo Recepcionado</Label>
+            <Input
+              id="correo_recepcionado"
+              type="email"
+              value={formData.correo_recepcionado}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  correo_recepcionado: e.target.value,
+                })
+              }
+              className="mt-1"
+              data-testid="input-correo_recepcionado"
+            />
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-2 mt-6">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            data-testid="btn-cancel"
+          >
+            Cancelar
+          </Button>
+          <Button
+            className="bg-blue-600 hover:bg-blue-700"
+            onClick={handleSave}
+            data-testid="btn-save"
+          >
+            Guardar Cambios
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// Modal para ver correo
+function EmailViewModal({
+  isOpen,
+  onClose,
+  title,
+  email,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  email: string;
+}) {
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+        </DialogHeader>
+        <div className="bg-slate-50 dark:bg-slate-700 p-4 rounded-lg border border-slate-200 dark:border-slate-600">
+          <p className="text-slate-900 dark:text-white break-all">{email}</p>
+        </div>
+        <div className="flex justify-end gap-2">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            data-testid="btn-close-email"
+          >
+            Cerrar
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function SupervisorBilling() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortField, setSortField] = useState<SortField>("fecha_gestion");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
+  const [editingRecord, setEditingRecord] = useState<BillingRecord | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [emailModalData, setEmailModalData] = useState<{ title: string; email: string } | null>(null);
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
 
   const filteredAndSortedData = useMemo(() => {
     let filtered = mockData.filter((item) => {
@@ -205,6 +509,16 @@ export default function SupervisorBilling() {
       setSortField(field);
       setSortOrder("asc");
     }
+  };
+
+  const handleEditClick = (record: BillingRecord) => {
+    setEditingRecord(record);
+    setIsEditModalOpen(true);
+  };
+
+  const handleViewEmail = (title: string, email: string) => {
+    setEmailModalData({ title, email });
+    setIsEmailModalOpen(true);
   };
 
   const SortableHeader = ({ field, label }: { field: SortField; label: string }) => (
@@ -353,14 +667,64 @@ export default function SupervisorBilling() {
                         </span>
                       </TableCell>
                       <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20"
-                          data-testid={`btn-view-${record.id}`}
-                        >
-                          Ver
-                        </Button>
+                        <div className="flex items-center gap-1 flex-wrap">
+                          {/* Botón Editar */}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                            onClick={() => handleEditClick(record)}
+                            data-testid={`btn-edit-${record.id}`}
+                            title="Editar"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+
+                          {/* Botón Ver Archivo */}
+                          {record.archivo_detalle && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-slate-600 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
+                              data-testid={`btn-file-${record.id}`}
+                              title="Ver archivo"
+                            >
+                              <FileText className="w-4 h-4" />
+                            </Button>
+                          )}
+
+                          {/* Botón Correo Enviado */}
+                          {record.correo_enviado && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20"
+                              onClick={() =>
+                                handleViewEmail("Correo Enviado", record.correo_enviado)
+                              }
+                              data-testid={`btn-email-sent-${record.id}`}
+                              title="Ver correo enviado"
+                            >
+                              <Mail className="w-4 h-4" />
+                            </Button>
+                          )}
+
+                          {/* Botón Correo Recepcionado */}
+                          {record.correo_recepcionado && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:hover:bg-purple-900/20"
+                              onClick={() =>
+                                handleViewEmail("Correo Recepcionado", record.correo_recepcionado)
+                              }
+                              data-testid={`btn-email-received-${record.id}`}
+                              title="Ver correo recepcionado"
+                            >
+                              <Mail className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
@@ -386,6 +750,19 @@ export default function SupervisorBilling() {
           </div>
         </div>
       </div>
+
+      {/* Modales */}
+      <EditBillingModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        record={editingRecord}
+      />
+      <EmailViewModal
+        isOpen={isEmailModalOpen}
+        onClose={() => setIsEmailModalOpen(false)}
+        title={emailModalData?.title || ""}
+        email={emailModalData?.email || ""}
+      />
     </SupervisorLayout>
   );
 }
