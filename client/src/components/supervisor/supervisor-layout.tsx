@@ -126,7 +126,7 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
       {/* Main Content Wrapper */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Header */}
-        <header className="h-16 bg-white dark:bg-[#1e293b] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-4 sm:px-6 lg:px-8 z-10">
+        <header className="h-16 bg-white dark:bg-[#1e293b] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-3 sm:px-5 lg:px-7 z-10">
           <div className="flex items-center">
             <button 
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
