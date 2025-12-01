@@ -91,9 +91,9 @@ const tableActions: Record<string, TableAction[]> = {
     { label: "Transferir", icon: Send, color: "purple-400" }
   ],
   reversa: [
-    { label: "Revisar", icon: Check, color: "green-400" },
-    { label: "Rechazar", icon: X, color: "red-400" },
-    { label: "Enviar", icon: Send, color: "blue-400" }
+    { label: "Historial", icon: History, color: "blue-400" },
+    { label: "Declarar Entrega", icon: CheckSquare, color: "amber-400" },
+    { label: "Derivar", icon: Send, color: "purple-400" }
   ]
 };
 
@@ -150,6 +150,10 @@ export default function Analytics() {
   const [transferTecnico, setTransferTecnico] = useState<string>("");
   const [transferFoto, setTransferFoto] = useState<string | null>(null);
   const [transferMotivo, setTransferMotivo] = useState<string>("");
+
+  const [isDeclareDeliveryOpen, setIsDeclareDeliveryOpen] = useState(false);
+  const [deliverySerie, setDeliverySerie] = useState<string>("");
+  const [deliveryFoto, setDeliveryFoto] = useState<string | null>(null);
 
   const activeTabData = tabs.find((tab) => tab.id === activeTab);
 
@@ -233,6 +237,19 @@ export default function Analytics() {
         transferMotivo
       });
       setIsTransferOpen(false);
+    }
+  };
+
+  const handleDeclareDeliveryClick = (serie: string) => {
+    setDeliverySerie(serie);
+    setDeliveryFoto(null);
+    setIsDeclareDeliveryOpen(true);
+  };
+
+  const handleDeclareDeliverySubmit = () => {
+    if (deliveryFoto) {
+      console.log("Declarar entregada:", { deliverySerie, deliveryFoto });
+      setIsDeclareDeliveryOpen(false);
     }
   };
 
@@ -383,6 +400,9 @@ export default function Analytics() {
                                       if (action.label === "Transferir" && activeTab === "directa") {
                                         handleTransferClick(row.serie);
                                       }
+                                      if (action.label === "Declarar Entrega" && activeTab === "reversa") {
+                                        handleDeclareDeliveryClick(row.serie);
+                                      }
                                     }}
                                   >
                                     <ActionIcon size={16} className={colorClass} />
@@ -466,6 +486,86 @@ export default function Analytics() {
           </Card>
         )}
       </main>
+
+      {/* Declare Delivery Dialog */}
+      <Sheet open={isDeclareDeliveryOpen} onOpenChange={setIsDeclareDeliveryOpen}>
+        <SheetContent side="right" className="w-full sm:w-96 p-0 bg-slate-900 border-l border-white/10">
+          {/* Header */}
+          <div className="h-16 border-b border-white/10 flex items-center px-6">
+            <SheetClose asChild>
+              <button className="p-2 hover:bg-white/10 rounded-lg transition-colors -ml-2">
+                <ArrowLeft size={20} className="text-slate-400" />
+              </button>
+            </SheetClose>
+            <h2 className="text-lg font-semibold text-white ml-4">
+              Declaración de entrega para reversa
+            </h2>
+          </div>
+
+          {/* Content */}
+          <div className="overflow-y-auto h-[calc(100vh-64px)]">
+            <div className="p-6 space-y-6">
+              {/* Serie Seleccionada */}
+              <div>
+                <label className="block text-sm font-semibold text-white mb-3">
+                  SERIE SELECCIONADA
+                </label>
+                <input
+                  type="text"
+                  value={deliverySerie}
+                  readOnly
+                  className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-lg text-white focus:outline-none cursor-not-allowed"
+                  data-testid="input-delivery-serie"
+                />
+              </div>
+
+              {/* Cargar Archivo */}
+              <div>
+                <label className="block text-sm font-semibold text-white mb-3">
+                  Cargar Archivo <span className="text-red-500">*</span>
+                </label>
+                <div className="flex gap-3 mb-2">
+                  <button
+                    onClick={() => {
+                      const input = document.createElement("input");
+                      input.type = "file";
+                      input.accept = ".jpg,.png,.pdf,.doc,.docx";
+                      input.onchange = (e: any) => {
+                        const file = e.target.files[0];
+                        if (file && file.size <= 5 * 1024 * 1024) {
+                          setDeliveryFoto(file.name);
+                        }
+                      };
+                      input.click();
+                    }}
+                    className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white hover:bg-slate-700 transition-colors text-sm font-medium"
+                    data-testid="button-delivery-select-file"
+                  >
+                    Seleccionar archivo
+                  </button>
+                  <div className="flex-1 px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-slate-400 text-sm flex items-center">
+                    {deliveryFoto ? deliveryFoto : "Ningún archi... seleccionado"}
+                  </div>
+                </div>
+                <p className="text-xs text-slate-400">
+                  Formatos permitidos: JPG, PNG, PDF, DOC, DOCX<br/>
+                  Tamaño máximo: 5MB
+                </p>
+              </div>
+
+              {/* Declarar Button */}
+              <button
+                onClick={handleDeclareDeliverySubmit}
+                disabled={!deliveryFoto}
+                className="px-6 py-3 bg-amber-400 hover:bg-amber-500 disabled:bg-amber-400/50 disabled:cursor-not-allowed text-black font-semibold rounded-lg transition-colors mt-8"
+                data-testid="button-declare-delivery"
+              >
+                Declarar entregada
+              </button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* Transfer Dialog */}
       <Sheet open={isTransferOpen} onOpenChange={setIsTransferOpen}>
