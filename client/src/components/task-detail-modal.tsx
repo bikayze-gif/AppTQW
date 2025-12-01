@@ -75,6 +75,7 @@ export function TaskDetailModal({ task, onClose, open }: TaskDetailModalProps) {
   const [newChecklistItem, setNewChecklistItem] = useState("");
   const [newComment, setNewComment] = useState("");
   const [activePanel, setActivePanel] = useState<string | null>(null);
+  const [comments, setComments] = useState(mockComments);
 
   if (!task) return null;
 
@@ -131,6 +132,27 @@ export function TaskDetailModal({ task, onClose, open }: TaskDetailModalProps) {
 
   const handleDeleteChecklistItem = (id: string) => {
     setChecklistItems(checklistItems.filter((item) => item.id !== id));
+  };
+
+  const handleSaveComment = () => {
+    if (newComment.trim()) {
+      const newCommentObj = {
+        id: Date.now().toString(),
+        author: "You",
+        avatar: "https://i.pravatar.cc/150?img=33",
+        time: "just now",
+        text: newComment.trim(),
+      };
+      setComments([...comments, newCommentObj]);
+      setNewComment("");
+    }
+  };
+
+  const handleCommentKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.ctrlKey && e.key === "Enter") {
+      e.preventDefault();
+      handleSaveComment();
+    }
   };
 
   const completedCount = checklistItems.filter((item) => item.completed).length;
@@ -342,12 +364,14 @@ export function TaskDetailModal({ task, onClose, open }: TaskDetailModalProps) {
                       type="text"
                       value={newComment}
                       onChange={(e) => setNewComment(e.target.value)}
+                      onKeyDown={handleCommentKeyDown}
                       placeholder="Add comment"
                       className="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white mb-2"
                       data-testid="input-new-comment"
                     />
                     <Button
-                      className="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 disabled:opacity-50"
+                      onClick={handleSaveComment}
+                      className="bg-slate-300 dark:bg-slate-600 hover:bg-slate-400 dark:hover:bg-slate-500 text-slate-800 dark:text-slate-200 disabled:opacity-50 border border-slate-400 dark:border-slate-500"
                       disabled={!newComment.trim()}
                       data-testid="btn-save-comment"
                     >
@@ -358,7 +382,7 @@ export function TaskDetailModal({ task, onClose, open }: TaskDetailModalProps) {
 
                 {/* Existing Comments */}
                 <div className="space-y-4">
-                  {mockComments.map((comment) => (
+                  {comments.map((comment) => (
                     <div key={comment.id} className="flex gap-3" data-testid={`comment-${comment.id}`}>
                       <img
                         src={comment.avatar}
