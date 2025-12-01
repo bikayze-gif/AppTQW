@@ -155,6 +155,15 @@ export default function Analytics() {
   const [deliverySerie, setDeliverySerie] = useState<string>("");
   const [deliveryFoto, setDeliveryFoto] = useState<string | null>(null);
 
+  const [isDeriveOpen, setIsDeriveOpen] = useState(false);
+  const [deriveSerie, setDeriveSerie] = useState<string>("");
+  const [deriveRut, setDeriveRut] = useState("");
+  const [deriveWorkOrder, setDeriveWorkOrder] = useState("");
+  const [deriveMotivo, setDeriveMotivo] = useState("");
+  const [deriveSerieFisica, setDeriveSerieFisica] = useState("");
+  const [deriveObservations, setDeriveObservations] = useState("");
+  const [deriveFoto, setDeriveFoto] = useState<string | null>(null);
+
   const activeTabData = tabs.find((tab) => tab.id === activeTab);
 
   const filteredAndSortedData = useMemo(() => {
@@ -250,6 +259,32 @@ export default function Analytics() {
     if (deliveryFoto) {
       console.log("Declarar entregada:", { deliverySerie, deliveryFoto });
       setIsDeclareDeliveryOpen(false);
+    }
+  };
+
+  const handleDeriveClick = (serie: string) => {
+    setDeriveSerie(serie);
+    setDeriveRut("");
+    setDeriveWorkOrder("");
+    setDeriveMotivo("");
+    setDeriveSerieFisica("");
+    setDeriveObservations("");
+    setDeriveFoto(null);
+    setIsDeriveOpen(true);
+  };
+
+  const handleDeriveSubmit = () => {
+    if (deriveWorkOrder.trim() && deriveMotivo && deriveObservations.trim()) {
+      console.log("Derivar:", {
+        deriveSerie,
+        deriveRut,
+        deriveWorkOrder,
+        deriveMotivo,
+        deriveSerieFisica,
+        deriveObservations,
+        deriveFoto
+      });
+      setIsDeriveOpen(false);
     }
   };
 
@@ -403,6 +438,9 @@ export default function Analytics() {
                                       if (action.label === "Declarar Entrega" && activeTab === "reversa") {
                                         handleDeclareDeliveryClick(row.serie);
                                       }
+                                      if (action.label === "Derivar" && activeTab === "reversa") {
+                                        handleDeriveClick(row.serie);
+                                      }
                                     }}
                                   >
                                     <ActionIcon size={16} className={colorClass} />
@@ -486,6 +524,179 @@ export default function Analytics() {
           </Card>
         )}
       </main>
+
+      {/* Derive Dialog */}
+      <Sheet open={isDeriveOpen} onOpenChange={setIsDeriveOpen}>
+        <SheetContent side="right" className="w-full sm:w-96 p-0 bg-slate-900 border-l border-white/10">
+          {/* Header */}
+          <div className="h-16 border-b border-white/10 flex items-center px-6">
+            <SheetClose asChild>
+              <button className="p-2 hover:bg-white/10 rounded-lg transition-colors -ml-2">
+                <ArrowLeft size={20} className="text-slate-400" />
+              </button>
+            </SheetClose>
+            <h2 className="text-lg font-semibold text-white ml-4">
+              Validación supervisor en reversa
+            </h2>
+          </div>
+
+          {/* Content */}
+          <div className="overflow-y-auto h-[calc(100vh-64px)]">
+            <div className="p-6 space-y-6">
+              {/* Serie Seleccionada */}
+              <div>
+                <label className="block text-sm font-semibold text-white mb-3">
+                  SERIE SELECCIONADA
+                </label>
+                <input
+                  type="text"
+                  value={deriveSerie}
+                  readOnly
+                  className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-lg text-white focus:outline-none cursor-not-allowed"
+                  data-testid="input-derive-serie"
+                />
+              </div>
+
+              {/* RUT */}
+              <div>
+                <label className="block text-sm font-semibold text-white mb-3">
+                  RUT
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ej. 12345678-9"
+                  value={deriveRut}
+                  onChange={(e) => setDeriveRut(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500"
+                  data-testid="input-derive-rut"
+                />
+              </div>
+
+              {/* Orden de trabajo */}
+              <div>
+                <label className="block text-sm font-semibold text-white mb-3">
+                  ORDEN DE TRABAJO <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ingrese la orden de trabajo"
+                  value={deriveWorkOrder}
+                  onChange={(e) => setDeriveWorkOrder(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500"
+                  data-testid="input-derive-work-order"
+                />
+              </div>
+
+              {/* Transferencia supervisor */}
+              <div>
+                <label className="block text-sm font-semibold text-white mb-3">
+                  TRANSFERENCIA SUPERVISOR
+                </label>
+                <input
+                  type="text"
+                  value="Se asignará automáticamente"
+                  readOnly
+                  className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-lg text-slate-400 focus:outline-none cursor-not-allowed"
+                  data-testid="input-derive-supervisor"
+                />
+              </div>
+
+              {/* Seleccionar motivo */}
+              <div>
+                <label className="block text-sm font-semibold text-white mb-3">
+                  SELECCIONAR MOTIVO <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={deriveMotivo}
+                  onChange={(e) => setDeriveMotivo(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                  data-testid="select-derive-motivo"
+                >
+                  <option value="">SELECCIONAR</option>
+                  <option value="defecto">Equipo con defecto</option>
+                  <option value="serie-incorrecta">Serie incorrecta</option>
+                  <option value="no-funciona">No funciona</option>
+                  <option value="otro">Otro</option>
+                </select>
+              </div>
+
+              {/* Serie fisica retirada */}
+              <div>
+                <label className="block text-sm font-semibold text-white mb-3">
+                  SERIE FISICA RETIRADA
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ingrese la serie física retirada (opcional)"
+                  value={deriveSerieFisica}
+                  onChange={(e) => setDeriveSerieFisica(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500"
+                  data-testid="input-derive-serie-fisica"
+                />
+              </div>
+
+              {/* Observaciones */}
+              <div>
+                <label className="block text-sm font-semibold text-white mb-3">
+                  OBSERVACIONES <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  placeholder="Describa los detalles de la transferencia reversa"
+                  value={deriveObservations}
+                  onChange={(e) => setDeriveObservations(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 resize-none"
+                  rows={5}
+                  data-testid="input-derive-observations"
+                />
+              </div>
+
+              {/* Cargar Archivo */}
+              <div>
+                <label className="block text-sm font-semibold text-white mb-3">
+                  Cargar Archivo
+                </label>
+                <div className="flex gap-3 mb-2">
+                  <button
+                    onClick={() => {
+                      const input = document.createElement("input");
+                      input.type = "file";
+                      input.accept = ".jpg,.png,.pdf,.doc,.docx";
+                      input.onchange = (e: any) => {
+                        const file = e.target.files[0];
+                        if (file && file.size <= 5 * 1024 * 1024) {
+                          setDeriveFoto(file.name);
+                        }
+                      };
+                      input.click();
+                    }}
+                    className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white hover:bg-slate-700 transition-colors text-sm font-medium"
+                    data-testid="button-derive-select-file"
+                  >
+                    Seleccionar archivo
+                  </button>
+                  <div className="flex-1 px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-slate-400 text-sm flex items-center">
+                    {deriveFoto ? deriveFoto : "Ningún arc... eleccionado"}
+                  </div>
+                </div>
+                <p className="text-xs text-slate-400">
+                  Formatos permitidos: JPG, PNG, PDF, DOC, DOCX<br/>
+                  Tamaño máximo: 5MB
+                </p>
+              </div>
+
+              {/* Solicitar Button */}
+              <button
+                onClick={handleDeriveSubmit}
+                disabled={!deriveWorkOrder.trim() || !deriveMotivo || !deriveObservations.trim()}
+                className="w-full py-3 bg-amber-400 hover:bg-amber-500 disabled:bg-amber-400/50 disabled:cursor-not-allowed text-black font-semibold rounded-lg transition-colors mt-8"
+                data-testid="button-solicitar-requerimiento"
+              >
+                Solicitar requerimiento
+              </button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* Declare Delivery Dialog */}
       <Sheet open={isDeclareDeliveryOpen} onOpenChange={setIsDeclareDeliveryOpen}>
