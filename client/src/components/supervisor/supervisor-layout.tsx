@@ -71,7 +71,7 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
 
         {/* User Profile Summary */}
         <div className="p-6 flex flex-col items-center border-b border-slate-100 dark:border-slate-800">
-          <div className="w-20 h-20 rounded-full overflow-hidden bg-slate-200 mb-3">
+          <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-200 mb-3">
             <img src="https://i.pravatar.cc/150?img=33" alt="User" className="w-full h-full object-cover" />
           </div>
           <h3 className={`font-semibold text-slate-800 dark:text-white ${!isSidebarOpen && "hidden"}`}>Abbott Keitch</h3>
