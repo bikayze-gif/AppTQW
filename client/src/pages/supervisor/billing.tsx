@@ -148,6 +148,307 @@ const mockData: BillingRecord[] = [
 type SortField = keyof BillingRecord;
 type SortOrder = "asc" | "desc";
 
+// Modal para Nueva Factura
+function NewBillingModal({
+  isOpen,
+  onClose,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+}) {
+  const [formData, setFormData] = useState<BillingRecord>({
+    id: Math.max(...mockData.map(r => r.id)) + 1,
+    periodo: "",
+    linea: "",
+    proyecto: "",
+    observacion: "",
+    cantidad: 0,
+    valorizacion: 0,
+    fecha_gestion: new Date().toISOString().split('T')[0],
+    responsable: "",
+    estado: "Pendiente",
+    observacion_gestion: "",
+    archivo_detalle: "",
+    correo_enviado: "",
+    correo_recepcionado: "",
+  });
+
+  const handleSave = () => {
+    console.log("Guardando nueva factura:", formData);
+    onClose();
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white text-slate-900">
+        <DialogHeader>
+          <DialogTitle className="text-slate-900">Nueva Factura</DialogTitle>
+          <DialogDescription className="text-slate-600">
+            Ingresa los detalles de la nueva factura
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="grid grid-cols-2 gap-4">
+          {/* Período */}
+          <div>
+            <Label htmlFor="new_periodo" className="text-slate-700">Período</Label>
+            <Input
+              id="new_periodo"
+              value={formData.periodo}
+              onChange={(e) =>
+                setFormData({ ...formData, periodo: e.target.value })
+              }
+              className="mt-1 bg-white border-slate-300 text-slate-900"
+              data-testid="input-new-periodo"
+            />
+          </div>
+
+          {/* Línea */}
+          <div>
+            <Label htmlFor="new_linea" className="text-slate-700">Línea</Label>
+            <Input
+              id="new_linea"
+              value={formData.linea}
+              onChange={(e) =>
+                setFormData({ ...formData, linea: e.target.value })
+              }
+              className="mt-1 bg-white border-slate-300 text-slate-900"
+              data-testid="input-new-linea"
+            />
+          </div>
+
+          {/* Proyecto */}
+          <div className="col-span-2">
+            <Label htmlFor="new_proyecto" className="text-slate-700">Proyecto</Label>
+            <Input
+              id="new_proyecto"
+              value={formData.proyecto}
+              onChange={(e) =>
+                setFormData({ ...formData, proyecto: e.target.value })
+              }
+              className="mt-1 bg-white border-slate-300 text-slate-900"
+              data-testid="input-new-proyecto"
+            />
+          </div>
+
+          {/* Observación */}
+          <div className="col-span-2">
+            <Label htmlFor="new_observacion" className="text-slate-700">Observación</Label>
+            <Textarea
+              id="new_observacion"
+              value={formData.observacion}
+              onChange={(e) =>
+                setFormData({ ...formData, observacion: e.target.value })
+              }
+              className="mt-1 bg-white border-slate-300 text-slate-900"
+              data-testid="textarea-new-observacion"
+            />
+          </div>
+
+          {/* Cantidad */}
+          <div>
+            <Label htmlFor="new_cantidad" className="text-slate-700">Cantidad</Label>
+            <Input
+              id="new_cantidad"
+              type="number"
+              value={formData.cantidad}
+              onChange={(e) =>
+                setFormData({ ...formData, cantidad: parseInt(e.target.value) || 0 })
+              }
+              className="mt-1 bg-white border-slate-300 text-slate-900"
+              data-testid="input-new-cantidad"
+            />
+          </div>
+
+          {/* Valorización */}
+          <div>
+            <Label htmlFor="new_valorizacion" className="text-slate-700">Valorización</Label>
+            <Input
+              id="new_valorizacion"
+              type="number"
+              step="0.01"
+              value={formData.valorizacion}
+              onChange={(e) =>
+                setFormData({ ...formData, valorizacion: parseFloat(e.target.value) || 0 })
+              }
+              className="mt-1 bg-white border-slate-300 text-slate-900"
+              data-testid="input-new-valorizacion"
+            />
+          </div>
+
+          {/* Fecha Gestión */}
+          <div>
+            <Label htmlFor="new_fecha_gestion" className="text-slate-700">Fecha de Gestión</Label>
+            <Input
+              id="new_fecha_gestion"
+              type="date"
+              value={formData.fecha_gestion}
+              onChange={(e) =>
+                setFormData({ ...formData, fecha_gestion: e.target.value })
+              }
+              className="mt-1 bg-white border-slate-300 text-slate-900"
+              data-testid="input-new-fecha_gestion"
+            />
+          </div>
+
+          {/* Responsable */}
+          <div>
+            <Label htmlFor="new_responsable" className="text-slate-700">Responsable</Label>
+            <Input
+              id="new_responsable"
+              value={formData.responsable}
+              onChange={(e) =>
+                setFormData({ ...formData, responsable: e.target.value })
+              }
+              className="mt-1 bg-white border-slate-300 text-slate-900"
+              data-testid="input-new-responsable"
+            />
+          </div>
+
+          {/* Estado */}
+          <div>
+            <Label htmlFor="new_estado" className="text-slate-700">Estado</Label>
+            <Select
+              value={formData.estado}
+              onValueChange={(value) =>
+                setFormData({
+                  ...formData,
+                  estado: value as BillingRecord["estado"],
+                })
+              }
+            >
+              <SelectTrigger className="mt-1 bg-white border-slate-300 text-slate-900" data-testid="select-new-estado">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Completado">Completado</SelectItem>
+                <SelectItem value="En Proceso">En Proceso</SelectItem>
+                <SelectItem value="Pendiente">Pendiente</SelectItem>
+                <SelectItem value="Rechazado">Rechazado</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Observación Gestión */}
+          <div className="col-span-2">
+            <Label htmlFor="new_observacion_gestion" className="text-slate-700">Observación de Gestión</Label>
+            <Textarea
+              id="new_observacion_gestion"
+              value={formData.observacion_gestion}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  observacion_gestion: e.target.value,
+                })
+              }
+              className="mt-1 bg-white border-slate-300 text-slate-900"
+              data-testid="textarea-new-observacion_gestion"
+            />
+          </div>
+
+          {/* Archivo Detalle - File Upload */}
+          <div>
+            <Label htmlFor="new_archivo_detalle" className="text-slate-700">Archivo Detalle</Label>
+            <div className="mt-1 flex items-center gap-2">
+              <label className="flex-1 relative cursor-pointer">
+                <div className="bg-white border-2 border-dashed border-slate-300 rounded-lg p-4 hover:border-blue-400 transition-colors text-center flex items-center justify-center gap-2">
+                  <Upload className="w-4 h-4 text-slate-500" />
+                  <span className="text-sm text-slate-600">
+                    {formData.archivo_detalle || "Seleccionar archivo"}
+                  </span>
+                </div>
+                <input
+                  id="new_archivo_detalle"
+                  type="file"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setFormData({ ...formData, archivo_detalle: file.name });
+                    }
+                  }}
+                  data-testid="input-new-archivo_detalle"
+                />
+              </label>
+            </div>
+          </div>
+
+          {/* Correo Enviado - File Upload */}
+          <div>
+            <Label htmlFor="new_correo_enviado" className="text-slate-700">Correo Enviado</Label>
+            <div className="mt-1 flex items-center gap-2">
+              <label className="flex-1 relative cursor-pointer">
+                <div className="bg-white border-2 border-dashed border-slate-300 rounded-lg p-4 hover:border-blue-400 transition-colors text-center flex items-center justify-center gap-2">
+                  <Upload className="w-4 h-4 text-slate-500" />
+                  <span className="text-sm text-slate-600">
+                    {formData.correo_enviado || "Seleccionar archivo"}
+                  </span>
+                </div>
+                <input
+                  id="new_correo_enviado"
+                  type="file"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setFormData({ ...formData, correo_enviado: file.name });
+                    }
+                  }}
+                  data-testid="input-new-correo_enviado"
+                />
+              </label>
+            </div>
+          </div>
+
+          {/* Correo Recepcionado - File Upload */}
+          <div>
+            <Label htmlFor="new_correo_recepcionado" className="text-slate-700">Correo Recepcionado</Label>
+            <div className="mt-1 flex items-center gap-2">
+              <label className="flex-1 relative cursor-pointer">
+                <div className="bg-white border-2 border-dashed border-slate-300 rounded-lg p-4 hover:border-blue-400 transition-colors text-center flex items-center justify-center gap-2">
+                  <Upload className="w-4 h-4 text-slate-500" />
+                  <span className="text-sm text-slate-600">
+                    {formData.correo_recepcionado || "Seleccionar archivo"}
+                  </span>
+                </div>
+                <input
+                  id="new_correo_recepcionado"
+                  type="file"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setFormData({ ...formData, correo_recepcionado: file.name });
+                    }
+                  }}
+                  data-testid="input-new-correo_recepcionado"
+                />
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-2 mt-6">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            data-testid="btn-cancel-new"
+          >
+            Cancelar
+          </Button>
+          <Button
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+            onClick={handleSave}
+            data-testid="btn-save-new"
+          >
+            Crear Factura
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // Modal de Edición
 function EditBillingModal({
   isOpen,
@@ -486,6 +787,7 @@ export default function SupervisorBilling() {
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
   const [editingRecord, setEditingRecord] = useState<BillingRecord | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isNewBillingModalOpen, setIsNewBillingModalOpen] = useState(false);
   const [emailModalData, setEmailModalData] = useState<{ title: string; email: string } | null>(null);
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
 
@@ -590,7 +892,8 @@ export default function SupervisorBilling() {
             </p>
           </div>
           <Button
-            className="bg-blue-600 hover:bg-blue-700"
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+            onClick={() => setIsNewBillingModalOpen(true)}
             data-testid="btn-new-bill"
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -792,6 +1095,10 @@ export default function SupervisorBilling() {
       </div>
 
       {/* Modales */}
+      <NewBillingModal
+        isOpen={isNewBillingModalOpen}
+        onClose={() => setIsNewBillingModalOpen(false)}
+      />
       <EditBillingModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
