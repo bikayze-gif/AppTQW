@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { SupervisorLayout } from "@/components/supervisor/supervisor-layout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 
 interface BillingRecord {
   id: number;
@@ -35,7 +37,7 @@ interface BillingRecord {
   proyecto: string;
   observacion: string;
   cantidad: number;
-  valorizacion: number;
+  valorizacion: number | string;
   fecha_gestion: string;
   responsable: string;
   estado: "Pendiente" | "Completado" | "En Proceso" | "Rechazado";
@@ -152,12 +154,15 @@ type SortOrder = "asc" | "desc";
 function NewBillingModal({
   isOpen,
   onClose,
+  onSubmit,
+  isLoading,
 }: {
   isOpen: boolean;
   onClose: () => void;
+  onSubmit: (data: Omit<BillingRecord, "id">) => void;
+  isLoading?: boolean;
 }) {
-  const [formData, setFormData] = useState<BillingRecord>({
-    id: Math.max(...mockData.map(r => r.id)) + 1,
+  const [formData, setFormData] = useState<Omit<BillingRecord, "id">>({
     periodo: "",
     linea: "",
     proyecto: "",
@@ -174,8 +179,25 @@ function NewBillingModal({
   });
 
   const handleSave = () => {
-    console.log("Guardando nueva factura:", formData);
-    onClose();
+    onSubmit(formData);
+    if (!isLoading) {
+      setFormData({
+        periodo: "",
+        linea: "",
+        proyecto: "",
+        observacion: "",
+        cantidad: 0,
+        valorizacion: 0,
+        fecha_gestion: new Date().toISOString().split('T')[0],
+        responsable: "",
+        estado: "Pendiente",
+        observacion_gestion: "",
+        archivo_detalle: "",
+        correo_enviado: "",
+        correo_recepcionado: "",
+      });
+      onClose();
+    }
   };
 
   return (
@@ -433,6 +455,7 @@ function NewBillingModal({
             variant="outline"
             onClick={onClose}
             data-testid="btn-cancel-new"
+            disabled={isLoading}
           >
             Cancelar
           </Button>
@@ -440,8 +463,9 @@ function NewBillingModal({
             className="bg-blue-600 hover:bg-blue-700 text-white"
             onClick={handleSave}
             data-testid="btn-save-new"
+            disabled={isLoading}
           >
-            Crear Factura
+            {isLoading ? "Creando..." : "Crear Factura"}
           </Button>
         </div>
       </DialogContent>
@@ -454,10 +478,14 @@ function EditBillingModal({
   isOpen,
   onClose,
   record,
+  onSubmit,
+  isLoading,
 }: {
   isOpen: boolean;
   onClose: () => void;
   record: BillingRecord | null;
+  onSubmit: (data: BillingRecord) => void;
+  isLoading?: boolean;
 }) {
   const [formData, setFormData] = useState<BillingRecord | null>(record);
 
@@ -468,8 +496,10 @@ function EditBillingModal({
   }, [record, isOpen]);
 
   const handleSave = () => {
-    console.log("Guardando:", formData);
-    onClose();
+    if (formData) {
+      onSubmit(formData);
+      if (!isLoading) onClose();
+    }
   };
 
   if (!formData) return null;
@@ -729,15 +759,17 @@ function EditBillingModal({
             variant="outline"
             onClick={onClose}
             data-testid="btn-cancel"
+            disabled={isLoading}
           >
             Cancelar
           </Button>
           <Button
-            className="bg-blue-600 hover:bg-blue-700"
+            className="bg-blue-600 hover:bg-blue-700 text-white"
             onClick={handleSave}
             data-testid="btn-save"
+            disabled={isLoading}
           >
-            Guardar Cambios
+            {isLoading ? "Guardando..." : "Guardar Cambios"}
           </Button>
         </div>
       </DialogContent>
@@ -781,6 +813,8 @@ function EmailViewModal({
 }
 
 export default function SupervisorBilling() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortField, setSortField] = useState<SortField>("fecha_gestion");
@@ -791,8 +825,81 @@ export default function SupervisorBilling() {
   const [emailModalData, setEmailModalData] = useState<{ title: string; email: string } | null>(null);
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
 
+  // Fetch billing data
+  const { data: billingData = mockData, isLoading, error } = useQuery({
+    queryKey: ["billing"],
+    queryFn: async () => {
+      try {
+        const response = await fetch("/api/billing");
+        if (!response.ok) throw new Error("Failed to fetch billing data");
+        return response.json();
+      } catch {
+        return mockData;
+      }
+    },
+  });
+
+  // Create billing mutation
+  const createBillingMutation = useMutation({
+    mutationFn: async (newBilling: Omit<BillingRecord, "id">) => {
+      const response = await fetch("/api/billing", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newBilling),
+      });
+      if (!response.ok) throw new Error("Failed to create billing record");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["billing"] });
+      toast({ description: "Factura creada exitosamente" });
+    },
+    onError: () => {
+      toast({ description: "Error al crear la factura", variant: "destructive" });
+    },
+  });
+
+  // Update billing mutation
+  const updateBillingMutation = useMutation({
+    mutationFn: async (updatedBilling: BillingRecord) => {
+      const { id, ...data } = updatedBilling;
+      const response = await fetch(`/api/billing/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error("Failed to update billing record");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["billing"] });
+      toast({ description: "Factura actualizada exitosamente" });
+    },
+    onError: () => {
+      toast({ description: "Error al actualizar la factura", variant: "destructive" });
+    },
+  });
+
+  // Delete billing mutation
+  const deleteBillingMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await fetch(`/api/billing/${id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) throw new Error("Failed to delete billing record");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["billing"] });
+      toast({ description: "Factura eliminada exitosamente" });
+    },
+    onError: () => {
+      toast({ description: "Error al eliminar la factura", variant: "destructive" });
+    },
+  });
+
   const filteredAndSortedData = useMemo(() => {
-    let filtered = mockData.filter((item) => {
+    let filtered = billingData.filter((item: BillingRecord) => {
       const matchesSearch =
         item.proyecto.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.linea.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -804,7 +911,7 @@ export default function SupervisorBilling() {
       return matchesSearch && matchesStatus;
     });
 
-    filtered.sort((a, b) => {
+    filtered.sort((a: BillingRecord, b: BillingRecord) => {
       const aVal = a[sortField];
       const bVal = b[sortField];
 
@@ -827,7 +934,7 @@ export default function SupervisorBilling() {
     });
 
     return filtered;
-  }, [searchTerm, statusFilter, sortField, sortOrder]);
+  }, [billingData, searchTerm, statusFilter, sortField, sortOrder]);
 
   const getStatusColor = (estado: string) => {
     switch (estado) {
@@ -972,7 +1079,7 @@ export default function SupervisorBilling() {
               </TableHeader>
               <TableBody>
                 {filteredAndSortedData.length > 0 ? (
-                  filteredAndSortedData.map((record) => (
+                  filteredAndSortedData.map((record: BillingRecord) => (
                     <TableRow
                       key={record.id}
                       className="hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
@@ -1098,11 +1205,15 @@ export default function SupervisorBilling() {
       <NewBillingModal
         isOpen={isNewBillingModalOpen}
         onClose={() => setIsNewBillingModalOpen(false)}
+        onSubmit={(data) => createBillingMutation.mutate(data)}
+        isLoading={createBillingMutation.isPending}
       />
       <EditBillingModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         record={editingRecord}
+        onSubmit={(data) => updateBillingMutation.mutate(data)}
+        isLoading={updateBillingMutation.isPending}
       />
       <EmailViewModal
         isOpen={isEmailModalOpen}

@@ -1,59 +1,54 @@
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
+import * as schema from "@shared/schema";
+import { eq, desc } from "drizzle-orm";
+import type { Billing, InsertBilling } from "@shared/schema";
 
-import { type User, type InsertUser } from "@shared/schema";
-import { randomUUID } from "crypto";
-import mysql from "mysql2/promise";
-
-// modify the interface with any CRUD methods
-// you might need
+const client = postgres(process.env.DATABASE_URL!);
+const db = drizzle(client, { schema });
 
 export interface IStorage {
-  getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  getAllBilling(): Promise<Billing[]>;
+  getBillingById(id: number): Promise<Billing | undefined>;
+  createBilling(billing: InsertBilling): Promise<Billing>;
+  updateBilling(id: number, billing: Partial<InsertBilling>): Promise<Billing | undefined>;
+  deleteBilling(id: number): Promise<boolean>;
 }
 
-export class MySQLStorage implements IStorage {
-  private pool: mysql.Pool;
-
-  constructor() {
-    this.pool = mysql.createPool({
-      host: "170.239.85.233",
-      port: 3306,
-      user: "ncornejo",
-      password: "N1c0l7as17",
-      database: "ncornejo", // ajusta el nombre de tu base de datos
-      waitForConnections: true,
-      connectionLimit: 10,
-      queueLimit: 0
-    });
+export class PostgresStorage implements IStorage {
+  async getAllBilling(): Promise<Billing[]> {
+    return db.select().from(schema.billing).orderBy(desc(schema.billing.fecha_gestion));
   }
 
-  async getUser(id: string): Promise<User | undefined> {
-    const [rows] = await this.pool.execute(
-      'SELECT * FROM users WHERE id = ?',
-      [id]
-    );
-    const users = rows as User[];
-    return users[0];
+  async getBillingById(id: number): Promise<Billing | undefined> {
+    const [result] = await db
+      .select()
+      .from(schema.billing)
+      .where(eq(schema.billing.id, id));
+    return result;
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    const [rows] = await this.pool.execute(
-      'SELECT * FROM users WHERE username = ?',
-      [username]
-    );
-    const users = rows as User[];
-    return users[0];
+  async createBilling(billing: InsertBilling): Promise<Billing> {
+    const [result] = await db
+      .insert(schema.billing)
+      .values(billing)
+      .returning();
+    return result;
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
-    await this.pool.execute(
-      'INSERT INTO users (id, username, password) VALUES (?, ?, ?)',
-      [id, insertUser.username, insertUser.password]
-    );
-    return { ...insertUser, id };
+  async updateBilling(id: number, billing: Partial<InsertBilling>): Promise<Billing | undefined> {
+    const [result] = await db
+      .update(schema.billing)
+      .set(billing)
+      .where(eq(schema.billing.id, id))
+      .returning();
+    return result;
+  }
+
+  async deleteBilling(id: number): Promise<boolean> {
+    await db.delete(schema.billing).where(eq(schema.billing.id, id));
+    return true;
   }
 }
 
-export const storage = new MySQLStorage();
+export const storage = new PostgresStorage();
