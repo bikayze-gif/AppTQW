@@ -1,11 +1,18 @@
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
+import { drizzle } from "drizzle-orm/mysql2";
+import mysql from "mysql2/promise";
 import * as schema from "@shared/schema";
 import { eq, desc } from "drizzle-orm";
 import type { Billing, InsertBilling } from "@shared/schema";
 
-const client = postgres(process.env.DATABASE_URL!);
-const db = drizzle(client, { schema });
+const pool = mysql.createPool({
+  host: process.env.MYSQL_HOST || "170.239.85.233",
+  port: parseInt(process.env.MYSQL_PORT || "3306"),
+  user: process.env.MYSQL_USER || "ncornejo",
+  password: process.env.MYSQL_PASSWORD || "N1c0l7as17",
+  database: process.env.MYSQL_DATABASE || "ncornejo",
+});
+
+const db = drizzle(pool, { schema, mode: "default" });
 
 export interface IStorage {
   getAllBilling(): Promise<Billing[]>;
@@ -15,7 +22,7 @@ export interface IStorage {
   deleteBilling(id: number): Promise<boolean>;
 }
 
-export class PostgresStorage implements IStorage {
+export class MySQLStorage implements IStorage {
   async getAllBilling(): Promise<Billing[]> {
     return db.select().from(schema.billing).orderBy(desc(schema.billing.fecha_gestion));
   }
@@ -29,20 +36,19 @@ export class PostgresStorage implements IStorage {
   }
 
   async createBilling(billing: InsertBilling): Promise<Billing> {
-    const [result] = await db
-      .insert(schema.billing)
-      .values(billing)
-      .returning();
-    return result;
+    const result = await db.insert(schema.billing).values(billing);
+    const insertId = result[0].insertId;
+    const created = await this.getBillingById(insertId);
+    if (!created) throw new Error("Failed to create billing record");
+    return created;
   }
 
   async updateBilling(id: number, billing: Partial<InsertBilling>): Promise<Billing | undefined> {
-    const [result] = await db
+    await db
       .update(schema.billing)
       .set(billing)
-      .where(eq(schema.billing.id, id))
-      .returning();
-    return result;
+      .where(eq(schema.billing.id, id));
+    return this.getBillingById(id);
   }
 
   async deleteBilling(id: number): Promise<boolean> {
@@ -51,4 +57,4 @@ export class PostgresStorage implements IStorage {
   }
 }
 
-export const storage = new PostgresStorage();
+export const storage = new MySQLStorage();

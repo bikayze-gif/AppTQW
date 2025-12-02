@@ -28,6 +28,10 @@ localPort = 37379
 externalPort = 3001
 
 [[ports]]
+localPort = 38205
+externalPort = 4200
+
+[[ports]]
 localPort = 38999
 externalPort = 3002
 
@@ -57,3 +61,10 @@ waitForPort = 5000
 
 [agent]
 mockupState = "FULLSTACK"
+
+[userenv]
+
+[userenv.shared]
+MYSQL_HOST = "170.239.85.233"
+MYSQL_PORT = "3306"
+MYSQL_DATABASE = "ncornejo"
