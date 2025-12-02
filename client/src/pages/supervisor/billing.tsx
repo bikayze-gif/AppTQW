@@ -13,6 +13,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -824,6 +832,8 @@ export default function SupervisorBilling() {
   const [isNewBillingModalOpen, setIsNewBillingModalOpen] = useState(false);
   const [emailModalData, setEmailModalData] = useState<{ title: string; email: string } | null>(null);
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 15;
 
   // Fetch billing data
   const { data: billingData = mockData, isLoading, error } = useQuery({
@@ -935,6 +945,18 @@ export default function SupervisorBilling() {
 
     return filtered;
   }, [billingData, searchTerm, statusFilter, sortField, sortOrder]);
+
+  const paginatedData = useMemo(() => {
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    return filteredAndSortedData.slice(startIndex, endIndex);
+  }, [filteredAndSortedData, currentPage]);
+
+  const totalPages = Math.ceil(filteredAndSortedData.length / rowsPerPage);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter]);
 
   const getStatusColor = (estado: string | null) => {
     switch (estado) {
@@ -1080,8 +1102,8 @@ export default function SupervisorBilling() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredAndSortedData.length > 0 ? (
-                  filteredAndSortedData.map((record: BillingRecord) => (
+                {paginatedData.length > 0 ? (
+                  paginatedData.map((record: BillingRecord) => (
                     <TableRow
                       key={record.id}
                       className="hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
@@ -1197,12 +1219,47 @@ export default function SupervisorBilling() {
             </Table>
           </div>
 
-          {/* Footer with info */}
+          {/* Footer with pagination */}
           <div className="border-t border-slate-200 dark:border-slate-700 px-6 py-4 bg-slate-50 dark:bg-slate-700">
-            <p className="text-sm text-slate-600 dark:text-slate-400">
-              Mostrando <span className="font-semibold">{filteredAndSortedData.length}</span> de{" "}
-              <span className="font-semibold">{billingData.length}</span> registros
-            </p>
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Mostrando <span className="font-semibold">{Math.min((currentPage - 1) * rowsPerPage + 1, filteredAndSortedData.length)}</span> a{" "}
+                <span className="font-semibold">{Math.min(currentPage * rowsPerPage, filteredAndSortedData.length)}</span> de{" "}
+                <span className="font-semibold">{filteredAndSortedData.length}</span> registros
+              </p>
+              
+              {totalPages > 1 && (
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                        className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                    
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <PaginationItem key={page}>
+                        <PaginationLink
+                          onClick={() => setCurrentPage(page)}
+                          isActive={currentPage === page}
+                          className="cursor-pointer"
+                        >
+                          {page}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ))}
+                    
+                    <PaginationItem>
+                      <PaginationNext
+                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                        className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              )}
+            </div>
           </div>
         </div>
       </div>
