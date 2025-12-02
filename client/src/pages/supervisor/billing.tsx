@@ -1238,17 +1238,66 @@ export default function SupervisorBilling() {
                       />
                     </PaginationItem>
                     
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                      <PaginationItem key={page}>
+                    {/* Primera página */}
+                    <PaginationItem>
+                      <PaginationLink
+                        onClick={() => setCurrentPage(1)}
+                        isActive={currentPage === 1}
+                        className="cursor-pointer"
+                      >
+                        1
+                      </PaginationLink>
+                    </PaginationItem>
+                    
+                    {/* Elipsis izquierda */}
+                    {currentPage > 3 && (
+                      <PaginationItem>
+                        <span className="flex h-9 w-9 items-center justify-center text-slate-500">
+                          ...
+                        </span>
+                      </PaginationItem>
+                    )}
+                    
+                    {/* Páginas intermedias (antes y después de la actual) */}
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter(page => {
+                        // Mostrar páginas cercanas a la actual
+                        if (page === 1 || page === totalPages) return false;
+                        return Math.abs(page - currentPage) <= 1;
+                      })
+                      .map((page) => (
+                        <PaginationItem key={page}>
+                          <PaginationLink
+                            onClick={() => setCurrentPage(page)}
+                            isActive={currentPage === page}
+                            className="cursor-pointer"
+                          >
+                            {page}
+                          </PaginationLink>
+                        </PaginationItem>
+                      ))}
+                    
+                    {/* Elipsis derecha */}
+                    {currentPage < totalPages - 2 && (
+                      <PaginationItem>
+                        <span className="flex h-9 w-9 items-center justify-center text-slate-500">
+                          ...
+                        </span>
+                      </PaginationItem>
+                    )}
+                    
+                    {/* Última página */}
+                    {totalPages > 1 && (
+                      <PaginationItem>
                         <PaginationLink
-                          onClick={() => setCurrentPage(page)}
-                          isActive={currentPage === page}
+                          onClick={() => setCurrentPage(totalPages)}
+                          isActive={currentPage === totalPages}
                           className="cursor-pointer"
                         >
-                          {page}
+                          {totalPages}
                         </PaginationLink>
                       </PaginationItem>
-                    ))}
+                    )}
                     
                     <PaginationItem>
                       <PaginationNext
