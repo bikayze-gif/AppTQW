@@ -35,16 +35,16 @@ interface BillingRecord {
   periodo: string;
   linea: string;
   proyecto: string;
-  observacion: string;
-  cantidad: number;
-  valorizacion: number | string;
-  fecha_gestion: string;
-  responsable: string;
-  estado: "Pendiente" | "Completado" | "En Proceso" | "Rechazado";
-  observacion_gestion: string;
-  archivo_detalle: string;
-  correo_enviado: string;
-  correo_recepcionado: string;
+  observacion: string | null;
+  cantidad: number | null;
+  valorizacion: number | string | null;
+  fecha_gestion: string | null;
+  responsable: string | null;
+  estado: string | null;
+  observacion_gestion: string | null;
+  archivo_detalle: string | null;
+  correo_enviado: string | null;
+  correo_recepcionado: string | null;
 }
 
 // Mock data
@@ -901,10 +901,10 @@ export default function SupervisorBilling() {
   const filteredAndSortedData = useMemo(() => {
     let filtered = billingData.filter((item: BillingRecord) => {
       const matchesSearch =
-        item.proyecto.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.linea.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.responsable.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.periodo.toLowerCase().includes(searchTerm.toLowerCase());
+        item.proyecto?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.linea?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (item.responsable?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
+        item.periodo?.toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesStatus = statusFilter === "all" || item.estado === statusFilter;
 
@@ -936,15 +936,17 @@ export default function SupervisorBilling() {
     return filtered;
   }, [billingData, searchTerm, statusFilter, sortField, sortOrder]);
 
-  const getStatusColor = (estado: string) => {
+  const getStatusColor = (estado: string | null) => {
     switch (estado) {
       case "Completado":
         return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
       case "En Proceso":
+      case "En proceso":
         return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
       case "Pendiente":
         return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
       case "Rechazado":
+      case "Cancelado":
         return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
       default:
         return "bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-200";
@@ -1098,13 +1100,17 @@ export default function SupervisorBilling() {
                         {record.responsable}
                       </TableCell>
                       <TableCell className="text-right font-semibold text-slate-900 dark:text-white">
-                        ${record.valorizacion.toLocaleString("es-ES", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
+                        {record.valorizacion != null
+                          ? `$${Number(record.valorizacion).toLocaleString("es-ES", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}`
+                          : "-"}
                       </TableCell>
                       <TableCell className="text-slate-600 dark:text-slate-400">
-                        {new Date(record.fecha_gestion).toLocaleDateString("es-ES")}
+                        {record.fecha_gestion
+                          ? new Date(record.fecha_gestion).toLocaleDateString("es-ES")
+                          : "-"}
                       </TableCell>
                       <TableCell>
                         <span
@@ -1195,7 +1201,7 @@ export default function SupervisorBilling() {
           <div className="border-t border-slate-200 dark:border-slate-700 px-6 py-4 bg-slate-50 dark:bg-slate-700">
             <p className="text-sm text-slate-600 dark:text-slate-400">
               Mostrando <span className="font-semibold">{filteredAndSortedData.length}</span> de{" "}
-              <span className="font-semibold">{mockData.length}</span> registros
+              <span className="font-semibold">{billingData.length}</span> registros
             </p>
           </div>
         </div>
