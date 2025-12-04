@@ -7,8 +7,8 @@ import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // Parámetros globales según documentación
-const GLOBAL_RUT = "14777223-8";
-const GLOBAL_PERIODO = "202510";
+const GLOBAL_RUT = "15762768-6";
+const GLOBAL_PERIODO = "202509";0";
 
 interface TqwData {
   RutTecnicoOrig: string;
