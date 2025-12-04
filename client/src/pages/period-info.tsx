@@ -228,12 +228,12 @@ export default function PeriodInfo() {
           isOpen={sections.produccion}
           onToggle={() => setSections(prev => ({ ...prev, produccion: !prev.produccion }))}
         >
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+          <div className="grid grid-cols-3 gap-3 sm:gap-4">
             <StatCard icon="📊" label="Puntos HFC" value={formatNumber(data.Puntos)} iconColor="text-blue-400" />
             <StatCard icon="📅" label="Cantidad Días HFC" value={formatNumber(data.Dias_Cantidad_HFC)} iconColor="text-orange-400" />
             <StatCard icon="📈" label="Promedio HFC" value={formatNumber(data.Promedio_HFC, 2)} iconColor="text-purple-400" />
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+          <div className="grid grid-cols-3 gap-3 sm:gap-4">
             <StatCard icon="📡" label="RGU FTTH" value={formatNumber(data.Q_RGU)} iconColor="text-blue-400" />
             <StatCard icon="📅" label="Cantidad Días FTTH" value={formatNumber(data.Dias_Cantidad_FTTH)} iconColor="text-orange-400" />
             <StatCard icon="📈" label="Promedio RGU" value={formatNumber(data.Promedio_RGU, 2)} iconColor="text-purple-400" />
@@ -254,12 +254,12 @@ export default function PeriodInfo() {
           isOpen={sections.calidad}
           onToggle={() => setSections(prev => ({ ...prev, calidad: !prev.calidad }))}
         >
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+          <div className="grid grid-cols-3 gap-3 sm:gap-4">
             <StatCard icon="📊" label="KPI Calidad HFC" value={formatPercent(data.Ratio_CalidadHFC)} unit="%" iconColor="text-green-400" />
             <StatCard icon="✅" label="Meta Calidad HFC" value={formatPercent(data.Meta_Calidad_HFC)} unit="%" iconColor="text-green-400" />
             <StatCard icon="%" label="Cumplimiento Calidad HFC" value={formatPercent(data._cumplimientoMeta_Calidad_HFC)} unit="%" iconColor="text-orange-400" />
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+          <div className="grid grid-cols-3 gap-3 sm:gap-4">
             <StatCard icon="📊" label="KPI Calidad FTTH" value={formatPercent(data.Ratio_CalidadFTTH)} unit="%" iconColor="text-green-400" />
             <StatCard icon="✅" label="Meta Calidad FTTH" value={formatPercent(data.Meta_Calidad_FTTH)} unit="%" iconColor="text-green-400" />
             <StatCard icon="%" label="Cumplimiento Calidad FTTH" value={formatPercent(data._cumplimientoMeta_Calidad_FTTH)} unit="%" iconColor="text-orange-400" />
@@ -272,12 +272,12 @@ export default function PeriodInfo() {
           isOpen={sections.asistencia}
           onToggle={() => setSections(prev => ({ ...prev, asistencia: !prev.asistencia }))}
         >
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+          <div className="grid grid-cols-3 gap-3 sm:gap-4">
             <StatCard icon="📅" label="Días Operativos" value={formatNumber(data.Q_OPERATIVO_TURNO)} iconColor="text-blue-400" />
             <StatCard icon="📅" label="Días Ausente" value={formatNumber(data.Q_AUSENTE_TURNO)} iconColor="text-blue-400" />
             <StatCard icon="📅" label="Días Vacaciones" value={formatNumber(data.Q_VACACIONES_TURNO)} iconColor="text-blue-400" />
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+          <div className="grid grid-cols-3 gap-3 sm:gap-4">
             <StatCard icon="📅" label="Días Licencia" value={formatNumber(data.Q_LICENCIA_TURNO)} iconColor="text-blue-400" />
             <StatCard icon="📊" label="Factor Ausencia" value={formatPercent(data.FACTOR_AUSENCIA)} unit="%" iconColor="text-purple-400" />
             <StatCard icon="📊" label="Factor Vacaciones" value={formatPercent(data.FACTOR_VACACIONES)} unit="%" iconColor="text-purple-400" />
