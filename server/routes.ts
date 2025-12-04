@@ -111,19 +111,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         req.session.connectionId = connectionId;
 
         // Determinar redirección basada en perfil
-        let redirectTo = "/";
+        let redirectTo = "/supervisor"; // Por defecto, redirigir a supervisor
         const perfil = user.perfil?.toLowerCase() || "";
         
-        if (perfil.includes("admin")) {
-          redirectTo = "/supervisor";
-        } else if (perfil.includes("supervisor")) {
-          redirectTo = "/supervisor";
-        } else if (perfil.includes("tecnico")) {
-          redirectTo = "/"; // Va a period-info
-        } else if (perfil.includes("bodega")) {
-          redirectTo = "/bodega";
-        } else if (perfil.includes("soporte") || perfil.includes("cescom")) {
-          redirectTo = "/soporte";
+        // Solo los técnicos residenciales van a period-info
+        if (perfil.includes("tecnico") && perfil.includes("residencial")) {
+          redirectTo = "/";
         }
 
         res.json({
