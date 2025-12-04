@@ -1137,6 +1137,9 @@ export default function SupervisorBilling() {
                     <SortableHeader field="responsable" label="Responsable" />
                   </TableHead>
                   <TableHead className="text-slate-700 dark:text-slate-300 text-right">
+                    <SortableHeader field="cantidad" label="Cantidad" />
+                  </TableHead>
+                  <TableHead className="text-slate-700 dark:text-slate-300 text-right">
                     <SortableHeader field="valorizacion" label="Valorización" />
                   </TableHead>
                   <TableHead className="text-slate-700 dark:text-slate-300">
@@ -1169,6 +1172,9 @@ export default function SupervisorBilling() {
                       </TableCell>
                       <TableCell className="text-slate-700 dark:text-slate-300">
                         {record.responsable}
+                      </TableCell>
+                      <TableCell className="text-right text-slate-900 dark:text-white">
+                        {record.cantidad ?? "-"}
                       </TableCell>
                       <TableCell className="text-right font-semibold text-slate-900 dark:text-white">
                         {record.valorizacion != null
