@@ -49,7 +49,7 @@ export default function Login() {
           <div className="w-10 h-10 bg-gradient-to-br from-[#06b6d4] to-[#0891b2] rounded-lg flex items-center justify-center">
             <div className="w-6 h-6 border-2 border-white rounded-sm transform rotate-45" />
           </div>
-          <span className="text-lg font-bold text-[#06b6d4]">TechApp</span>
+          <span className="text-lg font-bold text-[#06b6d4]">TelqwayAPP</span>
         </div>
 
         {/* Sign In Title */}
