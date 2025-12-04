@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Switch, Route, useLocation } from "wouter";
+import { Switch, Route, useLocation, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -9,6 +9,7 @@ import { AddMenu } from "@/components/add-menu";
 import { MaterialForm, type MaterialFormData } from "@/components/material-form";
 import { AIChat } from "@/components/ai-chat";
 import { ChatReporte } from "@/components/chat-reporte";
+import { AuthProvider, ProtectedRoute, useAuth } from "@/lib/auth-context";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
@@ -25,17 +26,43 @@ import SupervisorBilling from "@/pages/supervisor/billing";
 function Router() {
   return (
     <Switch>
+      {/* Public routes */}
       <Route path="/login" component={Login} />
-      <Route path="/supervisor" component={SupervisorNotes} />
-      <Route path="/supervisor/home" component={SupervisorHome} />
-      <Route path="/supervisor/messenger" component={SupervisorMessenger} />
-      <Route path="/supervisor/scrumboard" component={SupervisorScrumboard} />
-      <Route path="/supervisor/monitoring" component={SupervisorMonitoring} />
-      <Route path="/supervisor/billing" component={SupervisorBilling} />
-      <Route path="/" component={PeriodInfo} />
-      <Route path="/dashboard" component={Dashboard} />
-      <Route path="/activity" component={Activity} />
-      <Route path="/analytics" component={Analytics} />
+      
+      {/* Protected supervisor routes */}
+      <Route path="/supervisor">
+        <ProtectedRoute><SupervisorNotes /></ProtectedRoute>
+      </Route>
+      <Route path="/supervisor/home">
+        <ProtectedRoute><SupervisorHome /></ProtectedRoute>
+      </Route>
+      <Route path="/supervisor/messenger">
+        <ProtectedRoute><SupervisorMessenger /></ProtectedRoute>
+      </Route>
+      <Route path="/supervisor/scrumboard">
+        <ProtectedRoute><SupervisorScrumboard /></ProtectedRoute>
+      </Route>
+      <Route path="/supervisor/monitoring">
+        <ProtectedRoute><SupervisorMonitoring /></ProtectedRoute>
+      </Route>
+      <Route path="/supervisor/billing">
+        <ProtectedRoute><SupervisorBilling /></ProtectedRoute>
+      </Route>
+      
+      {/* Protected technician routes */}
+      <Route path="/">
+        <ProtectedRoute><PeriodInfo /></ProtectedRoute>
+      </Route>
+      <Route path="/dashboard">
+        <ProtectedRoute><Dashboard /></ProtectedRoute>
+      </Route>
+      <Route path="/activity">
+        <ProtectedRoute><Activity /></ProtectedRoute>
+      </Route>
+      <Route path="/analytics">
+        <ProtectedRoute><Analytics /></ProtectedRoute>
+      </Route>
+      
       <Route component={NotFound} />
     </Switch>
   );
@@ -43,17 +70,14 @@ function Router() {
 
 function AppLayout() {
   const [currentPath] = useLocation();
-  const isSupervisorRoute = currentPath.startsWith("/supervisor");
-
-  // Don't show the technician layout components on login or supervisor pages
-  if (currentPath === "/login" || isSupervisorRoute) {
-    return <Router />;
-  }
-
   const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
   const [isMaterialFormOpen, setIsMaterialFormOpen] = useState(false);
   const [isAIChatOpen, setIsAIChatOpen] = useState(false);
   const [isReportChatOpen, setIsReportChatOpen] = useState(false);
+
+  const isSupervisorRoute = currentPath.startsWith("/supervisor");
+  const isLoginPage = currentPath === "/login";
+  const showTechnicianLayout = !isLoginPage && !isSupervisorRoute;
 
   const handleMaterialSubmit = (data: MaterialFormData) => {
     console.log("Material request submitted:", data);
@@ -82,6 +106,10 @@ function AppLayout() {
     setIsMaterialFormOpen(true);
   };
 
+  if (!showTechnicianLayout) {
+    return <Router />;
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Router />
@@ -106,9 +134,7 @@ function AppLayout() {
         isOpen={isReportChatOpen}
         onClose={() => setIsReportChatOpen(false)}
       />
-      {currentPath !== "/login" && (
-        <BottomNav onAddClick={() => setIsAddMenuOpen(!isAddMenuOpen)} />
-      )}
+      <BottomNav onAddClick={() => setIsAddMenuOpen(!isAddMenuOpen)} />
     </div>
   );
 }
@@ -116,10 +142,12 @@ function AppLayout() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <AppLayout />
-      </TooltipProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <AppLayout />
+        </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

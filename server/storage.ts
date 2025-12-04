@@ -4,20 +4,22 @@ import * as schema from "@shared/schema";
 import { eq, desc, and, sql, gte } from "drizzle-orm";
 import type { Billing, InsertBilling, User, InsertLoginAttempt } from "@shared/schema";
 import crypto from "crypto";
+import bcrypt from "bcrypt";
+import { dbConfig, securityConfig } from "./config";
 
 const pool = mysql.createPool({
-  host: process.env.MYSQL_HOST || "170.239.85.233",
-  port: parseInt(process.env.MYSQL_PORT || "3306"),
-  user: process.env.MYSQL_USER || "ncornejo",
-  password: process.env.MYSQL_PASSWORD || "N1c0l7as17",
-  database: process.env.MYSQL_DATABASE || "operaciones_tqw",
+  host: dbConfig.host,
+  port: dbConfig.port,
+  user: dbConfig.user,
+  password: dbConfig.password,
+  database: dbConfig.database,
 });
 
 const db = drizzle(pool, { schema, mode: "default" });
 
-// Constantes de seguridad
-const MAX_LOGIN_ATTEMPTS = 5;
-const LOCKOUT_DURATION_MINUTES = 15;
+// Constantes de seguridad desde configuración
+const MAX_LOGIN_ATTEMPTS = securityConfig.maxLoginAttempts;
+const LOCKOUT_DURATION_MINUTES = securityConfig.lockoutDurationMinutes;
 
 // Interfaz de usuario autenticado (para la sesión)
 export interface AuthenticatedUser {
@@ -89,8 +91,10 @@ export class MySQLStorage implements IStorage {
     const [result] = await db
       .select()
       .from(schema.tqwComisionRenew)
-      .where(eq(schema.tqwComisionRenew.RutTecnicoOrig, rut))
-      .where(eq(schema.tqwComisionRenew.periodo, periodo));
+      .where(and(
+        eq(schema.tqwComisionRenew.RutTecnicoOrig, rut),
+        eq(schema.tqwComisionRenew.periodo, periodo)
+      ));
     return result;
   }
 
@@ -110,45 +114,72 @@ export class MySQLStorage implements IStorage {
     try {
       // Consulta que replica la lógica del documento:
       // Obtiene la contraseña más reciente del usuario y valida que esté vigente
-      const query = sql`
-        SELECT t.pass_new, w.id, w.email, w.nombre, w.area, w.supervisor, w.rut, w.PERFIL, w.ZONA_GEO
+      const [rows] = await pool.execute(
+        `SELECT t.pass_new, w.id, w.email, w.nombre, w.area, w.supervisor, w.rut, w.PERFIL, w.ZONA_GEO
         FROM (
           SELECT a.usuario, a.pass_new, a.fecha_registro, 
                  (SELECT COUNT(*) FROM tb_claves_usuarios b 
                   WHERE a.usuario = b.usuario AND a.fecha_registro <= b.fecha_registro) as total
           FROM tb_claves_usuarios a
-          WHERE a.usuario = ${email}
+          WHERE a.usuario = ?
         ) t
         LEFT JOIN tb_user_tqw w ON t.usuario = w.email
         WHERE t.total = 1 AND w.vigente = 'Si'
-        LIMIT 1
-      `;
-
-      const [rows] = await pool.execute(query.sql, query.params);
+        LIMIT 1`,
+        [email]
+      );
+      
       const results = rows as any[];
       
       if (!results || results.length === 0) {
+        console.log("No user found for email:", email);
         return null;
       }
 
       const user = results[0];
       const storedPassword = user.pass_new;
 
+      console.log("User found:", { 
+        email: user.email, 
+        hasPassword: !!storedPassword, 
+        passwordLength: storedPassword?.length,
+        passwordPrefix: storedPassword?.substring(0, 10) + '...',
+        perfil: user.PERFIL,
+        rut: user.rut
+      });
+
+      if (!storedPassword) {
+        console.log("No password found for user:", email);
+        return null;
+      }
+
       // Validación de contraseña (soporte dual: bcrypt y texto plano legado)
       let passwordValid = false;
+      const isBcrypt = storedPassword.startsWith('$2a$') || storedPassword.startsWith('$2b$') || storedPassword.startsWith('$2y$');
       
-      if (storedPassword && storedPassword.startsWith('$2')) {
-        // Contraseña hasheada con bcrypt - usamos comparación simple por ahora
-        // En producción deberías usar bcrypt.compare
-        passwordValid = false; // Requiere bcrypt
+      console.log("Password type:", isBcrypt ? "bcrypt" : "plaintext");
+      
+      if (isBcrypt) {
+        // Contraseña hasheada con bcrypt
+        try {
+          passwordValid = await bcrypt.compare(password, storedPassword);
+          console.log("Bcrypt comparison result:", passwordValid);
+        } catch (bcryptError) {
+          console.error("Error comparing bcrypt password:", bcryptError);
+          passwordValid = false;
+        }
       } else {
         // Contraseña en texto plano (sistema legado)
         passwordValid = storedPassword === password;
+        console.log("Plaintext comparison result:", passwordValid);
       }
 
       if (!passwordValid) {
+        console.log("Invalid password for user:", email);
         return null;
       }
+
+      console.log("User authenticated successfully:", email, "Perfil:", user.PERFIL);
 
       return {
         id: user.id,

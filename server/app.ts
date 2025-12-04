@@ -1,11 +1,15 @@
 import { type Server } from "node:http";
-import crypto from "crypto";
 
 import express, { type Express, type Request, Response, NextFunction } from "express";
 import session from "express-session";
 import MemoryStore from "memorystore";
 import { registerRoutes } from "./routes";
 import type { AuthenticatedUser } from "./storage";
+import { sessionConfig, appConfig, validateConfig, logConfig } from "./config";
+
+// Validar y mostrar configuración al iniciar
+validateConfig();
+logConfig();
 
 // Extend express-session types
 declare module "express-session" {
@@ -32,19 +36,18 @@ export const app = express();
 
 // Session configuration with security best practices
 const MemoryStoreSession = MemoryStore(session);
-const SESSION_MAX_AGE = 6 * 60 * 60 * 1000; // 6 hours in milliseconds
 
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || crypto.randomBytes(32).toString("hex"),
+    secret: sessionConfig.secret,
     resave: false,
     saveUninitialized: false,
-    name: "tqw_session",
+    name: sessionConfig.cookieName,
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: appConfig.isProduction,
       sameSite: "strict",
-      maxAge: SESSION_MAX_AGE,
+      maxAge: sessionConfig.maxAge,
     },
     store: new MemoryStoreSession({
       checkPeriod: 86400000, // Prune expired entries every 24h

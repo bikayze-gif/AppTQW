@@ -1,23 +1,42 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2, AlertCircle } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
 
 export default function Login() {
   const [, setLocation] = useLocation();
+  const { login, isAuthenticated, isLoading: authLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [role, setRole] = useState<"technician" | "supervisor">("technician");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSignIn = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Sign in:", { email, password, rememberMe, role });
-    
-    if (role === "supervisor") {
-      setLocation("/supervisor");
-    } else {
+  useEffect(() => {
+    if (isAuthenticated && !authLoading) {
       setLocation("/");
+    }
+  }, [isAuthenticated, authLoading, setLocation]);
+
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setIsSubmitting(true);
+
+    try {
+      const result = await login(email, password);
+      
+      if (result.success && result.redirectTo) {
+        setLocation(result.redirectTo);
+      } else if (!result.success) {
+        setError(result.error || "Error al iniciar sesión");
+      }
+    } catch (err) {
+      setError("Error de conexión. Intente nuevamente.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -43,6 +62,14 @@ export default function Login() {
             </button>
           </p>
         </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400" data-testid="error-message">
+            <AlertCircle size={18} />
+            <span className="text-sm">{error}</span>
+          </div>
+        )}
 
         {/* Form */}
         <form onSubmit={handleSignIn} className="space-y-6">
@@ -134,10 +161,18 @@ export default function Login() {
           {/* Sign In Button */}
           <button
             type="submit"
-            className="w-full py-3 bg-gradient-to-r from-[#06b6d4] to-[#0891b2] hover:from-[#0891b2] hover:to-[#06b6d4] text-black font-bold rounded-lg transition-all shadow-lg shadow-[#06b6d4]/30 hover:shadow-xl hover:shadow-[#06b6d4]/40 active:scale-95"
+            disabled={isSubmitting}
+            className="w-full py-3 bg-gradient-to-r from-[#06b6d4] to-[#0891b2] hover:from-[#0891b2] hover:to-[#06b6d4] text-black font-bold rounded-lg transition-all shadow-lg shadow-[#06b6d4]/30 hover:shadow-xl hover:shadow-[#06b6d4]/40 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             data-testid="button-signin"
           >
-            Iniciar sesión
+            {isSubmitting ? (
+              <>
+                <Loader2 size={18} className="animate-spin" />
+                Iniciando sesión...
+              </>
+            ) : (
+              "Iniciar sesión"
+            )}
           </button>
         </form>
       </div>
