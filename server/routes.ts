@@ -5,6 +5,21 @@ import { insertBillingSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // TQW Commission API route
+  app.get("/api/tqw-comision/:rut/:periodo", async (req, res) => {
+    try {
+      const { rut, periodo } = req.params;
+      const data = await storage.getTqwComisionData(rut, periodo);
+      if (!data) {
+        return res.status(404).json({ error: "No data found for this RUT and period" });
+      }
+      res.json(data);
+    } catch (error) {
+      console.error("Error fetching TQW commission data:", error);
+      res.status(500).json({ error: "Failed to fetch TQW commission data" });
+    }
+  });
+
   // Billing API routes
   
   // GET all billing records

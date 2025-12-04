@@ -20,6 +20,7 @@ export interface IStorage {
   createBilling(billing: InsertBilling): Promise<Billing>;
   updateBilling(id: number, billing: Partial<InsertBilling>): Promise<Billing | undefined>;
   deleteBilling(id: number): Promise<boolean>;
+  getTqwComisionData(rut: string, periodo: string): Promise<schema.TqwComisionRenew | undefined>;
 }
 
 export class MySQLStorage implements IStorage {
@@ -54,6 +55,15 @@ export class MySQLStorage implements IStorage {
   async deleteBilling(id: number): Promise<boolean> {
     await db.delete(schema.billing).where(eq(schema.billing.id, id));
     return true;
+  }
+
+  async getTqwComisionData(rut: string, periodo: string): Promise<schema.TqwComisionRenew | undefined> {
+    const [result] = await db
+      .select()
+      .from(schema.tqwComisionRenew)
+      .where(eq(schema.tqwComisionRenew.RutTecnicoOrig, rut))
+      .where(eq(schema.tqwComisionRenew.periodo, periodo));
+    return result;
   }
 }
 

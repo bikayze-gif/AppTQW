@@ -1,216 +1,270 @@
-import { useState } from "react";
-import { ChevronLeft, ChevronDown } from "lucide-react";
-import { useLocation } from "wouter";
+
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { BottomNav } from "@/components/bottom-nav";
+import { Separator } from "@/components/ui/separator";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+
+// Parámetros globales según documentación
+const GLOBAL_RUT = "14777223-8";
+const GLOBAL_PERIODO = "202510";
+
+interface TqwData {
+  RutTecnicoOrig: string;
+  periodo: string;
+  NombreTecnico: string | null;
+  Supervisor: string | null;
+  Zona_Factura23: string | null;
+  modelo_turno: string | null;
+  categoria: string | null;
+  Comision_HFC: string | null;
+  Comision_FTTH: string | null;
+  Comision_HFC_Ponderada: string | null;
+  Comision_FTTH_Ponderada: string | null;
+  Puntos: string | null;
+  Dias_Cantidad_HFC: string | null;
+  Promedio_HFC: string | null;
+  Q_RGU: string | null;
+  Dias_Cantidad_FTTH: string | null;
+  Promedio_RGU: string | null;
+  Meta_Produccion_HFC: string | null;
+  _CumplimientoProduccionHFC: string | null;
+  Meta_Produccion_FTTH: string | null;
+  _cumplimientoProduccionRGU: string | null;
+  Ratio_CalidadHFC: string | null;
+  Meta_Calidad_HFC: string | null;
+  _cumplimientoMeta_Calidad_HFC: string | null;
+  Ratio_CalidadFTTH: string | null;
+  Meta_Calidad_FTTH: string | null;
+  _cumplimientoMeta_Calidad_FTTH: string | null;
+  Q_OPERATIVO_TURNO: string | null;
+  Q_AUSENTE_TURNO: string | null;
+  Q_VACACIONES_TURNO: string | null;
+  Q_LICENCIA_TURNO: string | null;
+  FACTOR_AUSENCIA: string | null;
+  FACTOR_VACACIONES: string | null;
+}
+
+function StatCard({ icon, label, value, unit = "" }: { icon: string; label: string; value: string; unit?: string }) {
+  return (
+    <Card className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
+      <CardContent className="p-3">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-lg">{icon}</span>
+          <span className="text-xs text-slate-600 dark:text-slate-400 font-medium">{label}</span>
+        </div>
+        <div className="text-xl font-bold text-slate-900 dark:text-white">
+          {value}{unit}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function PeriodInfo() {
-  const [, setLocation] = useLocation();
-  const [expandedSections, setExpandedSections] = useState({
-    tecnico: true,
-    comisiones: true,
-    produccion: false,
-    indicadores: false,
-    asistencia: false,
-  });
+  const [data, setData] = useState<TqwData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const toggleSection = (section: keyof typeof expandedSections) => {
-    setExpandedSections((prev) => ({
-      ...prev,
-      [section]: !prev[section],
-    }));
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const response = await fetch(`/api/tqw-comision/${GLOBAL_RUT}/${GLOBAL_PERIODO}`);
+        if (!response.ok) {
+          throw new Error("No se encontraron datos para este RUT y período");
+        }
+        const result = await response.json();
+        setData(result);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Error al cargar los datos");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
+  // Helper functions para formateo según documentación
+  const formatMoney = (value: string | null) => {
+    if (!value) return "$0";
+    const num = parseInt(value);
+    return `$${num.toLocaleString('es-CL')}`;
   };
 
-  const StatCard = ({ icon, label, value, unit = "" }: any) => (
-    <div className="bg-white/5 border border-white/10 rounded-xl p-3 text-center overflow-hidden flex flex-col items-center justify-center min-h-[120px]">
-      <div className="text-2xl mb-2">{icon}</div>
-      <div className="text-sm md:text-base font-bold text-white mb-1 leading-tight line-clamp-2">{value}</div>
-      {unit && <div className="text-sm text-slate-400" style={{fontSize: '0.77rem'}}>{unit}</div>}
-      <div className="text-sm text-slate-500 leading-tight line-clamp-3" style={{fontSize: '0.715rem'}}>{label}</div>
-    </div>
-  );
+  const formatNumber = (value: string | null, decimals: number = 0) => {
+    if (!value) return "0";
+    const num = parseFloat(value);
+    return num.toLocaleString('es-CL', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+  };
+
+  const formatPercent = (value: string | null, decimals: number = 1) => {
+    if (!value) return "0.0";
+    const num = parseFloat(value) * 100;
+    return num.toFixed(decimals);
+  };
+
+  const calcularComisionTotal = () => {
+    if (!data) return "$0";
+    const hfc = parseInt(data.Comision_HFC_Ponderada || "0");
+    const ftth = parseInt(data.Comision_FTTH_Ponderada || "0");
+    return formatMoney(String(hfc + ftth));
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
+        <div className="text-slate-600 dark:text-slate-400">Cargando datos...</div>
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-4">
+        <Alert variant="destructive" className="max-w-2xl mx-auto mt-8">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            {error || "No se encontraron datos"}
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-background text-white font-sans pb-24">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-sm border-b border-white/5 px-4 md:px-6 pt-6 pb-4 flex items-center justify-between">
-        <div className="w-6" /> {/* Spacer for alignment */}
-        <h1 className="text-lg md:text-xl font-bold tracking-tight text-white">Información Técnica</h1>
-        <div className="w-6" /> {/* Spacer for alignment */}
-      </header>
-
-      <main className="px-4 md:px-6 space-y-4 max-w-2xl mx-auto pt-4">
-        
-        {/* Period Header */}
-        <Card className="bg-[#06b6d4]/20 border border-[#06b6d4]/30 shadow-lg rounded-2xl overflow-hidden">
-          <CardContent className="p-4 flex items-center justify-center gap-2">
-            <div className="text-[#06b6d4] text-xl">📅</div>
-            <h2 className="text-lg font-bold text-white">PERÍODO 202511</h2>
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 pb-24">
+      <div className="max-w-4xl mx-auto p-4 space-y-6">
+        {/* Header - Información del Técnico */}
+        <Card className="bg-gradient-to-br from-blue-600 to-blue-700 text-white border-none shadow-lg">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center text-2xl font-bold">
+                👤
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold">{data.NombreTecnico || "Sin datos"}</h1>
+                <p className="text-blue-100">RUT: {GLOBAL_RUT}</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4 mt-4">
+              <div>
+                <p className="text-blue-100 text-sm">Zona</p>
+                <p className="font-semibold">{data.Zona_Factura23 || "N/A"}</p>
+              </div>
+              <div>
+                <p className="text-blue-100 text-sm">Modelo Turno</p>
+                <p className="font-semibold">{data.modelo_turno || "N/A"}</p>
+              </div>
+              <div>
+                <p className="text-blue-100 text-sm">Categoría</p>
+                <p className="font-semibold">{data.categoria || "N/A"}</p>
+              </div>
+              <div>
+                <p className="text-blue-100 text-sm">Supervisor</p>
+                <p className="font-semibold">{data.Supervisor || ""}</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        {/* Información del Técnico */}
-        <div className="space-y-3">
-          <button
-            onClick={() => toggleSection("tecnico")}
-            className="w-full flex items-center justify-between p-4 bg-[#06b6d4]/20 border border-[#06b6d4]/30 rounded-xl hover:bg-[#06b6d4]/30 transition-colors"
-            data-testid="button-toggle-tecnico"
-          >
-            <h3 className="text-base font-bold text-[#06b6d4]">Información del Técnico</h3>
-            <ChevronDown
-              size={18}
-              className={`transition-transform ${expandedSections.tecnico ? "rotate-180" : ""}`}
-            />
-          </button>
-
-          {expandedSections.tecnico && (
-            <div className="space-y-3 pl-2">
-              <div className="text-sm text-slate-400">
-                Técnico: <span className="text-slate-200 font-semibold">Jesús Ignacio Lepe Rojas</span>
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
-                <StatCard icon="📍" label="Zona" value="ZMSU" />
-                <StatCard icon="🔧" label="Modelo Turno" value="5x2" />
-                <StatCard icon="👤" label="Categoría" value="Sénior" />
-              </div>
-            </div>
-          )}
-        </div>
-
         {/* Comisiones */}
-        <div className="space-y-3">
-          <button
-            onClick={() => toggleSection("comisiones")}
-            className="w-full flex items-center justify-between p-4 bg-[#06b6d4]/20 border border-[#06b6d4]/30 rounded-xl hover:bg-[#06b6d4]/30 transition-colors"
-            data-testid="button-toggle-comisiones"
-          >
-            <h3 className="text-base font-bold text-[#06b6d4]">Comisiones</h3>
-            <ChevronDown
-              size={18}
-              className={`transition-transform ${expandedSections.comisiones ? "rotate-180" : ""}`}
-            />
-          </button>
-
-          {expandedSections.comisiones && (
-            <div className="space-y-3 pl-2">
-              <div className="grid grid-cols-2 gap-3">
-                <StatCard icon="📊" label="Cálculo HFC" value="$0" />
-                <StatCard icon="📊" label="Cálculo FTTH" value="$56.000" />
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
-                <StatCard icon="💚" label="Comisión HFC Ponderada" value="$0" />
-                <StatCard icon="💚" label="Comisión FTTH Ponderada" value="$46.666" />
-                <StatCard icon="💚" label="Comisión Total" value="$46.666" />
-              </div>
+        <div>
+          <h2 className="text-lg font-bold text-slate-800 dark:text-white mb-3">💰 Comisiones</h2>
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <StatCard icon="📊" label="Cálculo HFC" value={formatMoney(data.Comision_HFC)} />
+              <StatCard icon="📊" label="Cálculo FTTH" value={formatMoney(data.Comision_FTTH)} />
             </div>
-          )}
+            <div className="grid grid-cols-2 gap-3">
+              <StatCard icon="💵" label="Comisión HFC Ponderada" value={formatMoney(data.Comision_HFC_Ponderada)} />
+              <StatCard icon="💵" label="Comisión FTTH Ponderada" value={formatMoney(data.Comision_FTTH_Ponderada)} />
+            </div>
+            <Card className="bg-gradient-to-r from-green-500 to-green-600 border-none shadow-lg">
+              <CardContent className="p-4">
+                <div className="flex justify-between items-center text-white">
+                  <span className="font-semibold">Comisión Total</span>
+                  <span className="text-2xl font-bold">{calcularComisionTotal()}</span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
+
+        <Separator />
 
         {/* Producción */}
-        <div className="space-y-3">
-          <button
-            onClick={() => toggleSection("produccion")}
-            className="w-full flex items-center justify-between p-4 bg-[#06b6d4]/20 border border-[#06b6d4]/30 rounded-xl hover:bg-[#06b6d4]/30 transition-colors"
-            data-testid="button-toggle-produccion"
-          >
-            <h3 className="text-base font-bold text-[#06b6d4]">Producción</h3>
-            <ChevronDown
-              size={18}
-              className={`transition-transform ${expandedSections.produccion ? "rotate-180" : ""}`}
-            />
-          </button>
-
-          {expandedSections.produccion && (
-            <div className="space-y-3 pl-2">
-              <div className="grid grid-cols-3 gap-3">
-                <StatCard icon="📈" label="Puntos HFC" value="0" />
-                <StatCard icon="📁" label="Cantidad Días HFC" value="0" />
-                <StatCard icon="🎯" label="Promedio HFC" value="0.00" />
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
-                <StatCard icon="📈" label="ROI FTTH" value="37" />
-                <StatCard icon="📁" label="Cantidad Días FTTH" value="11" />
-                <StatCard icon="🎯" label="Promedio ROI" value="3.39" />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <StatCard icon="🎁" label="Meta Producción HFC" value="349" />
-                <StatCard icon="📊" label="Cumplimiento HFC" value="0.0%" />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <StatCard icon="🎁" label="Meta Producción FTTH" value="1.6" />
-                <StatCard icon="📊" label="Cumplimiento FTTH" value="74.0%" />
-              </div>
+        <div>
+          <h2 className="text-lg font-bold text-slate-800 dark:text-white mb-3">📈 Producción</h2>
+          <div className="space-y-3">
+            <div className="grid grid-cols-3 gap-3">
+              <StatCard icon="🎯" label="Puntos HFC" value={formatNumber(data.Puntos)} />
+              <StatCard icon="📅" label="Días HFC" value={formatNumber(data.Dias_Cantidad_HFC)} />
+              <StatCard icon="📊" label="Promedio HFC" value={formatNumber(data.Promedio_HFC, 2)} />
             </div>
-          )}
+            <div className="grid grid-cols-3 gap-3">
+              <StatCard icon="📡" label="RGU FTTH" value={formatNumber(data.Q_RGU)} />
+              <StatCard icon="📅" label="Días FTTH" value={formatNumber(data.Dias_Cantidad_FTTH)} />
+              <StatCard icon="📊" label="Promedio RGU" value={formatNumber(data.Promedio_RGU, 2)} />
+            </div>
+          </div>
         </div>
+
+        <Separator />
+
+        {/* Metas y Cumplimiento */}
+        <div>
+          <h2 className="text-lg font-bold text-slate-800 dark:text-white mb-3">🎯 Metas y Cumplimiento</h2>
+          <div className="space-y-3">
+            <div className="grid grid-cols-3 gap-3">
+              <StatCard icon="🎯" label="Meta HFC" value={formatNumber(data.Meta_Produccion_HFC)} />
+              <StatCard icon="✅" label="Cumplimiento HFC" value={formatPercent(data._CumplimientoProduccionHFC)} unit="%" />
+              <StatCard icon="🎯" label="Meta FTTH" value={formatNumber(data.Meta_Produccion_FTTH, 1)} />
+            </div>
+            <StatCard icon="✅" label="Cumplimiento FTTH" value={formatPercent(data._cumplimientoProduccionRGU)} unit="%" />
+          </div>
+        </div>
+
+        <Separator />
 
         {/* Indicadores de Calidad */}
-        <div className="space-y-3">
-          <button
-            onClick={() => toggleSection("indicadores")}
-            className="w-full flex items-center justify-between p-4 bg-[#06b6d4]/20 border border-[#06b6d4]/30 rounded-xl hover:bg-[#06b6d4]/30 transition-colors"
-            data-testid="button-toggle-indicadores"
-          >
-            <h3 className="text-base font-bold text-[#06b6d4]">Indicadores de Calidad</h3>
-            <ChevronDown
-              size={18}
-              className={`transition-transform ${expandedSections.indicadores ? "rotate-180" : ""}`}
-            />
-          </button>
-
-          {expandedSections.indicadores && (
-            <div className="space-y-3 pl-2">
-              <div className="grid grid-cols-3 gap-3">
-                <StatCard icon="✅" label="KPI Calidad HFC" value="92.7" unit="%" />
-                <StatCard icon="✅" label="Meta Calidad HFC" value="90.8" unit="%" />
-                <StatCard icon="✅" label="Cumplimiento Calidad HFC" value="102.0" unit="%" />
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
-                <StatCard icon="✅" label="KPI Calidad FTTH" value="100.0" unit="%" />
-                <StatCard icon="✅" label="Meta Calidad FTTH" value="89.3" unit="%" />
-                <StatCard icon="✅" label="Cumplimiento Calidad FTTH" value="112.0" unit="%" />
-              </div>
+        <div>
+          <h2 className="text-lg font-bold text-slate-800 dark:text-white mb-3">⭐ Calidad</h2>
+          <div className="space-y-3">
+            <div className="grid grid-cols-3 gap-3">
+              <StatCard icon="📊" label="KPI Calidad HFC" value={formatPercent(data.Ratio_CalidadHFC)} unit="%" />
+              <StatCard icon="🎯" label="Meta Calidad HFC" value={formatPercent(data.Meta_Calidad_HFC)} unit="%" />
+              <StatCard icon="✅" label="Cumpl. Calidad HFC" value={formatPercent(data._cumplimientoMeta_Calidad_HFC)} unit="%" />
             </div>
-          )}
+            <div className="grid grid-cols-3 gap-3">
+              <StatCard icon="📊" label="KPI Calidad FTTH" value={formatPercent(data.Ratio_CalidadFTTH)} unit="%" />
+              <StatCard icon="🎯" label="Meta Calidad FTTH" value={formatPercent(data.Meta_Calidad_FTTH)} unit="%" />
+              <StatCard icon="✅" label="Cumpl. Calidad FTTH" value={formatPercent(data._cumplimientoMeta_Calidad_FTTH)} unit="%" />
+            </div>
+          </div>
         </div>
 
-        {/* Asistencia y Factores */}
-        <div className="space-y-3">
-          <button
-            onClick={() => toggleSection("asistencia")}
-            className="w-full flex items-center justify-between p-4 bg-[#06b6d4]/20 border border-[#06b6d4]/30 rounded-xl hover:bg-[#06b6d4]/30 transition-colors"
-            data-testid="button-toggle-asistencia"
-          >
-            <h3 className="text-base font-bold text-[#06b6d4]">Asistencia y Factores</h3>
-            <ChevronDown
-              size={18}
-              className={`transition-transform ${expandedSections.asistencia ? "rotate-180" : ""}`}
-            />
-          </button>
+        <Separator />
 
-          {expandedSections.asistencia && (
-            <div className="space-y-3 pl-2">
-              <div className="grid grid-cols-3 gap-3">
-                <StatCard icon="📅" label="Días Operativos" value="11" />
-                <StatCard icon="📅" label="Días Ausencia" value="0" />
-                <StatCard icon="📅" label="Días Vacaciones" value="5" />
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
-                <StatCard icon="📅" label="Días Licencia" value="0" />
-                <StatCard icon="📊" label="Factor Asistencia" value="100.0" unit="%" />
-                <StatCard icon="📊" label="Factor Vacaciones" value="83.3" unit="%" />
-              </div>
+        {/* Asistencia */}
+        <div>
+          <h2 className="text-lg font-bold text-slate-800 dark:text-white mb-3">📅 Asistencia</h2>
+          <div className="space-y-3">
+            <div className="grid grid-cols-3 gap-3">
+              <StatCard icon="📅" label="Días Operativos" value={formatNumber(data.Q_OPERATIVO_TURNO)} />
+              <StatCard icon="📅" label="Días Ausente" value={formatNumber(data.Q_AUSENTE_TURNO)} />
+              <StatCard icon="📅" label="Días Vacaciones" value={formatNumber(data.Q_VACACIONES_TURNO)} />
             </div>
-          )}
+            <div className="grid grid-cols-3 gap-3">
+              <StatCard icon="📅" label="Días Licencia" value={formatNumber(data.Q_LICENCIA_TURNO)} />
+              <StatCard icon="📊" label="Factor Ausencia" value={formatPercent(data.FACTOR_AUSENCIA)} unit="%" />
+              <StatCard icon="📊" label="Factor Vacaciones" value={formatPercent(data.FACTOR_VACACIONES)} unit="%" />
+            </div>
+          </div>
         </div>
+      </div>
 
-      </main>
+      <BottomNav />
     </div>
   );
 }
