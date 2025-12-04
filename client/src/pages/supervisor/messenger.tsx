@@ -14,6 +14,7 @@ import {
   SheetClose,
 } from "@/components/ui/sheet";
 import { useLocation } from "wouter";
+import { useAuth } from "@/hooks/useAuth"; // Import useAuth hook
 
 interface Chat {
   id: string;
@@ -34,6 +35,7 @@ interface Message {
 
 export default function SupervisorMessenger() {
   const [, setLocation] = useLocation();
+  const { logout } = useAuth(); // Destructure logout from useAuth
   const [selectedChat, setSelectedChat] = useState<string>("1");
   const [searchQuery, setSearchQuery] = useState("");
   const [messageInput, setMessageInput] = useState("");
@@ -315,7 +317,7 @@ export default function SupervisorMessenger() {
                         <User size={16} className="mr-2" />
                         Profile
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setLocation("/login")} data-testid="menu-logout">
+                      <DropdownMenuItem onClick={logout} data-testid="menu-logout"> {/* Changed to call logout */}
                         Logout
                       </DropdownMenuItem>
                     </DropdownMenuContent>

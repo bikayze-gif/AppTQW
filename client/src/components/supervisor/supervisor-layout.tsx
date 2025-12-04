@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
+import { useAuth } from "@/lib/auth-context";
 import { 
   Calendar, MessageSquare, Users, ShoppingCart, Folder, 
   HelpCircle, Mail, FileText, Trello, CheckSquare, 
@@ -21,10 +22,11 @@ interface SupervisorLayoutProps {
 
 export function SupervisorLayout({ children }: SupervisorLayoutProps) {
   const [location, setLocation] = useLocation();
+  const { logout } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-  const handleLogout = () => {
-    setLocation("/login");
+  const handleLogout = async () => {
+    await logout();
   };
 
   const handleNavigation = (label: string) => {

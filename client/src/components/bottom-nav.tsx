@@ -2,6 +2,7 @@ import { LayoutGrid, Activity, FileText, Ticket, Box, LogOut, Plus } from "lucid
 import { useLocation } from "wouter";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/lib/auth-context";
 
 interface BottomNavProps {
   onAddClick?: () => void;
@@ -10,6 +11,7 @@ interface BottomNavProps {
 export function BottomNav({ onAddClick }: BottomNavProps) {
   const [currentPath] = useLocation();
   const [, setLocation] = useLocation();
+  const { logout } = useAuth();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const isPeriodInfo = currentPath === "/";
@@ -17,32 +19,32 @@ export function BottomNav({ onAddClick }: BottomNavProps) {
   const isActivity = currentPath === "/activity";
   const isAnalytics = currentPath === "/analytics";
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setShowLogoutModal(false);
-    window.location.href = "/login";
+    await logout();
   };
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-[#1A1F33] border-t border-white/5 px-4 pb-4 pt-3 z-40">
       <div className="flex items-center justify-center max-w-full mx-auto">
-        
+
         {/* Left Group - 3 icons */}
         <div className="flex gap-4 items-center md:gap-6 lg:gap-8">
-          <button 
+          <button
             onClick={() => setLocation("/")}
             className={`p-2 rounded-lg relative hover:bg-white/5 transition-colors ${isPeriodInfo ? "text-[#06b6d4]" : "text-slate-400 hover:text-white"}`}
             data-testid="button-nav-grid"
           >
             <LayoutGrid size={22} />
           </button>
-          <button 
+          <button
             onClick={() => setLocation("/activity")}
             className={`p-2 rounded-lg relative hover:bg-white/5 transition-colors ${isActivity ? "text-[#06b6d4]" : "text-slate-400 hover:text-white"}`}
             data-testid="button-nav-activity"
           >
             <Activity size={22} />
           </button>
-          <button 
+          <button
             onClick={() => setLocation("/dashboard")}
             className={`p-2 rounded-lg relative hover:bg-white/5 transition-colors ${isDashboard ? "text-[#06b6d4]" : "text-slate-400 hover:text-white"}`}
             data-testid="button-nav-file"
@@ -52,7 +54,7 @@ export function BottomNav({ onAddClick }: BottomNavProps) {
         </div>
 
         {/* Center FAB - Integrated */}
-        <button 
+        <button
           onClick={onAddClick}
           className="bg-[#06b6d4] hover:bg-[#0891b2] text-black rounded-full p-3 shadow-lg shadow-cyan-500/30 transition-all active:scale-95 flex-shrink-0 flex items-center justify-center mx-6 md:mx-8 lg:mx-10"
           data-testid="button-add-material"
@@ -62,7 +64,7 @@ export function BottomNav({ onAddClick }: BottomNavProps) {
 
         {/* Right Group - 3 icons */}
         <div className="flex gap-4 items-center md:gap-6 lg:gap-8">
-          <button 
+          <button
             onClick={() => setLocation("/analytics")}
             className={`p-2 rounded-lg relative hover:bg-white/5 transition-colors ${isAnalytics ? "text-[#06b6d4]" : "text-slate-400 hover:text-white"}`}
             data-testid="button-nav-ticket"
@@ -72,9 +74,9 @@ export function BottomNav({ onAddClick }: BottomNavProps) {
           <button className="text-slate-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/5" data-testid="button-nav-box">
             <Box size={22} />
           </button>
-          <button 
+          <button
             onClick={() => setShowLogoutModal(true)}
-            className="text-slate-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/5" 
+            className="text-slate-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/5"
             data-testid="button-nav-logout"
           >
             <LogOut size={22} />
@@ -103,7 +105,7 @@ export function BottomNav({ onAddClick }: BottomNavProps) {
               <div className="bg-card border border-white/10 rounded-2xl shadow-2xl p-6 max-w-sm w-full" data-testid="logout-modal">
                 <h2 className="text-xl font-bold text-white mb-2">Cerrar Sesión</h2>
                 <p className="text-slate-300 text-sm mb-6">¿Estás seguro de que deseas cerrar sesión?</p>
-                
+
                 <div className="flex gap-3">
                   <button
                     onClick={() => setShowLogoutModal(false)}
