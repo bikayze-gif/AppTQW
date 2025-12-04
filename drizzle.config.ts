@@ -10,6 +10,6 @@ export default defineConfig({
     port: 3306,
     user: "ncornejo",
     password: "N1c0l7as17",
-    database: "ncornejo", // ajusta el nombre de tu base de datos
+    database: "operaciones_tqw",
   },
 });

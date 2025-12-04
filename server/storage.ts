@@ -9,7 +9,7 @@ const pool = mysql.createPool({
   port: parseInt(process.env.MYSQL_PORT || "3306"),
   user: process.env.MYSQL_USER || "ncornejo",
   password: process.env.MYSQL_PASSWORD || "N1c0l7as17",
-  database: process.env.MYSQL_DATABASE || "ncornejo",
+  database: process.env.MYSQL_DATABASE || "operaciones_tqw",
 });
 
 const db = drizzle(pool, { schema, mode: "default" });

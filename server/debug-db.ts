@@ -8,7 +8,7 @@ const pool = mysql.createPool({
   port: 3306,
   user: "ncornejo",
   password: "N1c0l7as17",
-  database: "ncornejo",
+  database: "operaciones_tqw",
 });
 
 const db = drizzle(pool, { schema, mode: "default" });
