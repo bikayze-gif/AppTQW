@@ -1299,7 +1299,7 @@ export default function SupervisorBilling() {
               </p>
               
               {totalPages > 1 && (
-                <Pagination>
+                <Pagination className="text-[#000305]">
                   <PaginationContent>
                     <PaginationItem>
                       <PaginationPrevious
