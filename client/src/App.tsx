@@ -44,7 +44,7 @@ function Router() {
 function AppLayout() {
   const [currentPath] = useLocation();
   const isSupervisorRoute = currentPath.startsWith("/supervisor");
-  
+
   // Don't show the technician layout components on login or supervisor pages
   if (currentPath === "/login" || isSupervisorRoute) {
     return <Router />;
