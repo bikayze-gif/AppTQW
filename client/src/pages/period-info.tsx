@@ -195,7 +195,7 @@ export default function PeriodInfo() {
           isOpen={sections.tecnico}
           onToggle={() => setSections(prev => ({ ...prev, tecnico: !prev.tecnico }))}
         >
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+          <div className="grid grid-cols-3 gap-3 sm:gap-4">
             <StatCard icon="📍" label="Zona" value={data.Zona_Factura23 || "N/A"} iconColor="text-rose-400" />
             <StatCard icon="🔄" label="Modelo Turno" value={data.modelo_turno || "N/A"} iconColor="text-purple-400" />
             <StatCard icon="⭐" label="Categoría" value={data.categoria || "N/A"} iconColor="text-yellow-400" />
