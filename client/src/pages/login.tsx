@@ -35,11 +35,11 @@ export default function Login() {
 
         {/* Sign In Title */}
         <div className="mb-6">
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">Sign in</h1>
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">Iniciar sesión</h1>
           <p className="text-slate-400 text-sm md:text-base">
-            Don't have an account?{" "}
+            ¿No tienes una cuenta?{" "}
             <button className="text-[#06b6d4] hover:text-[#0891b2] font-semibold transition-colors" data-testid="link-signup">
-              Sign up
+              Regístrate
             </button>
           </p>
         </div>
@@ -57,7 +57,7 @@ export default function Login() {
                   : "text-slate-400 hover:text-white"
               }`}
             >
-              Technician
+              Técnico
             </button>
             <button
               type="button"
@@ -74,12 +74,12 @@ export default function Login() {
 
           {/* Email Input */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-300">Email address</label>
+            <label className="text-sm font-medium text-slate-300">Correo electrónico</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
+              placeholder="tu@ejemplo.com"
               className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#06b6d4] focus:bg-white/10 transition-colors"
               data-testid="input-email"
               required
@@ -88,7 +88,7 @@ export default function Login() {
 
           {/* Password Input */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-300">Password</label>
+            <label className="text-sm font-medium text-slate-300">Contraseña</label>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
@@ -120,14 +120,14 @@ export default function Login() {
                 className="w-4 h-4 rounded border border-white/20 bg-white/5 accent-[#06b6d4] cursor-pointer"
                 data-testid="checkbox-remember"
               />
-              <span className="text-sm text-slate-400">Remember me</span>
+              <span className="text-sm text-slate-400">Recuérdame</span>
             </label>
             <button
               type="button"
               className="text-sm text-slate-400 hover:text-[#06b6d4] transition-colors font-medium"
               data-testid="link-forgot-password"
             >
-              Forgot password?
+              ¿Olvidaste tu contraseña?
             </button>
           </div>
 
@@ -137,7 +137,7 @@ export default function Login() {
             className="w-full py-3 bg-gradient-to-r from-[#06b6d4] to-[#0891b2] hover:from-[#0891b2] hover:to-[#06b6d4] text-black font-bold rounded-lg transition-all shadow-lg shadow-[#06b6d4]/30 hover:shadow-xl hover:shadow-[#06b6d4]/40 active:scale-95"
             data-testid="button-signin"
           >
-            Sign in
+            Iniciar sesión
           </button>
         </form>
       </div>
