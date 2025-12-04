@@ -38,8 +38,8 @@ const tableData = [
   { id: 5, mes: "06-24", totales: 67, cumple: 62, noCumple: 5 },
 ];
 
-const detailData: Record<string, { todas: Array<{orden: string; estado: string; fecha: string}>; cumple: Array<{orden: string; estado: string; fecha: string}>; noCumple: Array<{orden: string; estado: string; fecha: string}> }> = {
-  "12-24": { 
+const detailData: Record<string, {todas: Array<{orden: string; estado: string; fecha: string}>; cumple: Array<{orden: string; estado: string; fecha: string}>; noCumple: Array<{orden: string; estado: string; fecha: string}> }> = {
+  "12-24": {
     todas: [
       { orden: "1-36KUTNFZ", estado: "CUMPLE", fecha: "2024-12-01" },
       { orden: "1-36KMLHXJ", estado: "CUMPLE", fecha: "2024-12-02" },
@@ -63,7 +63,7 @@ const detailData: Record<string, { todas: Array<{orden: string; estado: string; 
       { orden: "1-36HJOQ9F", estado: "NO CUMPLE", fecha: "2024-12-10" },
     ]
   },
-  "03-24": { 
+  "03-24": {
     todas: [
       { orden: "1-36KUTNFZ", estado: "CUMPLE", fecha: "2024-03-01" },
       { orden: "1-36KMLHXJ", estado: "CUMPLE", fecha: "2024-03-02" },
@@ -80,7 +80,7 @@ const detailData: Record<string, { todas: Array<{orden: string; estado: string; 
 const CustomDot = (props: any) => {
   const { cx, cy, stroke, payload, value } = props;
   if (value === undefined) return null;
-  
+
   return (
     <g>
       <circle cx={cx} cy={cy} r={6} fill="#1e293b" stroke={stroke} strokeWidth={2.5} />
@@ -191,6 +191,8 @@ function DetailPanel({ record, onClose }: { record: TableRow; onClose: () => voi
 
 
 export default function Dashboard() {
+  const [, setLocation] = useState(null); // Placeholder, replace with actual location hook if needed
+
   const [selectedRecord, setSelectedRecord] = useState<TableRow | null>(null);
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
@@ -222,7 +224,7 @@ export default function Dashboard() {
 
   const sortedData = useMemo(() => {
     let data = [...tableData];
-    
+
     if (sortColumn) {
       data.sort((a, b) => {
         const aVal = a[sortColumn as keyof typeof a];
@@ -231,7 +233,7 @@ export default function Dashboard() {
         return sortDirection === "asc" ? comparison : -comparison;
       });
     }
-    
+
     return data;
   }, [sortColumn, sortDirection]);
 
@@ -245,7 +247,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-white font-sans">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 pb-28">
       {/* Fixed Header */}
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-sm border-b border-white/5 px-4 md:px-6 pt-6 pb-4 flex justify-between items-start">
         <div>
@@ -259,7 +261,7 @@ export default function Dashboard() {
       {/* Scrollable Content */}
       <main className="pb-24">
         <div className="px-3 md:px-6 space-y-4 max-w-4xl mx-auto">
-          
+
           {/* Chart Section Title */}
           <div className="flex items-center justify-between px-2 pt-4">
             <h2 className="text-base md:text-lg font-bold text-white">Evolución de Calidad Reactiva</h2>
@@ -273,16 +275,16 @@ export default function Dashboard() {
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={evolutionData} margin={{ top: 20, right: 30, left: 0, bottom: 35 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                    <XAxis 
-                      dataKey="month" 
-                      axisLine={false} 
-                      tickLine={false} 
+                    <XAxis
+                      dataKey="month"
+                      axisLine={false}
+                      tickLine={false}
                       tick={{ fill: '#94a3b8', fontSize: 11 }}
                       dy={5}
                     />
-                    <YAxis 
-                      axisLine={false} 
-                      tickLine={false} 
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
                       tick={{ fill: '#94a3b8', fontSize: 11 }}
                       domain={[0, 100]}
                       ticks={[0, 20, 40, 60, 80, 100]}
@@ -290,15 +292,15 @@ export default function Dashboard() {
                       label={{ value: 'Eficiencia (%)', angle: -90, position: 'insideLeft', fill: '#94a3b8', style: { textAnchor: 'middle' }, offset: 10 }}
                       width={50}
                     />
-                    <Tooltip 
+                    <Tooltip
                       contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(6, 182, 212, 0.3)', borderRadius: '8px', color: '#fff' }}
                       labelStyle={{ color: '#06b6d4' }}
                       formatter={(value) => [`${value}%`, 'Valor']}
                     />
-                    <Line 
-                      type="monotone" 
-                      dataKey="value" 
-                      stroke="hsl(var(--chart-1))" 
+                    <Line
+                      type="monotone"
+                      dataKey="value"
+                      stroke="hsl(var(--chart-1))"
                       strokeWidth={3}
                       dot={false}
                       activeDot={false}
@@ -316,17 +318,17 @@ export default function Dashboard() {
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={efficiencyData} margin={{ top: 20, right: 30, left: 0, bottom: 35 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                    <XAxis 
-                      dataKey="month" 
-                      axisLine={false} 
-                      tickLine={false} 
+                    <XAxis
+                      dataKey="month"
+                      axisLine={false}
+                      tickLine={false}
                       tick={{ fill: '#94a3b8', fontSize: 11 }}
                       dy={5}
                     />
-                    <YAxis 
+                    <YAxis
                       type="number"
-                      axisLine={false} 
-                      tickLine={false} 
+                      axisLine={false}
+                      tickLine={false}
                       tick={{ fill: '#94a3b8', fontSize: 11 }}
                       domain={[0, 100]}
                       ticks={[0, 20, 40, 60, 80, 100]}
@@ -334,22 +336,22 @@ export default function Dashboard() {
                       label={{ value: 'Eficiencia (%)', angle: -90, position: 'insideLeft', fill: '#94a3b8', style: { textAnchor: 'middle' }, offset: 10 }}
                       width={50}
                     />
-                    <Tooltip 
+                    <Tooltip
                       contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(6, 182, 212, 0.3)', borderRadius: '8px', color: '#fff' }}
                       labelStyle={{ color: '#06b6d4' }}
                       formatter={(value) => [`${value}%`, 'Eficiencia']}
                     />
-                    <Line 
-                      type="monotone" 
-                      dataKey="val1" 
-                      stroke="hsl(var(--chart-3))" 
+                    <Line
+                      type="monotone"
+                      dataKey="val1"
+                      stroke="hsl(var(--chart-3))"
                       strokeWidth={3}
                       dot={false}
                     />
-                    <Line 
-                      type="monotone" 
-                      dataKey="val2" 
-                      stroke="hsl(var(--chart-2))" 
+                    <Line
+                      type="monotone"
+                      dataKey="val2"
+                      stroke="hsl(var(--chart-2))"
                       strokeWidth={3}
                       dot={false}
                     />
@@ -362,7 +364,7 @@ export default function Dashboard() {
           {/* Table Section */}
           <div className="pt-4">
             <h3 className="text-base md:text-lg font-bold text-white mb-3 px-2">Detalle por Mes</h3>
-            
+
             {/* Filter and Download Section */}
             <div className="flex flex-row gap-2 items-center mb-4">
               {/* Search Bar */}
@@ -422,14 +424,14 @@ export default function Dashboard() {
                 <Sheet size={16} />
               </button>
             </div>
-            
+
             {/* Responsive Table Container */}
             <div className="overflow-x-auto">
               <Card className="bg-card border-none shadow-xl rounded-2xl md:rounded-3xl overflow-hidden">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-white/5 bg-white/5">
-                      <th 
+                      <th
                         onClick={() => handleSort("mes")}
                         className="px-3 md:px-6 py-3 text-left font-semibold text-slate-300 text-xs md:text-sm cursor-pointer hover:bg-white/10 transition-colors"
                       >
@@ -446,7 +448,7 @@ export default function Dashboard() {
                           )}
                         </div>
                       </th>
-                      <th 
+                      <th
                         onClick={() => handleSort("totales")}
                         className="px-3 md:px-6 py-3 text-left font-semibold text-slate-300 text-xs md:text-sm cursor-pointer hover:bg-white/10 transition-colors"
                       >
@@ -463,7 +465,7 @@ export default function Dashboard() {
                           )}
                         </div>
                       </th>
-                      <th 
+                      <th
                         onClick={() => handleSort("cumple")}
                         className="px-3 md:px-6 py-3 text-left font-semibold text-slate-300 text-xs md:text-sm cursor-pointer hover:bg-white/10 transition-colors"
                       >
@@ -480,7 +482,7 @@ export default function Dashboard() {
                           )}
                         </div>
                       </th>
-                      <th 
+                      <th
                         onClick={() => handleSort("noCumple")}
                         className="px-3 md:px-6 py-3 text-left font-semibold text-slate-300 text-xs md:text-sm cursor-pointer hover:bg-white/10 transition-colors"
                       >

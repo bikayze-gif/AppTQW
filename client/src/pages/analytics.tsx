@@ -289,7 +289,7 @@ export default function Analytics() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-white font-sans pb-24">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white font-sans pb-24">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-sm border-b border-white/5 px-4 md:px-6 pt-6 pb-4 flex items-center justify-center">
         <h1 className="text-lg md:text-xl font-bold tracking-tight text-white">Análitica</h1>
