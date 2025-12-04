@@ -63,7 +63,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const validatedData = insertBillingSchema.partial().parse(req.body);
-      const billing = await storage.updateBilling(id, validatedData);
+      
+      // Ensure fecha_gestion is in correct format (YYYY-MM-DD) or null
+      const dataToUpdate = {
+        ...validatedData,
+        fecha_gestion: validatedData.fecha_gestion 
+          ? validatedData.fecha_gestion.split('T')[0] 
+          : validatedData.fecha_gestion === null 
+          ? null 
+          : undefined,
+      };
+      
+      const billing = await storage.updateBilling(id, dataToUpdate);
       if (!billing) {
         return res.status(404).json({ error: "Billing record not found" });
       }

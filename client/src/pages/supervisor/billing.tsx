@@ -520,15 +520,42 @@ function EditBillingModal({
 
   useEffect(() => {
     if (record) {
-      setFormData(record);
+      // Ensure fecha_gestion is in yyyy-MM-dd format
+      const formattedRecord = {
+        ...record,
+        fecha_gestion: record.fecha_gestion 
+          ? record.fecha_gestion.split('T')[0] 
+          : null,
+      };
+      setFormData(formattedRecord);
     }
   }, [record, isOpen]);
 
   const handleSave = () => {
-    if (formData) {
-      onSubmit(formData);
-      if (!isLoading) onClose();
+    if (!formData) return;
+
+    // Validate required fields
+    if (!formData.periodo.trim() || !formData.linea.trim() || !formData.proyecto.trim()) {
+      return;
     }
+
+    // Prepare data with proper null handling and date format
+    const dataToSubmit = {
+      ...formData,
+      observacion: formData.observacion?.trim() || null,
+      cantidad: formData.cantidad || null,
+      valorizacion: formData.valorizacion || null,
+      fecha_gestion: formData.fecha_gestion 
+        ? formData.fecha_gestion.split('T')[0] 
+        : null,
+      responsable: formData.responsable?.trim() || null,
+      observacion_gestion: formData.observacion_gestion?.trim() || null,
+      archivo_detalle: formData.archivo_detalle?.trim() || null,
+      correo_enviado: formData.correo_enviado?.trim() || null,
+      correo_recepcionado: formData.correo_recepcionado?.trim() || null,
+    };
+
+    onSubmit(dataToSubmit);
   };
 
   if (!formData) return null;
@@ -591,9 +618,9 @@ function EditBillingModal({
             <Label htmlFor="observacion" className="text-slate-700">Observación</Label>
             <Textarea
               id="observacion"
-              value={formData.observacion}
+              value={formData.observacion || ""}
               onChange={(e) =>
-                setFormData({ ...formData, observacion: e.target.value })
+                setFormData({ ...formData, observacion: e.target.value || null })
               }
               className="mt-1 bg-white border-slate-300 text-slate-900"
               data-testid="textarea-observacion"
@@ -606,9 +633,9 @@ function EditBillingModal({
             <Input
               id="cantidad"
               type="number"
-              value={formData.cantidad}
+              value={formData.cantidad ?? ""}
               onChange={(e) =>
-                setFormData({ ...formData, cantidad: parseInt(e.target.value) })
+                setFormData({ ...formData, cantidad: e.target.value ? parseInt(e.target.value) : null })
               }
               className="mt-1 bg-white border-slate-300 text-slate-900"
               data-testid="input-cantidad"
@@ -622,9 +649,9 @@ function EditBillingModal({
               id="valorizacion"
               type="number"
               step="0.01"
-              value={formData.valorizacion}
+              value={formData.valorizacion ?? ""}
               onChange={(e) =>
-                setFormData({ ...formData, valorizacion: parseFloat(e.target.value) })
+                setFormData({ ...formData, valorizacion: e.target.value ? parseFloat(e.target.value) : null })
               }
               className="mt-1 bg-white border-slate-300 text-slate-900"
               data-testid="input-valorizacion"
@@ -637,9 +664,9 @@ function EditBillingModal({
             <Input
               id="fecha_gestion"
               type="date"
-              value={formData.fecha_gestion}
+              value={formData.fecha_gestion || ""}
               onChange={(e) =>
-                setFormData({ ...formData, fecha_gestion: e.target.value })
+                setFormData({ ...formData, fecha_gestion: e.target.value || null })
               }
               className="mt-1 bg-white border-slate-300 text-slate-900"
               data-testid="input-fecha_gestion"
@@ -651,9 +678,9 @@ function EditBillingModal({
             <Label htmlFor="responsable" className="text-slate-700">Responsable</Label>
             <Input
               id="responsable"
-              value={formData.responsable}
+              value={formData.responsable || ""}
               onChange={(e) =>
-                setFormData({ ...formData, responsable: e.target.value })
+                setFormData({ ...formData, responsable: e.target.value || null })
               }
               className="mt-1 bg-white border-slate-300 text-slate-900"
               data-testid="input-responsable"
@@ -689,11 +716,11 @@ function EditBillingModal({
             <Label htmlFor="observacion_gestion" className="text-slate-700">Observación de Gestión</Label>
             <Textarea
               id="observacion_gestion"
-              value={formData.observacion_gestion}
+              value={formData.observacion_gestion || ""}
               onChange={(e) =>
                 setFormData({
                   ...formData,
-                  observacion_gestion: e.target.value,
+                  observacion_gestion: e.target.value || null,
                 })
               }
               className="mt-1 bg-white border-slate-300 text-slate-900"
