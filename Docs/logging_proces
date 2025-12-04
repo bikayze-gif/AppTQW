@@ -1,0 +1,1018 @@
+# Documentación Técnica del Sistema de Autenticación TQW
+
+## Tabla de Contenidos
+
+1. [Resumen Ejecutivo del Proceso de Autenticación](#resumen-ejecutivo)
+2. [Arquitectura y Flujo del Proceso](#arquitectura-y-flujo)
+3. [Características y Funcionalidades Clave](#caracteristicas-y-funcionalidades)
+4. [Modelo de Datos y Recursos de la Base de Datos](#modelo-de-datos)
+5. [Endpoints y Contratos de API](#endpoints-y-contratos-de-api)
+6. [Consideraciones de Seguridad](#consideraciones-de-seguridad)
+7. [Guía de Replicación para una Nueva UI](#guia-de-replicacion)
+
+---
+
+## Resumen Ejecutivo del Proceso de Autenticación {#resumen-ejecutivo}
+
+### Visión General
+
+El sistema de autenticación TQW (Telqway) implementa un mecanismo de autenticación basado en sesiones PHP con múltiples capas de seguridad. El sistema está diseñado para gestionar el acceso de diferentes tipos de usuarios (técnicos, supervisores, administradores, personal de bodega, etc.) a través de una interfaz web centralizada.
+
+### Actores Involucrados
+
+- **Cliente**: Navegador web del usuario final
+- **Servidor Web**: Servidor Apache/Nginx con PHP 8.x
+- **Base de Datos**: MySQL/MariaDB (operaciones_tqw)
+- **Sistema de Logs**: Archivos de log locales y base de datos
+
+### Protocolos de Seguridad Utilizados
+
+- **Session-Cookie**: Gestión de sesiones PHP con cookies seguras
+- **Password Hashing**: Soporte para contraseñas hasheadas (bcrypt) y texto plano (legado)
+- **Rate Limiting**: Límite de intentos de conexión y login
+- **CSRF Protection**: Tokens CSRF implícitos en formularios
+- **SQL Injection Prevention**: Uso de prepared statements y consultas parametrizadas
+
+### Tecnologías Principales
+
+- **Backend**: PHP 8.x con MySQLi
+- **Frontend**: HTML5, CSS3, Bootstrap 5.3, JavaScript vanilla
+- **Base de Datos**: MySQL/MariaDB con charset utf8mb4
+- **Seguridad**: Headers HTTP de seguridad, logging comprehensivo
+
+---
+
+## Arquitectura y Flujo del Proceso {#arquitectura-y-flujo}
+
+### Diagrama de Arquitectura General
+
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   Navegador    │    │   Servidor Web   │    │  Base de Datos  │
+│   (Cliente)     │    │     (PHP)        │    │   (MySQL)       │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+         │                       │                       │
+         │ 1. Solicitud Login      │                       │
+         ├───────────────────────>│                       │
+         │                       │                       │
+         │                       │ 2. Validar Credenciales│
+         │                       ├───────────────────────>│
+         │                       │                       │
+         │                       │ 3. Consulta Usuario   │
+         │                       │<───────────────────────│
+         │                       │                       │
+         │                       │ 4. Respuesta Usuario  │
+         │                       ├───────────────────────>│
+         │                       │                       │
+         │ 5. Crear Sesión        │                       │
+         │<───────────────────────│                       │
+         │                       │                       │
+         │ 6. Redirección Dashboard│                       │
+         ├───────────────────────>│                       │
+         │                       │                       │
+         │ 7. Ping Sesión (cada 5 min)                    │
+         ├───────────────────────>│                       │
+```
+
+### Flujo Detallado de Autenticación
+
+#### Fase 1: Inicio de Sesión
+
+1. **Acceso a login.php**
+   - Cliente solicita página de login
+   - Servidor establece headers de seguridad
+   - Se inicia sesión PHP con configuración segura
+
+2. **Presentación del Formulario**
+   - Formulario HTML con campos: email (usuario) y contraseña
+   - Implementación de visibilidad de contraseña
+   - Sistema de reporte de problemas integrado
+
+#### Fase 2: Procesamiento de Credenciales
+
+1. **Envío a Controller3.php**
+   - Método POST con credenciales
+   - Validación básica de entrada
+   - Consulta a base de datos para validación
+
+2. **Validación en Base de Datos**
+   ```sql
+   SELECT t.*, w.nombre, w.area, w.supervisor, w.iden_user, w.rut, w.PERFIL
+   FROM (
+       SELECT a.usuario, a.pass_new, a.fecha_registro, count(*) total
+       FROM TB_CLAVES_USUARIOS a
+       LEFT JOIN TB_CLAVES_USUARIOS b ON a.usuario = b.usuario 
+           AND a.fecha_registro <= b.fecha_registro
+       GROUP BY a.usuario, a.pass_new, a.fecha_registro
+   ) t
+   LEFT JOIN tb_user_tqw w ON t.usuario = w.email
+   WHERE t.total = 1 AND t.usuario = ? AND w.vigente = 'Si'
+   ```
+
+3. **Verificación de Contraseña**
+   - Detección automática de formato hash (bcrypt vs texto plano)
+   - Validación con `password_verify()` para hashes
+   - Comparación directa para texto plano (legado)
+
+#### Fase 3: Gestión de Sesión
+
+1. **Creación de Variables de Sesión**
+   ```php
+   $_SESSION['usuario'] = $userRut;
+   $_SESSION['login_time'] = time();
+   $_SESSION['last_activity'] = time();
+   $_SESSION['id_sesion'] = $clave_temporal;
+   $_SESSION['periodo'] = "202505"; // Período estático
+   ```
+
+2. **Registro de Actividad**
+   - Inserción en `TB_LOG_APP` con token temporal
+   - Logging en `tb_conexiones_log` para auditoría
+
+3. **Redirección Basada en Perfil**
+   - Administradores: `new_dash.php`
+   - Técnicos: `activity_dashboard.php`
+   - Bodega: `home_bodega_new.php`
+   - Soporte: `SoporteCalidad.php`
+
+#### Fase 4: Mantenimiento de Sesión
+
+1. **Session Ping (cada 5 minutos)**
+   - AJAX a `session_ping.php`
+   - Regeneración de ID de sesión
+   - Actualización de timestamp de actividad
+
+2. **Timeout por Inactividad**
+   - 6 horas (21,600 segundos) de inactividad máxima
+   - Destrucción automática de sesión
+   - Redirección a login con mensaje de expiración
+
+---
+
+## Características y Funcionalidades Clave {#caracteristicas-y-funcionalidades}
+
+### 1. Autenticación Clásica (Usuario/Contraseña)
+
+- **Validación de Credenciales**: Email y contraseña
+- **Soporte Dual de Contraseñas**: 
+  - Hash moderno (bcrypt) para nuevas cuentas
+  - Texto plano para compatibilidad con sistema legado
+- **Detección Automática**: Identifica formato de contraseña automáticamente
+
+### 2. Sistema de Roles y Perfiles
+
+- **Perfiles Definidos**:
+  - `admin`: Acceso administrativo completo
+  - `Supervisor`: Gestión de equipos técnicos
+  - `TECNICO REDES`: Técnicos de redes
+  - `user_QA`: Usuarios de módulo logístico
+  - `bodega`: Personal de bodega
+  - `Cescom`: Soporte de calidad
+  - `SOPORTE TQW`: Soporte técnico
+
+### 3. Recuperación y Restablecimiento de Contraseña
+
+- **Flujo de Recuperación**:
+  1. Usuario ingresa email en `forget-password.php`
+  2. Sistema genera token temporal de 12 caracteres
+  3. Token se almacena en `TB_SOLICITUD_PASS_NEW`
+  4. Usuario recibe enlace con token
+  5. En `change-password.php` establece nueva contraseña
+
+- **Validaciones de Contraseña**:
+  - Mínimo 8 caracteres
+  - Requiere número, mayúscula y carácter especial
+  - Indicador visual de fortaleza
+
+### 4. Sistema de "Recordarme"
+
+- **Implementación**: Cookies de sesión con duración extendida
+- **Configuración**: 6 horas de vida útil por defecto
+- **Seguridad**: Cookies HTTPOnly, Secure y SameSite Strict
+
+### 5. Políticas de Bloqueo de Cuentas
+
+- **Rate Limiting**: Máximo 5 intentos de login
+- **Lockout Duration**: 15 minutos de bloqueo
+- **Connection Rate Limit**: Máximo 3 intentos de conexión
+- **Logging Completo**: Todos los intentos se registran
+
+### 6. Sistema de Reporte de Problemas
+
+- **Integrado en Login**: Modal para reportar problemas de acceso
+- **Registro Automático**: Guarda tickets en base de datos
+- **Contexto Completo**: Captura navegador, IP y detalles del error
+
+### 7. Auditoría y Logging
+
+- **Login Attempts**: Registro en tabla `login_attempts`
+- **Connection Logs**: Auditoría en `tb_conexiones_log`
+- **Security Events**: Logs de eventos de seguridad
+- **Session Activity**: Seguimiento completo de actividad de sesión
+
+---
+
+## Modelo de Datos y Recursos de la Base de Datos {#modelo-de-datos}
+
+### Esquema Principal de Autenticación
+
+#### 1. Tabla: `tb_user_tqw` (Usuarios Principales)
+
+```sql
+CREATE TABLE tb_user_tqw (
+    id int AUTO_INCREMENT PRIMARY KEY,
+    email text,                    -- Email del usuario (usado para login)
+    pass text,                     -- Contraseña (legado, obsoleto)
+    reg_date datetime,               -- Fecha de registro
+    nombre text,                    -- Nombre completo del usuario
+    area text,                      -- Área/departamento
+    supervisor text,                 -- Email del supervisor
+    rut text,                       -- RUT (identificador único)
+    correo_super text,               -- Email supervisor (alternativo)
+    iden_user text,                  -- Identificador de usuario
+    vigente text,                   -- Estado: 'Si'/'No'
+    ZONA_GEO text,                  -- Zona geográfica
+    nombre_ndc text,                 -- Nombre NDC
+    Nombre_short text,                -- Nombre corto
+    PERFIL text,                    -- Perfil de acceso
+    perfil2 varchar(50),            -- Perfil secundario
+
+    INDEX idx_email (email(255)),
+    INDEX idx_rut (rut(255)),
+    INDEX idx_correo_super (correo_super(255))
+);
+```
+
+#### 2. Tabla: `tb_claves_usuarios` (Credenciales)
+
+```sql
+CREATE TABLE tb_claves_usuarios (
+    id_uniq int AUTO_INCREMENT PRIMARY KEY,
+    fecha_registro datetime,           -- Fecha de registro de la clave
+    pass_new text,                   -- Contraseña (puede ser hash o texto plano)
+    usuario text,                     -- Email del usuario
+    pass_anterior text,               -- Contraseña anterior
+    RW_ID double,                    -- ID del sistema RW
+    ult_modificacion datetime,         -- Última modificación
+    rut_APP text                      -- RUT asociado
+);
+```
+
+#### 3. Tabla: `tb_log_app` (Sesiones Activas)
+
+```sql
+CREATE TABLE tb_log_app (
+    RUT text,                        -- RUT del usuario
+    FECH_REG datetime,                -- Fecha de registro
+    TOKEN text,                       -- Token de sesión temporal
+    FLAG_GET text                     -- Indicador de método GET
+
+    INDEX idx_token (TOKEN(255))
+);
+```
+
+#### 4. Tabla: `tb_conexiones_log` (Auditoría de Conexiones)
+
+```sql
+CREATE TABLE tb_conexiones_log (
+    id int AUTO_INCREMENT PRIMARY KEY,
+    usuario varchar(100),             -- Usuario de la sesión
+    pagina varchar(255),               -- Página accedida
+    estado varchar(50),                -- Estado: 'ACTIVE', 'CLOSED', 'TIMEOUT'
+    fecha_conexion datetime,           -- Fecha de conexión
+    fecha_desconexion datetime,         -- Fecha de desconexión
+    duracion int,                     -- Duración en segundos
+    ip varchar(45),                   -- Dirección IP
+    tcp_state int DEFAULT 0,          -- Estado TCP
+    tcp_info json,                    -- Información TCP adicional
+
+    INDEX idx_estado (estado),
+    INDEX idx_fecha_conexion (fecha_conexion),
+    INDEX idx_pagina (pagina(255))
+);
+```
+
+#### 5. Tabla: `login_attempts` (Intentos de Login)
+
+```sql
+CREATE TABLE login_attempts (
+    id bigint unsigned AUTO_INCREMENT PRIMARY KEY,
+    user_id bigint unsigned,           -- ID del usuario
+    email varchar(320) NOT NULL,       -- Email utilizado
+    ip_address varbinary(16),          -- Dirección IP (binario)
+    user_agent varchar(500),           -- User Agent del navegador
+    login_method enum('credentials','google','facebook','biometric') DEFAULT 'credentials',
+    success tinyint(1) DEFAULT 0,   -- Éxito: 1=éxito, 0=fracaso
+    failure_reason varchar(100),        -- Razón del fracaso
+    metadata json,                     -- Metadatos adicionales
+    created_at timestamp DEFAULT CURRENT_TIMESTAMP,
+
+    INDEX idx_email (email),
+    INDEX idx_ip_address (ip_address),
+    INDEX idx_success (success),
+    INDEX idx_created_at (created_at)
+);
+```
+
+#### 6. Tabla: `tb_solicitud_pass_new` (Recuperación de Contraseña)
+
+```sql
+CREATE TABLE tb_solicitud_pass_new (
+    id bigint,                        -- ID de solicitud
+    correo text,                       -- Email del solicitante
+    clave_temporal text,               -- Token temporal de recuperación
+    fecha_solicitud datetime             -- Fecha de solicitud
+);
+```
+
+### Diagrama de Relaciones (ERD)
+
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│  tb_user_tqw   │    │tb_claves_usuarios│    │  tb_log_app     │
+├─────────────────┤    ├──────────────────┤    ├─────────────────┤
+│id (PK)         │    │id_uniq (PK)    │    │RUT             │
+│email           │◄───┤usuario          │◄───┤TOKEN           │
+│rut             │    │pass_new         │    │FECH_REG        │
+│PERFIL         │    │fecha_registro   │    │FLAG_GET        │
+│nombre          │    └──────────────────┘    └─────────────────┘
+│area            │                                    │
+│supervisor      │                                    │
+└─────────────────┘                                    │
+         │                                            │
+         │                                            │
+         ▼                                            ▼
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│tb_conexiones_log│    │login_attempts   │    │tb_solicitud_   │
+├─────────────────┤    ├──────────────────┤    │pass_new        │
+│id (PK)         │    │id (PK)          │    ├─────────────────┤
+│usuario         │◄───┤email            │    │id              │
+│pagina          │    │ip_address       │    │correo          │
+│estado          │    │success          │    │clave_temporal   │
+│fecha_conexion  │    │created_at       │    │fecha_solicitud │
+│ip              │    └──────────────────┘    └─────────────────┘
+│tcp_info        │
+└─────────────────┘
+```
+
+### Vistas y Procedimientos Utilizados
+
+#### Vista: `v_recent_login_activity`
+```sql
+CREATE VIEW v_recent_login_activity AS
+SELECT 
+    email,
+    COUNT(*) as attempt_count,
+    MAX(created_at) as last_attempt,
+    SUM(CASE WHEN success = 1 THEN 1 ELSE 0 END) as successful_logins
+FROM login_attempts 
+WHERE created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
+GROUP BY email;
+```
+
+#### Procedimiento: Limpieza de Sesiones Expiradas
+```sql
+-- Ejecutado periódicamente para limpiar sesiones inactivas
+UPDATE tb_conexiones_log 
+SET estado = 'TIMEOUT',
+    fecha_desconexion = NOW(),
+    duracion = TIMESTAMPDIFF(SECOND, fecha_conexion, NOW()),
+    tcp_state = 0
+WHERE estado = 'ACTIVE' 
+AND fecha_conexion < DATE_SUB(NOW(), INTERVAL 6 HOUR);
+```
+
+---
+
+## Endpoints y Contratos de API {#endpoints-y-contratos-de-api}
+
+### 1. Endpoint Principal de Login
+
+#### `POST /Controller3.php`
+
+**Descripción**: Procesa las credenciales de autenticación y establece la sesión del usuario.
+
+**Request Body**:
+```http
+Content-Type: application/x-www-form-urlencoded
+
+e_mail=usuario@ejemplo.com&passs=contraseña123
+```
+
+**Parámetros**:
+- `e_mail` (string, required): Email del usuario
+- `passs` (string, required): Contraseña del usuario
+
+**Respuestas Exitosas**:
+```javascript
+// Redirección JavaScript basada en perfil
+window.location = 'activity_dashboard.php?id_sesion=abc123def456';
+```
+
+**Respuestas de Error**:
+```javascript
+// Credenciales incorrectas
+alert('Datos ingresados incorrectos');
+window.history.back();
+
+// Error genérico
+alert('Error en el inicio de sesión');
+window.history.back();
+```
+
+**Códigos de Estado HTTP**:
+- `200 OK`: Procesamiento exitoso (con redirección)
+- `302 Found`: Redirección a dashboard
+- `400 Bad Request`: Parámetros inválidos
+- `500 Internal Server Error`: Error del servidor
+
+### 2. Endpoint de Mantenimiento de Sesión
+
+#### `GET /session_ping.php`
+
+**Descripción**: Mantiene la sesión activa y previene timeout por inactividad.
+
+**Headers**:
+```http
+Content-Type: application/json
+Cache-Control: no-cache, no-store, must-revalidate
+```
+
+**Query Parameters**:
+- `t` (timestamp, optional): Timestamp para evitar caché
+
+**Respuesta Exitosa**:
+```json
+{
+    "success": true,
+    "sessionActive": true,
+    "sessionExpired": false,
+    "timestamp": "2025-01-15 10:30:45",
+    "maxInactiveTime": 21600,
+    "lastActivity": "2025-01-15 10:25:30"
+}
+```
+
+**Respuesta de Sesión Expirada**:
+```json
+{
+    "success": true,
+    "sessionActive": false,
+    "sessionExpired": true,
+    "timestamp": "2025-01-15 10:30:45",
+    "maxInactiveTime": 21600,
+    "lastActivity": null
+}
+```
+
+### 3. Endpoint de Recuperación de Contraseña
+
+#### `POST /mailTQW.php`
+
+**Descripción**: Inicia el proceso de recuperación de contraseña.
+
+**Request Body**:
+```http
+Content-Type: application/x-www-form-urlencoded
+
+correo=usuario@ejemplo.com
+```
+
+**Respuesta Exitosa**:
+```javascript
+alert('Se ha enviado un código de recuperación a su correo');
+window.location.href = 'forget-password.php';
+```
+
+### 4. Endpoint de Restablecimiento de Contraseña
+
+#### `POST /ACTION_PASS_USUARIO.php`
+
+**Descripción**: Procesa el restablecimiento de contraseña con token temporal.
+
+**Request Body**:
+```http
+Content-Type: application/x-www-form-urlencoded
+
+psw-input=nuevaContraseña123&confirm-psw-input=nuevaContraseña123&clave_recupera=abc123def456
+```
+
+**Respuesta Exitosa**:
+```javascript
+alert('Actividad fue creada correctamente. Ya puedes ingresar con tu nueva contraseña');
+window.location.href = 'login.php';
+```
+
+### 5. Endpoint de Reporte de Problemas
+
+#### `POST /save_support_ticket.php`
+
+**Descripción**: Registra tickets de soporte para problemas de acceso.
+
+**Request Body (JSON)**:
+```json
+{
+    "observaciones": "No puedo iniciar sesión",
+    "modulo": "LOGIN",
+    "complemento": "Error de credenciales",
+    "id_tecnico": "12345"
+}
+```
+
+**Respuesta Exitosa**:
+```json
+{
+    "success": true
+}
+```
+
+**Respuesta de Error**:
+```json
+{
+    "success": false,
+    "message": "Faltan datos requeridos"
+}
+```
+
+### 6. Endpoint de Logout
+
+#### `GET /logout.php`
+
+**Descripción**: Cierra la sesión del usuario y lo redirige al login.
+
+**Headers**:
+```http
+Location: login.php
+```
+
+**Proceso Interno**:
+1. Destruir variables de sesión
+2. Eliminar cookie de sesión
+3. Destruir sesión PHP
+4. Redirigir a login.php
+
+---
+
+## Consideraciones de Seguridad {#consideraciones-de-seguridad}
+
+### 1. Hashing de Contraseñas
+
+**Algoritmos Utilizados**:
+- **bcrypt (recomendado)**: Para nuevas contraseñas
+  - Prefijo: `$2a$`, `$2b$`, `$2y$`, `$2x$`
+  - Cost factor: 10 (por defecto)
+- **Texto Plano (legado)**: Para compatibilidad con sistema existente
+
+**Implementación**:
+```php
+// Detección automática de formato
+if (strpos($userPassword, '$2') === 0) {
+    $passwordValida = password_verify($clave, $userPassword);
+} else {
+    // Compatibilidad con texto plano
+    $passwordValida = ($userPassword == $clave);
+}
+```
+
+### 2. Gestión de Sesiones
+
+**Configuración Segura**:
+```php
+ini_set('session.cookie_httponly', 1);        // HTTP Only
+ini_set('session.cookie_secure', 1);           // HTTPS only (producción)
+ini_set('session.cookie_samesite', 'Strict');    // SameSite Strict
+ini_set('session.use_strict_mode', 1);         // Modo estricto
+ini_set('session.cookie_lifetime', 21600);      // 6 horas
+ini_set('session.gc_maxlifetime', 21600);        // 6 horas
+```
+
+**Regeneración de ID**:
+```php
+// Cada 5 minutos y en navegación hacia atrás
+session_regenerate_id(false);
+```
+
+### 3. Rate Limiting y Protección contra Fuerza Bruta
+
+**Límites Implementados**:
+- **Intentos de Login**: Máximo 5 intentos
+- **Duración de Bloqueo**: 15 minutos
+- **Intentos de Conexión**: Máximo 3 intentos
+- **Ventana de Tiempo**: Por sesión de navegador
+
+**Implementación**:
+```php
+$maxLoginAttempts = 5;
+$lockoutDuration = 900; // 15 minutos
+
+// Verificar intentos previos
+$attempts = checkLoginAttempts($ip, $email);
+if ($attempts >= $maxLoginAttempts) {
+    blockUser($ip, $lockoutDuration);
+}
+```
+
+### 4. Protección CSRF
+
+**Mecanismos Implementados**:
+- **Sincronización de Tokens**: Tokens implícitos en formularios
+- **SameSite Cookies**: Previene ataques CSRF entre sitios
+- **Validación de Origen**: Verificación de referer HTTP
+
+### 5. Protección XSS
+
+**Medidas Implementadas**:
+```php
+// Headers de seguridad
+header('X-Content-Type-Options: nosniff');
+header('X-Frame-Options: DENY');
+header('X-XSS-Protection: 1; mode=block');
+header('Referrer-Policy: strict-origin-when-cross-origin');
+
+// Escape de salida
+echo htmlspecialchars($userInput, ENT_QUOTES, 'UTF-8');
+```
+
+### 6. Protección SQL Injection
+
+**Prevención**:
+- **Prepared Statements**: Todas las consultas usan parámetros
+- **Validación de Entrada**: Filtrado y sanitización
+- **Mínimo Privilegio**: Usuario de base de datos con permisos limitados
+
+**Ejemplo**:
+```php
+$stmt = $conex->prepare("SELECT * FROM tb_user_tqw WHERE email = ? AND vigente = 'Si'");
+$stmt->bind_param("s", $correo);
+$stmt->execute();
+```
+
+### 7. Logging y Auditoría
+
+**Eventos Registrados**:
+- Intentos de login (exitosos y fallidos)
+- Conexiones y desconexiones
+- Cambios de contraseña
+- Eventos de seguridad críticos
+- Errores del sistema
+
+**Estructura de Logs**:
+```json
+{
+    "timestamp": "2025-01-15 10:30:45",
+    "level": "SECURITY",
+    "message": "Login attempt failed",
+    "context": {
+        "email": "usuario@ejemplo.com",
+        "ip": "192.168.1.100",
+        "user_agent": "Mozilla/5.0...",
+        "failure_reason": "invalid_credentials"
+    },
+    "session_id": "abc123def456",
+    "remote_addr": "192.168.1.100"
+}
+```
+
+### 8. Configuración de Entorno
+
+**Variables de Entorno**:
+```php
+// Producción
+'host' => '170.239.85.233',
+'user' => 'ncornejo',
+'password' => 'N1c0l7as17',
+'database' => 'operaciones_tqw',
+'ssl' => true,
+'debug' => false
+
+// Desarrollo
+'host' => 'localhost',
+'user' => 'ncornejo',
+'password' => 'N1c0l7as17',
+'database' => 'operaciones_test',
+'ssl' => false,
+'debug' => true
+```
+
+---
+
+## Guía de Replicación para una Nueva UI {#guia-de-replicacion}
+
+### Prerrequisitos y Dependencias
+
+#### 1. Requisitos del Servidor
+- **PHP**: Versión 8.0 o superior
+- **Extensiones PHP**: mysqli, json, session, openssl
+- **Base de Datos**: MySQL 5.7+ o MariaDB 10.2+
+- **Servidor Web**: Apache 2.4+ o Nginx 1.14+
+
+#### 2. Dependencias del Frontend
+```html
+<!-- Bootstrap 5.3 -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+```
+
+#### 3. Configuración del Entorno
+```php
+// config/database.php
+define('DB_HOST', '170.239.85.233');
+define('DB_USER', 'ncornejo');
+define('DB_PASS', 'N1c0l7as17');
+define('DB_NAME', 'operaciones_tqw');
+define('DB_PORT', 3306);
+```
+
+### Pasos para Consumir los Endpoints de API
+
+#### 1. Implementación del Formulario de Login
+
+```html
+<form id="login-form" action="Controller3.php" method="post">
+    <div class="mb-3">
+        <input class="form-control" type="text" id="e_mail" name="e_mail" 
+               placeholder="Usuario" required>
+    </div>
+    <div class="mb-3 position-relative">
+        <input class="form-control" id="passs" name="passs" type="password"
+               placeholder="Contraseña" required>
+        <div class="position-absolute" id="password-visibility">
+            <i class="bi bi-eye text-white"></i>
+            <i class="bi bi-eye-slash text-white"></i>
+        </div>
+    </div>
+    <button class="btn btn-success w-100 mb-3" type="submit">Ingresar</button>
+</form>
+```
+
+#### 2. JavaScript para Procesamiento de Login
+
+```javascript
+document.addEventListener('DOMContentLoaded', function() {
+    const loginForm = document.getElementById('login-form');
+    const errorMessage = document.getElementById('error-message');
+
+    loginForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const email = document.getElementById('e_mail').value;
+        const password = document.getElementById('passs').value;
+
+        try {
+            const formData = new FormData();
+            formData.append('e_mail', email);
+            formData.append('passs', password);
+
+            const response = await fetch('Controller3.php', {
+                method: 'POST',
+                body: formData
+            });
+
+            const text = await response.text();
+
+            // Buscar redirección en la respuesta
+            const match = text.match(/window\.location(?:\.href)?\s*=\s*['"]([^'"]+)['"]/);
+
+            if (match) {
+                // Verificar cookie de redirección
+                const redirectCookie = document.cookie
+                    .split('; ')
+                    .find(row => row.startsWith('redirect_after_login='));
+
+                if (redirectCookie) {
+                    const redirectUrl = decodeURIComponent(redirectCookie.split('=')[1]);
+                    document.cookie = 'redirect_after_login=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                    window.location.href = redirectUrl;
+                } else {
+                    window.location.href = match[1];
+                }
+            } else if (text.includes("Datos ingresados incorrectos")) {
+                showError("¡Credenciales incorrectas!");
+            } else {
+                showError("Error en el inicio de sesión!");
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showError("Error de conexión");
+        }
+    });
+
+    function showError(message) {
+        errorMessage.innerHTML = `
+            <div class="alert alert-warning" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <span>${message}</span>
+            </div>`;
+    }
+});
+```
+
+### Gestión del Estado de Autenticación en el Cliente
+
+#### 1. Verificación de Sesión
+
+```javascript
+// Función para verificar estado de sesión
+async function checkSessionStatus() {
+    try {
+        const response = await fetch('session_ping.php?t=' + new Date().getTime());
+        const data = await response.json();
+
+        if (!data.sessionActive || data.sessionExpired) {
+            window.location.href = 'login.php?session_expired=1';
+            return false;
+        }
+
+        return true;
+    } catch (error) {
+        console.error('Error checking session:', error);
+        return false;
+    }
+}
+
+// Ejecutar cada 5 minutos
+setInterval(checkSessionStatus, 300000);
+```
+
+#### 2. Almacenamiento de Estado
+
+```javascript
+// localStorage para estado de sesión
+localStorage.setItem('sessionActive', 'true');
+localStorage.setItem('lastActivity', new Date().toISOString());
+localStorage.setItem('currentPage', window.location.href);
+
+// Manejar navegación hacia atrás
+window.addEventListener('pageshow', function(event) {
+    if (event.persisted && localStorage.getItem('sessionActive') === 'true') {
+        checkSessionStatus();
+    }
+});
+```
+
+### Lógica para Redirigir al Usuario y Proteger Rutas
+
+#### 1. Protección de Rutas
+
+```php
+// session_manager.php - Incluir al inicio de páginas protegidas
+<?php
+require_once 'includes/session_manager.php';
+
+// La función verificarSesion() se ejecuta automáticamente
+// Si la sesión no es válida, redirige a login.php
+?>
+```
+
+#### 2. Redirección Basada en Perfil
+
+```javascript
+// Después del login exitoso, redirigir según perfil
+function redirectByProfile(userProfile, userArea) {
+    const redirects = {
+        'admin': 'new_dash.php',
+        'Supervisor': 'new_dash.php',
+        'TECNICO REDES': 'activity_dashboard.php',
+        'user_QA': 'mod_logistica.php',
+        'bodega': 'home_bodega_new.php',
+        'Cescom': 'SoporteCalidad.php',
+        'SOPORTE TQW': 'Piloto_Soporte.php'
+    };
+
+    const redirectUrl = redirects[userProfile] || redirects[userArea] || 'activity_dashboard.php';
+    window.location.href = redirectUrl;
+}
+```
+
+### Adaptación de Componentes de UI
+
+#### 1. Componente de Visibilidad de Contraseña
+
+```html
+<div class="position-relative">
+    <input class="form-control" id="password" type="password" placeholder="Contraseña">
+    <div class="position-absolute" id="password-visibility" style="top: 50%; right: 10px; transform: translateY(-50%); cursor: pointer;">
+        <i class="bi bi-eye"></i>
+        <i class="bi bi-eye-slash" style="display: none;"></i>
+    </div>
+</div>
+
+<script>
+document.getElementById('password-visibility').addEventListener('click', function() {
+    const passwordInput = document.getElementById('password');
+    const eyeIcon = this.querySelector('.bi-eye');
+    const eyeSlashIcon = this.querySelector('.bi-eye-slash');
+
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        eyeIcon.style.display = 'none';
+        eyeSlashIcon.style.display = 'inline';
+    } else {
+        passwordInput.type = 'password';
+        eyeIcon.style.display = 'inline';
+        eyeSlashIcon.style.display = 'none';
+    }
+});
+</script>
+```
+
+#### 2. Modal de Reporte de Problemas
+
+```html
+<div class="modal fade" id="reportModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Reportar Problema</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="reportEmail" class="form-label">Email</label>
+                    <select class="form-control" id="reportEmail" required>
+                        <option value="">Seleccione un email</option>
+                        <!-- Opciones cargadas dinámicamente -->
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="reportMessage" class="form-label">Motivo</label>
+                    <textarea class="form-control" id="reportMessage" rows="3" required></textarea>
+                </div>
+                <div class="mb-3">
+                    <label for="reportObservation" class="form-label">Observación</label>
+                    <textarea class="form-control" id="reportObservation" rows="2"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" id="submitReport">Enviar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('submitReport').addEventListener('click', async function() {
+    const formData = {
+        observaciones: document.getElementById('reportMessage').value,
+        modulo: 'LOGIN',
+        complemento: document.getElementById('reportObservation').value,
+        id_tecnico: document.getElementById('reportEmail').value
+    };
+
+    try {
+        const response = await fetch('save_support_ticket.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData)
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            alert('Ticket de soporte registrado exitosamente');
+            bootstrap.Modal.getInstance(document.getElementById('reportModal')).hide();
+        } else {
+            alert('Error al registrar el ticket');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al enviar el ticket');
+    }
+});
+</script>
+```
+
+### Consideraciones Finales
+
+#### 1. Configuración de Producción
+- Asegurar que todas las URLs usen HTTPS
+- Configurar headers de seguridad adecuados
+- Implementar monitoreo de logs de seguridad
+- Establecer políticas de respaldo de base de datos
+
+#### 2. Pruebas Recomendadas
+- Pruebas de penetración de seguridad
+- Pruebas de carga con múltiples usuarios
+- Validación de todos los flujos de autenticación
+- Verificación de manejo de errores
+
+#### 3. Mantenimiento
+- Revisión periódica de logs de seguridad
+- Actualización de dependencias del frontend
+- Monitoreo de rendimiento de base de datos
+- Limpieza regular de sesiones expiradas
+
+---
+
+## Conclusión
+
+Esta documentación proporciona una guía completa para entender, auditar y replicar el sistema de autenticación TQW. El sistema implementa múltiples capas de seguridad y está diseñado para ser escalable y mantenible. Para cualquier implementación nueva, se recomienda seguir las mejores prácticas de seguridad descritas y mantenerse actualizado con las últimas vulnerabilidades y parches de seguridad.
+
+---
+
+*Documento generado el: 2025-01-15*
+*Versión: 1.0.0*
+*Autor: Kilo Code - Senior Software Architect*
