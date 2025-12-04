@@ -1083,7 +1083,7 @@ export default function SupervisorBilling() {
 
         {/* Filters */}
         <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4 mb-6 text-[#0f40d4]">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Search */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -1109,6 +1109,21 @@ export default function SupervisorBilling() {
                 <SelectItem value="Rechazado">Rechazado</SelectItem>
               </SelectContent>
             </Select>
+
+            {/* Clear Filters Button */}
+            <Button 
+              variant="outline" 
+              className="gap-2" 
+              onClick={() => {
+                setSearchTerm("");
+                setStatusFilter("all");
+                setCurrentPage(1);
+              }}
+              data-testid="btn-clear-filters"
+            >
+              <X className="w-4 h-4" />
+              Limpiar Filtros
+            </Button>
 
             {/* Export Button */}
             <Button variant="outline" className="gap-2" data-testid="btn-export">
