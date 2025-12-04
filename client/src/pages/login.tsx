@@ -152,34 +152,17 @@ export default function Login() {
         <div className="relative z-10 text-center space-y-6 max-w-md">
           <div>
             <h2 className="text-5xl md:text-6xl font-bold text-white leading-tight mb-4">
-              Welcome to our community
+              Bienvenido a una nueva experiencia de trabajo
             </h2>
             <p className="text-slate-300 text-base leading-relaxed">
-              Join us and start building amazing dashboards. Get organized, collaborate with your team, and create beautiful applications with our powerful tools.
+              Bienvenido a Telqway, donde la excelencia y la innovación guían nuestro camino. 
+              Te presentamos nuestra nueva interfaz de operaciones, diseñada para optimizar el rendimiento 
+              y enriquecer continuamente la experiencia de nuestros usuarios
             </p>
           </div>
 
           {/* Community Stats */}
-          <div className="flex items-center justify-center gap-4 pt-6">
-            <div className="flex -space-x-3">
-              {[
-                "bg-gradient-to-br from-pink-500 to-rose-500",
-                "bg-gradient-to-br from-blue-500 to-cyan-500",
-                "bg-gradient-to-br from-purple-500 to-pink-500",
-                "bg-gradient-to-br from-green-500 to-emerald-500",
-              ].map((gradient, i) => (
-                <div
-                  key={i}
-                  className={`w-10 h-10 ${gradient} rounded-full border-2 border-slate-900 flex items-center justify-center text-white text-xs font-bold`}
-                >
-                  {i + 1}
-                </div>
-              ))}
-            </div>
-            <p className="text-slate-300 text-sm">
-              More than <span className="text-[#06b6d4] font-semibold">17k people</span> joined us. It's your turn
-            </p>
-          </div>
+          
         </div>
       </div>
     </div>
