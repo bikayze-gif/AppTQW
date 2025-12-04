@@ -1300,7 +1300,7 @@ export default function SupervisorBilling() {
               
               {totalPages > 1 && (
                 <Pagination className="text-[#000305]">
-                  <PaginationContent>
+                  <PaginationContent className="mx-auto flex w-full justify-center text-[#000305]">
                     <PaginationItem>
                       <PaginationPrevious
                         onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}

@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // Parámetros globales según documentación
 const GLOBAL_RUT = "15762768-6";
-const GLOBAL_PERIODO = "202509";0";
+const GLOBAL_PERIODO = "202509";
 
 interface TqwData {
   RutTecnicoOrig: string;
