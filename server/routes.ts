@@ -36,8 +36,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // POST create new billing record
   app.post("/api/billing", async (req, res) => {
     try {
+      // Parse and validate the incoming data
       const validatedData = insertBillingSchema.parse(req.body);
-      const billing = await storage.createBilling(validatedData);
+      
+      // Ensure fecha_gestion is in correct format (YYYY-MM-DD) or null
+      const dataToInsert = {
+        ...validatedData,
+        fecha_gestion: validatedData.fecha_gestion 
+          ? validatedData.fecha_gestion.split('T')[0] 
+          : null,
+      };
+      
+      const billing = await storage.createBilling(dataToInsert);
       res.status(201).json(billing);
     } catch (error) {
       if (error instanceof z.ZodError) {

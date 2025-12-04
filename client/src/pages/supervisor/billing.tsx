@@ -174,39 +174,60 @@ function NewBillingModal({
     periodo: "",
     linea: "",
     proyecto: "",
-    observacion: "",
-    cantidad: 0,
-    valorizacion: 0,
-    fecha_gestion: new Date().toISOString().split('T')[0],
-    responsable: "",
+    observacion: null,
+    cantidad: null,
+    valorizacion: null,
+    fecha_gestion: null,
+    responsable: null,
     estado: "Pendiente",
-    observacion_gestion: "",
-    archivo_detalle: "",
-    correo_enviado: "",
-    correo_recepcionado: "",
+    observacion_gestion: null,
+    archivo_detalle: null,
+    correo_enviado: null,
+    correo_recepcionado: null,
   });
 
   const handleSave = () => {
-    onSubmit(formData);
-    if (!isLoading) {
+    // Validate required fields
+    if (!formData.periodo.trim() || !formData.linea.trim() || !formData.proyecto.trim()) {
+      return;
+    }
+
+    // Prepare data with proper null handling
+    const dataToSubmit = {
+      ...formData,
+      observacion: formData.observacion?.trim() || null,
+      cantidad: formData.cantidad || null,
+      valorizacion: formData.valorizacion || null,
+      fecha_gestion: formData.fecha_gestion || null,
+      responsable: formData.responsable?.trim() || null,
+      observacion_gestion: formData.observacion_gestion?.trim() || null,
+      archivo_detalle: formData.archivo_detalle?.trim() || null,
+      correo_enviado: formData.correo_enviado?.trim() || null,
+      correo_recepcionado: formData.correo_recepcionado?.trim() || null,
+    };
+
+    onSubmit(dataToSubmit);
+  };
+
+  useEffect(() => {
+    if (!isLoading && !isOpen) {
       setFormData({
         periodo: "",
         linea: "",
         proyecto: "",
-        observacion: "",
-        cantidad: 0,
-        valorizacion: 0,
-        fecha_gestion: new Date().toISOString().split('T')[0],
-        responsable: "",
+        observacion: null,
+        cantidad: null,
+        valorizacion: null,
+        fecha_gestion: null,
+        responsable: null,
         estado: "Pendiente",
-        observacion_gestion: "",
-        archivo_detalle: "",
-        correo_enviado: "",
-        correo_recepcionado: "",
+        observacion_gestion: null,
+        archivo_detalle: null,
+        correo_enviado: null,
+        correo_recepcionado: null,
       });
-      onClose();
     }
-  };
+  }, [isLoading, isOpen]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -266,9 +287,9 @@ function NewBillingModal({
             <Label htmlFor="new_observacion" className="text-slate-700">Observación</Label>
             <Textarea
               id="new_observacion"
-              value={formData.observacion}
+              value={formData.observacion || ""}
               onChange={(e) =>
-                setFormData({ ...formData, observacion: e.target.value })
+                setFormData({ ...formData, observacion: e.target.value || null })
               }
               className="mt-1 bg-white border-slate-300 text-slate-900"
               data-testid="textarea-new-observacion"
@@ -281,9 +302,9 @@ function NewBillingModal({
             <Input
               id="new_cantidad"
               type="number"
-              value={formData.cantidad}
+              value={formData.cantidad ?? ""}
               onChange={(e) =>
-                setFormData({ ...formData, cantidad: parseInt(e.target.value) || 0 })
+                setFormData({ ...formData, cantidad: e.target.value ? parseInt(e.target.value) : null })
               }
               className="mt-1 bg-white border-slate-300 text-slate-900"
               data-testid="input-new-cantidad"
@@ -297,9 +318,9 @@ function NewBillingModal({
               id="new_valorizacion"
               type="number"
               step="0.01"
-              value={formData.valorizacion}
+              value={formData.valorizacion ?? ""}
               onChange={(e) =>
-                setFormData({ ...formData, valorizacion: parseFloat(e.target.value) || 0 })
+                setFormData({ ...formData, valorizacion: e.target.value ? parseFloat(e.target.value) : null })
               }
               className="mt-1 bg-white border-slate-300 text-slate-900"
               data-testid="input-new-valorizacion"
@@ -312,9 +333,9 @@ function NewBillingModal({
             <Input
               id="new_fecha_gestion"
               type="date"
-              value={formData.fecha_gestion}
+              value={formData.fecha_gestion || ""}
               onChange={(e) =>
-                setFormData({ ...formData, fecha_gestion: e.target.value })
+                setFormData({ ...formData, fecha_gestion: e.target.value || null })
               }
               className="mt-1 bg-white border-slate-300 text-slate-900"
               data-testid="input-new-fecha_gestion"
@@ -326,9 +347,9 @@ function NewBillingModal({
             <Label htmlFor="new_responsable" className="text-slate-700">Responsable</Label>
             <Input
               id="new_responsable"
-              value={formData.responsable}
+              value={formData.responsable || ""}
               onChange={(e) =>
-                setFormData({ ...formData, responsable: e.target.value })
+                setFormData({ ...formData, responsable: e.target.value || null })
               }
               className="mt-1 bg-white border-slate-300 text-slate-900"
               data-testid="input-new-responsable"
@@ -364,11 +385,11 @@ function NewBillingModal({
             <Label htmlFor="new_observacion_gestion" className="text-slate-700">Observación de Gestión</Label>
             <Textarea
               id="new_observacion_gestion"
-              value={formData.observacion_gestion}
+              value={formData.observacion_gestion || ""}
               onChange={(e) =>
                 setFormData({
                   ...formData,
-                  observacion_gestion: e.target.value,
+                  observacion_gestion: e.target.value || null,
                 })
               }
               className="mt-1 bg-white border-slate-300 text-slate-900"
@@ -863,6 +884,7 @@ export default function SupervisorBilling() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["billing"] });
       toast({ description: "Factura creada exitosamente" });
+      setIsNewBillingModalOpen(false);
     },
     onError: () => {
       toast({ description: "Error al crear la factura", variant: "destructive" });

@@ -19,7 +19,21 @@ export const billing = mysqlTable("tb_facturacion_bitacora", {
   correo_recepcionado: varchar("correo_recepcionado", { length: 255 }),
 });
 
-export const insertBillingSchema = createInsertSchema(billing).omit({ id: true });
+export const insertBillingSchema = createInsertSchema(billing, {
+  periodo: z.string().min(1, "Periodo es requerido"),
+  linea: z.string().min(1, "Linea es requerida"),
+  proyecto: z.string().min(1, "Proyecto es requerido"),
+  observacion: z.string().nullable().optional(),
+  cantidad: z.number().nullable().optional(),
+  valorizacion: z.union([z.string(), z.number()]).nullable().optional(),
+  fecha_gestion: z.string().nullable().optional(),
+  responsable: z.string().nullable().optional(),
+  estado: z.string().default("Pendiente"),
+  observacion_gestion: z.string().nullable().optional(),
+  archivo_detalle: z.string().nullable().optional(),
+  correo_enviado: z.string().nullable().optional(),
+  correo_recepcionado: z.string().nullable().optional(),
+}).omit({ id: true });
 
 export type InsertBilling = z.infer<typeof insertBillingSchema>;
 export type Billing = typeof billing.$inferSelect;
