@@ -14,7 +14,7 @@ import {
   SheetClose,
 } from "@/components/ui/sheet";
 import { useLocation } from "wouter";
-import { useAuth } from "@/hooks/useAuth"; // Import useAuth hook
+import { useAuth } from "@/lib/auth-context";
 
 interface Chat {
   id: string;
