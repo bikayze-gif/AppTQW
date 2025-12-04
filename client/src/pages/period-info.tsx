@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { BottomNav } from "@/components/bottom-nav";
-import { AlertCircle, ChevronUp, ChevronDown, LogOut } from "lucide-react";
+import { AlertCircle, ChevronUp, ChevronDown } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/lib/auth-context";
 
@@ -97,7 +97,7 @@ function CollapsibleSection({ title, isOpen, onToggle, children }: CollapsibleSe
 }
 
 export default function PeriodInfo() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [data, setData] = useState<TqwData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -186,21 +186,11 @@ export default function PeriodInfo() {
       <div className="max-w-5xl mx-auto p-3 sm:p-4 space-y-4 sm:space-y-6">
         {/* Header */}
         <div className="bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 rounded-lg p-6 backdrop-blur-sm">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-3">
-              <div className="text-2xl">📅</div>
-              <h1 className="text-3xl font-bold text-white">
-                PERIODO {GLOBAL_PERIODO.slice(0, 4)}-{GLOBAL_PERIODO.slice(4)}
-              </h1>
-            </div>
-            <button
-              onClick={logout}
-              className="flex items-center gap-2 px-3 py-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 rounded-lg text-red-400 transition-colors"
-              data-testid="button-logout"
-            >
-              <LogOut size={18} />
-              <span className="hidden sm:inline">Cerrar sesión</span>
-            </button>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="text-2xl">📅</div>
+            <h1 className="text-3xl font-bold text-white">
+              PERIODO {GLOBAL_PERIODO.slice(0, 4)}-{GLOBAL_PERIODO.slice(4)}
+            </h1>
           </div>
           <p className="text-slate-300 text-sm">{user?.nombre || data.NombreTecnico || "Técnico: Sin datos"}</p>
           <p className="text-slate-400 text-xs">RUT: {user?.rut}</p>
