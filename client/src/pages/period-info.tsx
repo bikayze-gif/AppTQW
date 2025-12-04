@@ -213,8 +213,8 @@ export default function PeriodInfo() {
             <StatCard icon="💵" label="Cálculo FTTH" value={formatMoney(data.Comision_FTTH)} iconColor="text-green-400" />
           </div>
           <div className="grid grid-cols-2 gap-3 sm:gap-4">
-            <StatCard icon="💳" label="Comisión HFC Ponderada" value={formatMoney(data.Comision_HFC_Ponderada)} iconColor="text-green-400" />
-            <StatCard icon="💳" label="Comisión FTTH Ponderada" value={formatMoney(data.Comision_FTTH_Ponderada)} iconColor="text-green-400" />
+            <StatCard icon="💵" label="Comisión HFC Ponderada" value={formatMoney(data.Comision_HFC_Ponderada)} iconColor="text-green-400" />
+            <StatCard icon="💵" label="Comisión FTTH Ponderada" value={formatMoney(data.Comision_FTTH_Ponderada)} iconColor="text-green-400" />
           </div>
           <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 rounded-lg p-4 text-center">
             <p className="text-slate-300 text-sm mb-1">Comisión Total</p>
