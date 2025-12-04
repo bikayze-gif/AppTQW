@@ -1,7 +1,21 @@
 import { type Server } from "node:http";
+import crypto from "crypto";
 
 import express, { type Express, type Request, Response, NextFunction } from "express";
+import session from "express-session";
+import MemoryStore from "memorystore";
 import { registerRoutes } from "./routes";
+import type { AuthenticatedUser } from "./storage";
+
+// Extend express-session types
+declare module "express-session" {
+  interface SessionData {
+    user: AuthenticatedUser | null;
+    loginTime: number;
+    lastActivity: number;
+    connectionId: number;
+  }
+}
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -15,6 +29,37 @@ export function log(message: string, source = "express") {
 }
 
 export const app = express();
+
+// Session configuration with security best practices
+const MemoryStoreSession = MemoryStore(session);
+const SESSION_MAX_AGE = 6 * 60 * 60 * 1000; // 6 hours in milliseconds
+
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || crypto.randomBytes(32).toString("hex"),
+    resave: false,
+    saveUninitialized: false,
+    name: "tqw_session",
+    cookie: {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: SESSION_MAX_AGE,
+    },
+    store: new MemoryStoreSession({
+      checkPeriod: 86400000, // Prune expired entries every 24h
+    }),
+  })
+);
+
+// Security headers middleware
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("X-XSS-Protection", "1; mode=block");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  next();
+});
 
 declare module 'http' {
   interface IncomingMessage {

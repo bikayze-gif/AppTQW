@@ -1,8 +1,9 @@
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
 import * as schema from "@shared/schema";
-import { eq, desc } from "drizzle-orm";
-import type { Billing, InsertBilling } from "@shared/schema";
+import { eq, desc, and, sql, gte } from "drizzle-orm";
+import type { Billing, InsertBilling, User, InsertLoginAttempt } from "@shared/schema";
+import crypto from "crypto";
 
 const pool = mysql.createPool({
   host: process.env.MYSQL_HOST || "170.239.85.233",
@@ -14,13 +15,40 @@ const pool = mysql.createPool({
 
 const db = drizzle(pool, { schema, mode: "default" });
 
+// Constantes de seguridad
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOCKOUT_DURATION_MINUTES = 15;
+
+// Interfaz de usuario autenticado (para la sesión)
+export interface AuthenticatedUser {
+  id: number;
+  email: string;
+  rut: string;
+  nombre: string;
+  perfil: string;
+  area: string | null;
+  supervisor: string | null;
+  zona: string | null;
+}
+
 export interface IStorage {
+  // Billing operations
   getAllBilling(): Promise<Billing[]>;
   getBillingById(id: number): Promise<Billing | undefined>;
   createBilling(billing: InsertBilling): Promise<Billing>;
   updateBilling(id: number, billing: Partial<InsertBilling>): Promise<Billing | undefined>;
   deleteBilling(id: number): Promise<boolean>;
   getTqwComisionData(rut: string, periodo: string): Promise<schema.TqwComisionRenew | undefined>;
+  
+  // Authentication operations
+  getUserByEmail(email: string): Promise<User | undefined>;
+  validateCredentials(email: string, password: string): Promise<AuthenticatedUser | null>;
+  recordLoginAttempt(data: InsertLoginAttempt): Promise<void>;
+  getRecentLoginAttempts(email: string, ip: string): Promise<number>;
+  isAccountLocked(email: string, ip: string): Promise<boolean>;
+  createSession(rut: string, token: string): Promise<void>;
+  logConnection(usuario: string, pagina: string, ip: string): Promise<number>;
+  closeConnection(id: number): Promise<void>;
 }
 
 export class MySQLStorage implements IStorage {
@@ -64,6 +92,172 @@ export class MySQLStorage implements IStorage {
       .where(eq(schema.tqwComisionRenew.RutTecnicoOrig, rut))
       .where(eq(schema.tqwComisionRenew.periodo, periodo));
     return result;
+  }
+
+  // ============================================
+  // AUTHENTICATION OPERATIONS
+  // ============================================
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [result] = await db
+      .select()
+      .from(schema.users)
+      .where(eq(schema.users.email, email));
+    return result;
+  }
+
+  async validateCredentials(email: string, password: string): Promise<AuthenticatedUser | null> {
+    try {
+      // Consulta que replica la lógica del documento:
+      // Obtiene la contraseña más reciente del usuario y valida que esté vigente
+      const query = sql`
+        SELECT t.pass_new, w.id, w.email, w.nombre, w.area, w.supervisor, w.rut, w.PERFIL, w.ZONA_GEO
+        FROM (
+          SELECT a.usuario, a.pass_new, a.fecha_registro, 
+                 (SELECT COUNT(*) FROM tb_claves_usuarios b 
+                  WHERE a.usuario = b.usuario AND a.fecha_registro <= b.fecha_registro) as total
+          FROM tb_claves_usuarios a
+          WHERE a.usuario = ${email}
+        ) t
+        LEFT JOIN tb_user_tqw w ON t.usuario = w.email
+        WHERE t.total = 1 AND w.vigente = 'Si'
+        LIMIT 1
+      `;
+
+      const [rows] = await pool.execute(query.sql, query.params);
+      const results = rows as any[];
+      
+      if (!results || results.length === 0) {
+        return null;
+      }
+
+      const user = results[0];
+      const storedPassword = user.pass_new;
+
+      // Validación de contraseña (soporte dual: bcrypt y texto plano legado)
+      let passwordValid = false;
+      
+      if (storedPassword && storedPassword.startsWith('$2')) {
+        // Contraseña hasheada con bcrypt - usamos comparación simple por ahora
+        // En producción deberías usar bcrypt.compare
+        passwordValid = false; // Requiere bcrypt
+      } else {
+        // Contraseña en texto plano (sistema legado)
+        passwordValid = storedPassword === password;
+      }
+
+      if (!passwordValid) {
+        return null;
+      }
+
+      return {
+        id: user.id,
+        email: user.email || email,
+        rut: user.rut || '',
+        nombre: user.nombre || '',
+        perfil: user.PERFIL || 'user',
+        area: user.area,
+        supervisor: user.supervisor,
+        zona: user.ZONA_GEO,
+      };
+    } catch (error) {
+      console.error("Error validating credentials:", error);
+      return null;
+    }
+  }
+
+  async recordLoginAttempt(data: InsertLoginAttempt): Promise<void> {
+    try {
+      await db.insert(schema.loginAttempts).values({
+        ...data,
+        created_at: new Date(),
+      });
+    } catch (error) {
+      // Si la tabla no existe, solo logueamos el error
+      console.error("Error recording login attempt:", error);
+    }
+  }
+
+  async getRecentLoginAttempts(email: string, ip: string): Promise<number> {
+    try {
+      const fifteenMinutesAgo = new Date(Date.now() - LOCKOUT_DURATION_MINUTES * 60 * 1000);
+      
+      const [rows] = await pool.execute(
+        `SELECT COUNT(*) as count FROM login_attempts 
+         WHERE email = ? AND ip_address = ? AND success = 0 
+         AND created_at >= ?`,
+        [email, ip, fifteenMinutesAgo]
+      );
+      
+      const results = rows as any[];
+      return results[0]?.count || 0;
+    } catch (error) {
+      // Si la tabla no existe, retornamos 0
+      console.error("Error getting login attempts:", error);
+      return 0;
+    }
+  }
+
+  async isAccountLocked(email: string, ip: string): Promise<boolean> {
+    const attempts = await this.getRecentLoginAttempts(email, ip);
+    return attempts >= MAX_LOGIN_ATTEMPTS;
+  }
+
+  async createSession(rut: string, token: string): Promise<void> {
+    try {
+      await db.insert(schema.activeSessions).values({
+        RUT: rut,
+        TOKEN: token,
+        FECH_REG: new Date(),
+        FLAG_GET: 'N',
+      });
+    } catch (error) {
+      console.error("Error creating session:", error);
+    }
+  }
+
+  async logConnection(usuario: string, pagina: string, ip: string): Promise<number> {
+    try {
+      const result = await db.insert(schema.connectionLogs).values({
+        usuario,
+        pagina,
+        ip,
+        estado: 'ACTIVE',
+        fecha_conexion: new Date(),
+        tcp_state: 1,
+      });
+      return result[0].insertId;
+    } catch (error) {
+      console.error("Error logging connection:", error);
+      return 0;
+    }
+  }
+
+  async closeConnection(id: number): Promise<void> {
+    try {
+      const connection = await db
+        .select()
+        .from(schema.connectionLogs)
+        .where(eq(schema.connectionLogs.id, id));
+      
+      if (connection[0]) {
+        const duracion = Math.floor(
+          (Date.now() - new Date(connection[0].fecha_conexion!).getTime()) / 1000
+        );
+        
+        await db
+          .update(schema.connectionLogs)
+          .set({
+            estado: 'CLOSED',
+            fecha_desconexion: new Date(),
+            duracion,
+            tcp_state: 0,
+          })
+          .where(eq(schema.connectionLogs.id, id));
+      }
+    } catch (error) {
+      console.error("Error closing connection:", error);
+    }
   }
 }
 

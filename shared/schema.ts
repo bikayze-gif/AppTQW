@@ -1,6 +1,111 @@
-import { mysqlTable, varchar, text, int, decimal, date } from "drizzle-orm/mysql-core";
+import { mysqlTable, varchar, text, int, decimal, date, datetime, tinyint, json, bigint } from "drizzle-orm/mysql-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+
+// ============================================
+// TABLAS DE AUTENTICACIÓN Y SEGURIDAD
+// ============================================
+
+// Tabla de usuarios principales (tb_user_tqw)
+export const users = mysqlTable("tb_user_tqw", {
+  id: int("id").primaryKey().autoincrement(),
+  email: text("email"),
+  pass: text("pass"),
+  reg_date: datetime("reg_date"),
+  nombre: text("nombre"),
+  area: text("area"),
+  supervisor: text("supervisor"),
+  rut: text("rut"),
+  correo_super: text("correo_super"),
+  iden_user: text("iden_user"),
+  vigente: text("vigente"),
+  ZONA_GEO: text("ZONA_GEO"),
+  nombre_ndc: text("nombre_ndc"),
+  Nombre_short: text("Nombre_short"),
+  PERFIL: text("PERFIL"),
+  perfil2: varchar("perfil2", { length: 50 }),
+});
+
+export type User = typeof users.$inferSelect;
+
+// Tabla de credenciales (tb_claves_usuarios)
+export const userCredentials = mysqlTable("tb_claves_usuarios", {
+  id_uniq: int("id_uniq").primaryKey().autoincrement(),
+  fecha_registro: datetime("fecha_registro"),
+  pass_new: text("pass_new"),
+  usuario: text("usuario"),
+  pass_anterior: text("pass_anterior"),
+  RW_ID: decimal("RW_ID", { precision: 20, scale: 0 }),
+  ult_modificacion: datetime("ult_modificacion"),
+  rut_APP: text("rut_APP"),
+});
+
+export type UserCredential = typeof userCredentials.$inferSelect;
+
+// Tabla de sesiones activas (tb_log_app)
+export const activeSessions = mysqlTable("tb_log_app", {
+  RUT: text("RUT"),
+  FECH_REG: datetime("FECH_REG"),
+  TOKEN: text("TOKEN"),
+  FLAG_GET: text("FLAG_GET"),
+});
+
+export type ActiveSession = typeof activeSessions.$inferSelect;
+
+// Tabla de intentos de login (login_attempts) - Para rate limiting
+export const loginAttempts = mysqlTable("login_attempts", {
+  id: bigint("id", { mode: "number", unsigned: true }).primaryKey().autoincrement(),
+  user_id: bigint("user_id", { mode: "number", unsigned: true }),
+  email: varchar("email", { length: 320 }).notNull(),
+  ip_address: varchar("ip_address", { length: 45 }),
+  user_agent: varchar("user_agent", { length: 500 }),
+  login_method: varchar("login_method", { length: 20 }).default("credentials"),
+  success: tinyint("success").default(0),
+  failure_reason: varchar("failure_reason", { length: 100 }),
+  metadata: json("metadata"),
+  created_at: datetime("created_at"),
+});
+
+export type LoginAttempt = typeof loginAttempts.$inferSelect;
+
+export const insertLoginAttemptSchema = createInsertSchema(loginAttempts, {
+  email: z.string().email(),
+  ip_address: z.string().nullable().optional(),
+  user_agent: z.string().nullable().optional(),
+  success: z.number().min(0).max(1).optional(),
+  failure_reason: z.string().nullable().optional(),
+}).omit({ id: true });
+
+export type InsertLoginAttempt = z.infer<typeof insertLoginAttemptSchema>;
+
+// Tabla de auditoría de conexiones (tb_conexiones_log)
+export const connectionLogs = mysqlTable("tb_conexiones_log", {
+  id: int("id").primaryKey().autoincrement(),
+  usuario: varchar("usuario", { length: 100 }),
+  pagina: varchar("pagina", { length: 255 }),
+  estado: varchar("estado", { length: 50 }),
+  fecha_conexion: datetime("fecha_conexion"),
+  fecha_desconexion: datetime("fecha_desconexion"),
+  duracion: int("duracion"),
+  ip: varchar("ip", { length: 45 }),
+  tcp_state: int("tcp_state").default(0),
+  tcp_info: json("tcp_info"),
+});
+
+export type ConnectionLog = typeof connectionLogs.$inferSelect;
+
+// Schema para login request
+export const loginSchema = z.object({
+  email: z.string().email("Correo electrónico inválido"),
+  password: z.string().min(1, "Contraseña requerida"),
+  role: z.enum(["technician", "supervisor"]).optional(),
+});
+
+export type LoginRequest = z.infer<typeof loginSchema>;
+
+// ============================================
+// TABLAS DE NEGOCIO
+// ============================================
 
 export const billing = mysqlTable("tb_facturacion_bitacora", {
   id: int("id").primaryKey().autoincrement(),
