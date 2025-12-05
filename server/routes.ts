@@ -390,10 +390,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // POST create material solicitud
-  app.post("/api/materials/solicitud", async (req, res) => {
+  app.post("/api/materials/solicitud", requireAuth, async (req, res) => {
     try {
       const validatedData = materialSolicitudRequestSchema.parse(req.body);
-      const { id_usuario, id_destino, id_supervisor, items } = validatedData;
+      const { id_destino, id_supervisor, items } = validatedData;
+
+      // Obtener el ID del usuario desde la sesión autenticada (más seguro que confiar en el cliente)
+      const id_usuario = req.session.user?.id;
+      
+      if (!id_usuario) {
+        return res.status(401).json({ error: "Usuario no autenticado" });
+      }
 
       // Validar permisos del usuario
       const userPerfil2 = await storage.getUserPerfil2(id_usuario);

@@ -250,7 +250,6 @@ export type InsertMaterialSolicitud = z.infer<typeof insertMaterialSolicitudSche
 
 // Schema para el request de solicitud de materiales
 export const materialSolicitudRequestSchema = z.object({
-  id_usuario: z.number().int(),
   id_destino: z.number().int().optional(),
   id_supervisor: z.number().int().optional(),
   items: z.array(z.object({
