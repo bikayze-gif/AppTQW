@@ -1,0 +1,83 @@
+### Operaciones MySQL Detalladas
+
+#### Variables Recibidas del Cliente
+
+El endpoint recibe las siguientes variables desde el payload JSON:
+
+```php
+// Líneas 73-75: Extracción de variables principales
+$id_usuario = isset($request_data["id_usuario"]) ? intval($request_data["id_usuario"]) : 0;
+$id_destino = isset($request_data["id_destino"]) ? intval($request_data["id_destino"]) : 0;
+$id_supervisor = isset($request_data["id_supervisor"]) ? intval($request_data["id_supervisor"]) : 0;
+```
+
+Para cada item del carrito (líneas 188-195):
+```php
+$material = isset($item["material"]) ? $item["material"] : (isset($item["codigo"]) ? $item["codigo"] : "");
+$cantidad = intval($item["cantidad"]);
+$campo_item = isset($item["item"]) ? trim($item["item"]) : (isset($item["itemCode"]) ? trim($item["itemCode"]) : "");
+```
+
+#### Consultas SQL Ejecutadas
+
+1. **Validación de Permisos de Usuario** (líneas 85-86):
+```sql
+SELECT perfil2 FROM tb_user_tqw WHERE id = ?
+```
+
+2. **Validación de Permisos de Supervisor** (líneas 102-103):
+```sql
+SELECT perfil2 FROM tb_user_tqw WHERE id = ?
+```
+
+3. **Obtención de ID por RUT** (líneas 143-144, 159-160):
+```sql
+SELECT id FROM tb_user_tqw WHERE rut = ?
+```
+
+4. **Fallback para Obtener Item** (líneas 201-202):
+```sql
+SELECT `Item`, `Item Description` FROM tp_logistica_mat_oracle WHERE `Item Description` LIKE ? LIMIT 1
+```
+
+5. **Inserción Principal** (líneas 242-243):
+```sql
+INSERT INTO TB_LOGIS_TECNICO_SOLICITUD
+(material, cantidad, fecha, tecnico, id_tecnico_traspaso, TICKET, flag_regiones, flag_gestion_supervisor, campo_item)
+VALUES (?, ?, NOW(), ?, ?, ?, ?, ?, ?)
+```
+
+#### Proceso de Almacenamiento en MySQL
+
+Para cada item del carrito, el script realiza el siguiente proceso:
+
+1. **Identificación del Material**:
+   - Extrae el nombre del material del campo `material` o `codigo`
+   - Busca el código `Item` correspondiente en `tp_logistica_mat_oracle`
+   - Si no encuentra el Item, usa LIKE para búsqueda flexible
+
+2. **Determinación de Flags**:
+   - `flag_regiones`: "flag_regiones" si el usuario tiene `perfil2`, sino "No"
+   - `flag_gestion_supervisor`: 1 si el usuario tiene `perfil2`, sino 0
+
+3. **Generación de Ticket**:
+   - Token único de 8 caracteres: `substr(md5(uniqid(rand(), true)), 0, 8)`
+
+4. **Inserción Final**:
+   - Cada item del carrito genera un registro separado en `TB_LOGIS_TECNICO_SOLICITUD`
+   - Todos los items comparten el mismo ticket y fecha
+   - El `campo_item` se almacena como código único del material
+
+#### Mapeo de Variables a Campos de Base de Datos
+
+| Variable PHP | Campo MySQL | Tabla | Descripción |
+|-------------|-------------|--------|-------------|
+| `$material` | `material` | TB_LOGIS_TECNICO_SOLICITUD | Nombre del material solicitado |
+| `$cantidad` | `cantidad` | TB_LOGIS_TECNICO_SOLICITUD | Cantidad solicitada |
+| `NOW()` | `fecha` | TB_LOGIS_TECNICO_SOLICITUD | Fecha y hora actual |
+| `$id_tecnico_real` | `tecnico` | TB_LOGIS_TECNICO_SOLICITUD | ID del técnico solicitante |
+| `$id_destino` | `id_tecnico_traspaso` | TB_LOGIS_TECNICO_SOLICITUD | ID del técnico destino |
+| `$token` | `TICKET` | TB_LOGIS_TECNICO_SOLICITUD | Ticket único de seguimiento |
+| `$flag_regiones` | `flag_regiones` | TB_LOGIS_TECNICO_SOLICITUD | Flag de gestión de regiones |
+| `$flag_gestion_supervisor` | `flag_gestion_supervisor` | TB_LOGIS_TECNICO_SOLICITUD | Flag de gestión supervisor |
+| `$campo_item` | `campo_item` | TB_LOGIS_TECNICO_SOLICITUD | Código Item del material |
