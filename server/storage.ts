@@ -42,6 +42,12 @@ export interface IStorage {
   deleteBilling(id: number): Promise<boolean>;
   getTqwComisionData(rut: string, periodo: string): Promise<schema.TqwComisionRenew | undefined>;
   
+  // Materials operations
+  getMaterialTipos(): Promise<string[]>;
+  getMaterialFamilias(tipo: string): Promise<string[]>;
+  getMaterialSubfamilias(tipo: string, familia: string): Promise<string[]>;
+  getMaterialItems(tipo: string, familia: string, subfamilia: string): Promise<Array<{id: string, description: string}>>;
+  
   // Authentication operations
   getUserByEmail(email: string): Promise<User | undefined>;
   validateCredentials(email: string, password: string): Promise<AuthenticatedUser | null>;
@@ -288,6 +294,78 @@ export class MySQLStorage implements IStorage {
       }
     } catch (error) {
       console.error("Error closing connection:", error);
+    }
+  }
+
+  // ============================================
+  // MATERIALS OPERATIONS
+  // ============================================
+
+  async getMaterialTipos(): Promise<string[]> {
+    try {
+      const [rows] = await pool.execute(
+        `SELECT DISTINCT \`Tipo Material\` FROM tp_logistica_mat_oracle 
+         WHERE \`Tipo Material\` IS NOT NULL AND \`Tipo Material\` != '' 
+         ORDER BY \`Tipo Material\` ASC`
+      );
+      const results = rows as any[];
+      return results.map(r => r['Tipo Material']).filter(Boolean);
+    } catch (error) {
+      console.error("Error fetching material tipos:", error);
+      return [];
+    }
+  }
+
+  async getMaterialFamilias(tipo: string): Promise<string[]> {
+    try {
+      const [rows] = await pool.execute(
+        `SELECT DISTINCT \`Familia\` FROM tp_logistica_mat_oracle 
+         WHERE \`Tipo Material\` = ? AND \`Familia\` IS NOT NULL AND \`Familia\` != '' 
+         ORDER BY \`Familia\` ASC`,
+        [tipo]
+      );
+      const results = rows as any[];
+      return results.map(r => r['Familia']).filter(Boolean);
+    } catch (error) {
+      console.error("Error fetching material familias:", error);
+      return [];
+    }
+  }
+
+  async getMaterialSubfamilias(tipo: string, familia: string): Promise<string[]> {
+    try {
+      const [rows] = await pool.execute(
+        `SELECT DISTINCT \`Sub Familia\` FROM tp_logistica_mat_oracle 
+         WHERE \`Tipo Material\` = ? AND \`Familia\` = ? 
+         AND \`Sub Familia\` IS NOT NULL AND \`Sub Familia\` != '' 
+         ORDER BY \`Sub Familia\` ASC`,
+        [tipo, familia]
+      );
+      const results = rows as any[];
+      return results.map(r => r['Sub Familia']).filter(Boolean);
+    } catch (error) {
+      console.error("Error fetching material subfamilias:", error);
+      return [];
+    }
+  }
+
+  async getMaterialItems(tipo: string, familia: string, subfamilia: string): Promise<Array<{id: string, description: string}>> {
+    try {
+      const [rows] = await pool.execute(
+        `SELECT \`Item\`, \`Item Description\` FROM tp_logistica_mat_oracle 
+         WHERE \`Tipo Material\` = ? AND \`Familia\` = ? AND \`Sub Familia\` = ? 
+         AND \`Item\` IS NOT NULL AND \`Item\` != '' 
+         ORDER BY \`Item Description\` ASC`,
+        [tipo, familia, subfamilia]
+      );
+      const results = rows as any[];
+      return results.map(r => ({
+        id: r['Item'],
+        description: r['Item Description'] || r['Item']
+      })).filter((item, index, self) => self.findIndex(i => i.id === item.id) === index);
+    } catch (error) {
+      console.error("Error fetching material items:", error);
+      return [];
     }
   }
 }

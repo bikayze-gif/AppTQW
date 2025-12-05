@@ -186,3 +186,32 @@ export const tqwComisionRenew = mysqlTable("tb_tqw_comision_renew", {
 });
 
 export type TqwComisionRenew = typeof tqwComisionRenew.$inferSelect;
+
+// ============================================
+// TABLA DE MATERIALES - tp_logistica_mat_oracle
+// ============================================
+
+export const materialsOracle = mysqlTable("tp_logistica_mat_oracle", {
+  clear: bigint("clear", { mode: "number" }),
+  Item: text("Item"),
+  ItemDescription: text("Item Description"),
+  Medida: text("Medida"),
+  TipoMaterial: text("Tipo Material"),
+  Familia: text("Familia"),
+  SubFamilia: text("Sub Familia"),
+  LineaNegocio: text("Linea negocio"),
+  Tecnologia: text("Tecnologia"),
+  VIGENCIA: text("VIGENCIA"),
+  ValorTQW: text("Valor TQW"),
+  UnidadPorKit: decimal("Unidad por Kit", { precision: 10, scale: 2 }),
+  PorUnidadTQW: text("$ por unidad TQW"),
+  ValorVTR: decimal("Valor VTR", { precision: 10, scale: 2 }),
+  Funcionalidad: decimal("Funcionalidad", { precision: 10, scale: 2 }),
+  FechaActualizacion: datetime("fecha_actualizacion"),
+  FlagContrato: varchar("Flag contrato", { length: 255 }),
+  Cruce: varchar("cruce", { length: 255 }),
+  CodigoOraclePreMigracion: text("Código ORACLE Pre Migración"),
+  FechaActualizacion2: text("fecha actualizacion"),
+});
+
+export type MaterialOracle = typeof materialsOracle.$inferSelect;

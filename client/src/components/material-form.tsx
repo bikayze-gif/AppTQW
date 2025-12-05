@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Plus, ShoppingCart, Trash2 } from "lucide-react";
 
@@ -16,11 +16,6 @@ export interface MaterialFormData {
   cantidad: number;
 }
 
-const tiposMaterial = ["Acero", "Aluminio", "Cobre", "Hierro", "Zinc"];
-const familias = ["Estructural", "Acabado", "Especial", "Estándar"];
-const subfamilias = ["Tipo A", "Tipo B", "Tipo C", "Tipo D"];
-const materiales = ["Material 1", "Material 2", "Material 3", "Material 4"];
-
 export function MaterialForm({ isOpen, onClose, onSubmit }: MaterialFormProps) {
   const [formData, setFormData] = useState<MaterialFormData>({
     tipo: "",
@@ -31,6 +26,97 @@ export function MaterialForm({ isOpen, onClose, onSubmit }: MaterialFormProps) {
   });
 
   const [cartItems, setCartItems] = useState<MaterialFormData[]>([]);
+  const [tiposMaterial, setTiposMaterial] = useState<string[]>([]);
+  const [familias, setFamilias] = useState<string[]>([]);
+  const [subfamilias, setSubfamilias] = useState<string[]>([]);
+  const [materiales, setMateriales] = useState<Array<{id: string, description: string}>>([]);
+  const [loading, setLoading] = useState(false);
+
+  // Load tipos on mount
+  useEffect(() => {
+    const loadTipos = async () => {
+      try {
+        const res = await fetch("/api/materials/tipos");
+        if (res.ok) {
+          const data = await res.json();
+          setTiposMaterial(data);
+        }
+      } catch (error) {
+        console.error("Error loading tipos:", error);
+      }
+    };
+    loadTipos();
+  }, []);
+
+  // Load familias when tipo changes
+  useEffect(() => {
+    if (formData.tipo) {
+      const loadFamilias = async () => {
+        try {
+          setLoading(true);
+          const res = await fetch(`/api/materials/familias/${encodeURIComponent(formData.tipo)}`);
+          if (res.ok) {
+            const data = await res.json();
+            setFamilias(data);
+            setFormData(prev => ({ ...prev, familia: "", subfamilia: "", material: "" }));
+          }
+        } catch (error) {
+          console.error("Error loading familias:", error);
+        } finally {
+          setLoading(false);
+        }
+      };
+      loadFamilias();
+    }
+  }, [formData.tipo]);
+
+  // Load subfamilias when familia changes
+  useEffect(() => {
+    if (formData.tipo && formData.familia) {
+      const loadSubfamilias = async () => {
+        try {
+          setLoading(true);
+          const res = await fetch(
+            `/api/materials/subfamilias/${encodeURIComponent(formData.tipo)}/${encodeURIComponent(formData.familia)}`
+          );
+          if (res.ok) {
+            const data = await res.json();
+            setSubfamilias(data);
+            setFormData(prev => ({ ...prev, subfamilia: "", material: "" }));
+          }
+        } catch (error) {
+          console.error("Error loading subfamilias:", error);
+        } finally {
+          setLoading(false);
+        }
+      };
+      loadSubfamilias();
+    }
+  }, [formData.tipo, formData.familia]);
+
+  // Load items when subfamilia changes
+  useEffect(() => {
+    if (formData.tipo && formData.familia && formData.subfamilia) {
+      const loadItems = async () => {
+        try {
+          setLoading(true);
+          const res = await fetch(
+            `/api/materials/items/${encodeURIComponent(formData.tipo)}/${encodeURIComponent(formData.familia)}/${encodeURIComponent(formData.subfamilia)}`
+          );
+          if (res.ok) {
+            const data = await res.json();
+            setMateriales(data);
+            setFormData(prev => ({ ...prev, material: "" }));
+          }
+        } catch (error) {
+          console.error("Error loading items:", error);
+        } finally {
+          setLoading(false);
+        }
+      };
+      loadItems();
+    }
+  }, [formData.tipo, formData.familia, formData.subfamilia]);
 
   const handleChange = (field: keyof MaterialFormData, value: string | number) => {
     setFormData((prev) => ({
@@ -119,10 +205,13 @@ export function MaterialForm({ isOpen, onClose, onSubmit }: MaterialFormProps) {
                 <select
                   value={formData.familia}
                   onChange={(e) => handleChange("familia", e.target.value)}
-                  className="w-full bg-slate-900/50 border border-[#06b6d4]/30 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-[#06b6d4] focus:ring-2 focus:ring-[#06b6d4]/20 transition-all cursor-pointer hover:border-[#06b6d4]/50"
+                  disabled={!formData.tipo || loading}
+                  className="w-full bg-slate-900/50 border border-[#06b6d4]/30 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-[#06b6d4] focus:ring-2 focus:ring-[#06b6d4]/20 transition-all cursor-pointer hover:border-[#06b6d4]/50 disabled:opacity-50 disabled:cursor-not-allowed"
                   data-testid="select-familia"
                 >
-                  <option value="" className="bg-slate-900">Seleccione una familia</option>
+                  <option value="" className="bg-slate-900">
+                    {loading ? "Cargando..." : "Seleccione una familia"}
+                  </option>
                   {familias.map((fam) => (
                     <option key={fam} value={fam} className="bg-slate-900">
                       {fam}
@@ -137,10 +226,13 @@ export function MaterialForm({ isOpen, onClose, onSubmit }: MaterialFormProps) {
                 <select
                   value={formData.subfamilia}
                   onChange={(e) => handleChange("subfamilia", e.target.value)}
-                  className="w-full bg-slate-900/50 border border-[#06b6d4]/30 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-[#06b6d4] focus:ring-2 focus:ring-[#06b6d4]/20 transition-all cursor-pointer hover:border-[#06b6d4]/50"
+                  disabled={!formData.familia || loading}
+                  className="w-full bg-slate-900/50 border border-[#06b6d4]/30 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-[#06b6d4] focus:ring-2 focus:ring-[#06b6d4]/20 transition-all cursor-pointer hover:border-[#06b6d4]/50 disabled:opacity-50 disabled:cursor-not-allowed"
                   data-testid="select-subfamilia"
                 >
-                  <option value="" className="bg-slate-900">Seleccione una subfamilia</option>
+                  <option value="" className="bg-slate-900">
+                    {loading ? "Cargando..." : "Seleccione una subfamilia"}
+                  </option>
                   {subfamilias.map((subfam) => (
                     <option key={subfam} value={subfam} className="bg-slate-900">
                       {subfam}
@@ -155,13 +247,16 @@ export function MaterialForm({ isOpen, onClose, onSubmit }: MaterialFormProps) {
                 <select
                   value={formData.material}
                   onChange={(e) => handleChange("material", e.target.value)}
-                  className="w-full bg-slate-900/50 border border-[#06b6d4]/30 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-[#06b6d4] focus:ring-2 focus:ring-[#06b6d4]/20 transition-all cursor-pointer hover:border-[#06b6d4]/50"
+                  disabled={!formData.subfamilia || loading}
+                  className="w-full bg-slate-900/50 border border-[#06b6d4]/30 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-[#06b6d4] focus:ring-2 focus:ring-[#06b6d4]/20 transition-all cursor-pointer hover:border-[#06b6d4]/50 disabled:opacity-50 disabled:cursor-not-allowed"
                   data-testid="select-material"
                 >
-                  <option value="" className="bg-slate-900">Seleccione un material</option>
+                  <option value="" className="bg-slate-900">
+                    {loading ? "Cargando..." : "Seleccione un material"}
+                  </option>
                   {materiales.map((mat) => (
-                    <option key={mat} value={mat} className="bg-slate-900">
-                      {mat}
+                    <option key={mat.id} value={mat.id} className="bg-slate-900">
+                      {mat.description}
                     </option>
                   ))}
                 </select>

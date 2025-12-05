@@ -331,6 +331,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ============================================
+  // MATERIALS ROUTES
+  // ============================================
+
+  // GET material tipos
+  app.get("/api/materials/tipos", async (req, res) => {
+    try {
+      const tipos = await storage.getMaterialTipos();
+      res.json(tipos);
+    } catch (error) {
+      console.error("Error fetching material tipos:", error);
+      res.status(500).json({ error: "Failed to fetch material tipos" });
+    }
+  });
+
+  // GET material familias filtered by tipo
+  app.get("/api/materials/familias/:tipo", async (req, res) => {
+    try {
+      const { tipo } = req.params;
+      const familias = await storage.getMaterialFamilias(decodeURIComponent(tipo));
+      res.json(familias);
+    } catch (error) {
+      console.error("Error fetching material familias:", error);
+      res.status(500).json({ error: "Failed to fetch material familias" });
+    }
+  });
+
+  // GET material subfamilias filtered by tipo and familia
+  app.get("/api/materials/subfamilias/:tipo/:familia", async (req, res) => {
+    try {
+      const { tipo, familia } = req.params;
+      const subfamilias = await storage.getMaterialSubfamilias(
+        decodeURIComponent(tipo),
+        decodeURIComponent(familia)
+      );
+      res.json(subfamilias);
+    } catch (error) {
+      console.error("Error fetching material subfamilias:", error);
+      res.status(500).json({ error: "Failed to fetch material subfamilias" });
+    }
+  });
+
+  // GET material items filtered by tipo, familia, and subfamilia
+  app.get("/api/materials/items/:tipo/:familia/:subfamilia", async (req, res) => {
+    try {
+      const { tipo, familia, subfamilia } = req.params;
+      const items = await storage.getMaterialItems(
+        decodeURIComponent(tipo),
+        decodeURIComponent(familia),
+        decodeURIComponent(subfamilia)
+      );
+      res.json(items);
+    } catch (error) {
+      console.error("Error fetching material items:", error);
+      res.status(500).json({ error: "Failed to fetch material items" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
