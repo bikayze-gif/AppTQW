@@ -426,10 +426,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
 
+        // Asegurarse de que id_usuario es un número válido
+        const tecnicoId = Number(id_usuario);
+        if (isNaN(tecnicoId) || tecnicoId <= 0) {
+          throw new Error(`ID de usuario inválido: ${id_usuario}`);
+        }
+
         const insertId = await storage.createMaterialSolicitud({
           material: item.material,
           cantidad: item.cantidad,
-          tecnico: id_usuario,
+          tecnico: tecnicoId,
           id_tecnico_traspaso: id_destino || 0,
           ticket,
           flag_regiones,
