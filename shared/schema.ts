@@ -215,3 +215,50 @@ export const materialsOracle = mysqlTable("tp_logistica_mat_oracle", {
 });
 
 export type MaterialOracle = typeof materialsOracle.$inferSelect;
+
+// ============================================
+// TABLA DE SOLICITUDES DE MATERIALES - TB_LOGIS_TECNICO_SOLICITUD
+// ============================================
+
+export const materialSolicitud = mysqlTable("TB_LOGIS_TECNICO_SOLICITUD", {
+  id: int("id").primaryKey().autoincrement(),
+  material: text("material"),
+  cantidad: int("cantidad"),
+  fecha: datetime("fecha"),
+  tecnico: int("tecnico"),
+  id_tecnico_traspaso: int("id_tecnico_traspaso"),
+  TICKET: varchar("TICKET", { length: 50 }),
+  flag_regiones: varchar("flag_regiones", { length: 50 }),
+  flag_gestion_supervisor: tinyint("flag_gestion_supervisor").default(0),
+  campo_item: varchar("campo_item", { length: 100 }),
+});
+
+export type MaterialSolicitud = typeof materialSolicitud.$inferSelect;
+
+export const insertMaterialSolicitudSchema = createInsertSchema(materialSolicitud, {
+  material: z.string(),
+  cantidad: z.number().int().positive(),
+  tecnico: z.number().int(),
+  id_tecnico_traspaso: z.number().int().optional(),
+  TICKET: z.string(),
+  flag_regiones: z.string().optional(),
+  flag_gestion_supervisor: z.number().min(0).max(1).optional(),
+  campo_item: z.string().optional(),
+}).omit({ id: true, fecha: true });
+
+export type InsertMaterialSolicitud = z.infer<typeof insertMaterialSolicitudSchema>;
+
+// Schema para el request de solicitud de materiales
+export const materialSolicitudRequestSchema = z.object({
+  id_usuario: z.number().int(),
+  id_destino: z.number().int().optional(),
+  id_supervisor: z.number().int().optional(),
+  items: z.array(z.object({
+    material: z.string(),
+    cantidad: z.number().int().positive(),
+    item: z.string().optional(),
+    itemCode: z.string().optional(),
+  })).min(1, "Debe incluir al menos un item"),
+});
+
+export type MaterialSolicitudRequest = z.infer<typeof materialSolicitudRequestSchema>;

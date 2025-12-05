@@ -48,6 +48,20 @@ export interface IStorage {
   getMaterialSubfamilias(tipo: string, familia: string): Promise<string[]>;
   getMaterialItems(tipo: string, familia: string, subfamilia: string): Promise<Array<{id: string, description: string}>>;
   
+  // Material solicitud operations
+  getUserPerfil2(userId: number): Promise<string | null>;
+  getItemCodeByDescription(description: string): Promise<string | null>;
+  createMaterialSolicitud(data: {
+    material: string;
+    cantidad: number;
+    tecnico: number;
+    id_tecnico_traspaso: number;
+    ticket: string;
+    flag_regiones: string;
+    flag_gestion_supervisor: number;
+    campo_item: string;
+  }): Promise<number>;
+  
   // Authentication operations
   getUserByEmail(email: string): Promise<User | undefined>;
   validateCredentials(email: string, password: string): Promise<AuthenticatedUser | null>;
@@ -366,6 +380,72 @@ export class MySQLStorage implements IStorage {
     } catch (error) {
       console.error("Error fetching material items:", error);
       return [];
+    }
+  }
+
+  // ============================================
+  // MATERIAL SOLICITUD OPERATIONS
+  // ============================================
+
+  async getUserPerfil2(userId: number): Promise<string | null> {
+    try {
+      const [rows] = await pool.execute(
+        `SELECT perfil2 FROM tb_user_tqw WHERE id = ?`,
+        [userId]
+      );
+      const results = rows as any[];
+      return results[0]?.perfil2 || null;
+    } catch (error) {
+      console.error("Error fetching user perfil2:", error);
+      return null;
+    }
+  }
+
+  async getItemCodeByDescription(description: string): Promise<string | null> {
+    try {
+      const [rows] = await pool.execute(
+        `SELECT \`Item\`, \`Item Description\` FROM tp_logistica_mat_oracle 
+         WHERE \`Item Description\` LIKE ? LIMIT 1`,
+        [`%${description}%`]
+      );
+      const results = rows as any[];
+      return results[0]?.['Item'] || null;
+    } catch (error) {
+      console.error("Error fetching item code by description:", error);
+      return null;
+    }
+  }
+
+  async createMaterialSolicitud(data: {
+    material: string;
+    cantidad: number;
+    tecnico: number;
+    id_tecnico_traspaso: number;
+    ticket: string;
+    flag_regiones: string;
+    flag_gestion_supervisor: number;
+    campo_item: string;
+  }): Promise<number> {
+    try {
+      const [result] = await pool.execute(
+        `INSERT INTO TB_LOGIS_TECNICO_SOLICITUD 
+         (material, cantidad, fecha, tecnico, id_tecnico_traspaso, TICKET, flag_regiones, flag_gestion_supervisor, campo_item) 
+         VALUES (?, ?, NOW(), ?, ?, ?, ?, ?, ?)`,
+        [
+          data.material,
+          data.cantidad,
+          data.tecnico,
+          data.id_tecnico_traspaso,
+          data.ticket,
+          data.flag_regiones,
+          data.flag_gestion_supervisor,
+          data.campo_item
+        ]
+      );
+      return (result as any).insertId;
+    } catch (error) {
+      console.error("Error creating material solicitud:", error);
+      throw error;
     }
   }
 }

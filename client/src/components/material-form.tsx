@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Plus, ShoppingCart, Trash2 } from "lucide-react";
+import { X, Plus, ShoppingCart, Trash2, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 
 interface MaterialFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: MaterialFormData) => void;
+  userId?: number;
 }
 
 export interface MaterialFormData {
@@ -13,10 +14,17 @@ export interface MaterialFormData {
   familia: string;
   subfamilia: string;
   material: string;
+  materialDescription?: string;
+  itemCode?: string;
   cantidad: number;
 }
 
-export function MaterialForm({ isOpen, onClose, onSubmit }: MaterialFormProps) {
+interface CartItem extends MaterialFormData {
+  itemCode: string;
+  materialDescription: string;
+}
+
+export function MaterialForm({ isOpen, onClose, onSubmit, userId }: MaterialFormProps) {
   const [formData, setFormData] = useState<MaterialFormData>({
     tipo: "",
     familia: "",
@@ -25,13 +33,15 @@ export function MaterialForm({ isOpen, onClose, onSubmit }: MaterialFormProps) {
     cantidad: 1,
   });
 
-  const [cartItems, setCartItems] = useState<MaterialFormData[]>([]);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [tiposMaterial, setTiposMaterial] = useState<string[]>([]);
   const [familias, setFamilias] = useState<string[]>([]);
   const [subfamilias, setSubfamilias] = useState<string[]>([]);
   const [materiales, setMateriales] = useState<Array<{id: string, description: string}>>([]);
   const [loading, setLoading] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitResult, setSubmitResult] = useState<{success: boolean; message: string; ticket?: string} | null>(null);
 
   // Load tipos on mount
   useEffect(() => {
@@ -128,7 +138,13 @@ export function MaterialForm({ isOpen, onClose, onSubmit }: MaterialFormProps) {
 
   const handleAddToCart = () => {
     if (formData.tipo && formData.familia && formData.subfamilia && formData.material && formData.cantidad > 0) {
-      setCartItems((prev) => [...prev, { ...formData }]);
+      const selectedMaterial = materiales.find(m => m.id === formData.material);
+      const cartItem: CartItem = {
+        ...formData,
+        itemCode: formData.material,
+        materialDescription: selectedMaterial?.description || formData.material,
+      };
+      setCartItems((prev) => [...prev, cartItem]);
       setFormData({ tipo: "", familia: "", subfamilia: "", material: "", cantidad: 1 });
     }
   };
@@ -137,11 +153,62 @@ export function MaterialForm({ isOpen, onClose, onSubmit }: MaterialFormProps) {
     setCartItems((prev) => prev.filter((_, i) => i !== idx));
   };
 
-  const handleConfirmOrder = () => {
-    onSubmit(formData);
-    setCartItems([]);
-    setShowConfirmation(false);
-    onClose();
+  const handleConfirmOrder = async () => {
+    if (cartItems.length === 0) return;
+    
+    setSubmitting(true);
+    setSubmitResult(null);
+    
+    try {
+      const response = await fetch("/api/materials/solicitud", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id_usuario: userId || 0,
+          id_destino: 0,
+          id_supervisor: 0,
+          items: cartItems.map(item => ({
+            material: item.materialDescription,
+            cantidad: item.cantidad,
+            item: item.itemCode,
+            itemCode: item.itemCode,
+          })),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSubmitResult({
+          success: true,
+          message: data.message || "Solicitud creada exitosamente",
+          ticket: data.ticket,
+        });
+        
+        setTimeout(() => {
+          onSubmit(formData);
+          setCartItems([]);
+          setShowConfirmation(false);
+          setSubmitResult(null);
+          onClose();
+        }, 2000);
+      } else {
+        setSubmitResult({
+          success: false,
+          message: data.error || "Error al crear la solicitud",
+        });
+      }
+    } catch (error) {
+      console.error("Error submitting solicitud:", error);
+      setSubmitResult({
+        success: false,
+        message: "Error de conexión al enviar la solicitud",
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -326,7 +393,7 @@ export function MaterialForm({ isOpen, onClose, onSubmit }: MaterialFormProps) {
                               <span className="text-slate-300">{item.familia}</span>
                             </div>
                             <div className="text-slate-400 text-xs mt-1.5">
-                              {item.subfamilia} • {item.material}
+                              {item.subfamilia} • {item.materialDescription}
                             </div>
                           </div>
                           <button
@@ -367,26 +434,62 @@ export function MaterialForm({ isOpen, onClose, onSubmit }: MaterialFormProps) {
             {/* Confirmation Dialog */}
             {showConfirmation && (
               <div className="border-t border-white/10 bg-card/95 p-6 space-y-3">
-                <div className="text-center">
-                  <p className="text-white font-semibold mb-1">¿Confirmar Solicitud?</p>
-                  <p className="text-slate-400 text-sm">Se enviarán {cartItems.length} items</p>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    onClick={() => setShowConfirmation(false)}
-                    className="w-full bg-slate-700/50 hover:bg-slate-700/70 text-white border border-slate-600/50 font-semibold py-3 rounded-lg transition-colors"
-                    data-testid="button-cancel-confirmation"
-                  >
-                    No
-                  </button>
-                  <button
-                    onClick={handleConfirmOrder}
-                    className="w-full bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/30 font-semibold py-3 rounded-lg transition-colors"
-                    data-testid="button-confirm-yes"
-                  >
-                    Sí, Confirmar
-                  </button>
-                </div>
+                {submitResult ? (
+                  <div className="text-center py-2">
+                    {submitResult.success ? (
+                      <>
+                        <CheckCircle className="w-12 h-12 text-green-400 mx-auto mb-2" />
+                        <p className="text-green-400 font-semibold">{submitResult.message}</p>
+                        {submitResult.ticket && (
+                          <p className="text-slate-400 text-sm mt-1">Ticket: {submitResult.ticket}</p>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-2" />
+                        <p className="text-red-400 font-semibold">{submitResult.message}</p>
+                        <button
+                          onClick={() => setSubmitResult(null)}
+                          className="mt-3 text-sm text-slate-400 hover:text-white transition-colors"
+                        >
+                          Intentar de nuevo
+                        </button>
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    <div className="text-center">
+                      <p className="text-white font-semibold mb-1">¿Confirmar Solicitud?</p>
+                      <p className="text-slate-400 text-sm">Se enviarán {cartItems.length} items</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        onClick={() => setShowConfirmation(false)}
+                        disabled={submitting}
+                        className="w-full bg-slate-700/50 hover:bg-slate-700/70 text-white border border-slate-600/50 font-semibold py-3 rounded-lg transition-colors disabled:opacity-50"
+                        data-testid="button-cancel-confirmation"
+                      >
+                        No
+                      </button>
+                      <button
+                        onClick={handleConfirmOrder}
+                        disabled={submitting}
+                        className="w-full bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/30 font-semibold py-3 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                        data-testid="button-confirm-yes"
+                      >
+                        {submitting ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Enviando...
+                          </>
+                        ) : (
+                          "Sí, Confirmar"
+                        )}
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </motion.div>

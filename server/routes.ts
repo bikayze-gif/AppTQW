@@ -2,7 +2,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import crypto from "crypto";
 import { storage } from "./storage";
-import { insertBillingSchema, loginSchema } from "@shared/schema";
+import { insertBillingSchema, loginSchema, materialSolicitudRequestSchema } from "@shared/schema";
 import { z } from "zod";
 
 // Middleware para verificar autenticación
@@ -386,6 +386,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching material items:", error);
       res.status(500).json({ error: "Failed to fetch material items" });
+    }
+  });
+
+  // POST create material solicitud
+  app.post("/api/materials/solicitud", async (req, res) => {
+    try {
+      const validatedData = materialSolicitudRequestSchema.parse(req.body);
+      const { id_usuario, id_destino, id_supervisor, items } = validatedData;
+
+      // Validar permisos del usuario
+      const userPerfil2 = await storage.getUserPerfil2(id_usuario);
+      
+      // Validar permisos del supervisor si se proporciona
+      let supervisorPerfil2: string | null = null;
+      if (id_supervisor) {
+        supervisorPerfil2 = await storage.getUserPerfil2(id_supervisor);
+      }
+
+      // Determinar flags basados en perfil2
+      const flag_regiones = userPerfil2 ? "flag_regiones" : "No";
+      const flag_gestion_supervisor = userPerfil2 ? 1 : 0;
+
+      // Generar ticket único de 8 caracteres
+      const ticket = crypto.randomBytes(4).toString('hex');
+
+      const insertedIds: number[] = [];
+
+      // Insertar cada item del carrito
+      for (const item of items) {
+        // Obtener el código del item
+        let campo_item = item.item || item.itemCode || "";
+        
+        // Si no tiene código, intentar buscarlo por descripción
+        if (!campo_item && item.material) {
+          const foundCode = await storage.getItemCodeByDescription(item.material);
+          if (foundCode) {
+            campo_item = foundCode;
+          }
+        }
+
+        const insertId = await storage.createMaterialSolicitud({
+          material: item.material,
+          cantidad: item.cantidad,
+          tecnico: id_usuario,
+          id_tecnico_traspaso: id_destino || 0,
+          ticket,
+          flag_regiones,
+          flag_gestion_supervisor,
+          campo_item,
+        });
+
+        insertedIds.push(insertId);
+      }
+
+      res.status(201).json({
+        success: true,
+        message: `Solicitud creada exitosamente con ${insertedIds.length} items`,
+        ticket,
+        insertedIds,
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          error: "Datos de solicitud inválidos", 
+          details: error.errors 
+        });
+      }
+      console.error("Error creating material solicitud:", error);
+      res.status(500).json({ error: "Error al crear la solicitud de materiales" });
     }
   });
 
