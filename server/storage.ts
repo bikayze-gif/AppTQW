@@ -1,5 +1,5 @@
 import { drizzle } from "drizzle-orm/mysql2";
-import mysql from "mysql2/promise";
+import mysql, { RowDataPacket } from "mysql2/promise";
 import * as schema from "@shared/schema";
 import { eq, desc, and, sql, gte } from "drizzle-orm";
 import type { Billing, InsertBilling, User, InsertLoginAttempt } from "@shared/schema";
@@ -465,7 +465,7 @@ export class MySQLStorage implements IStorage {
     ftth: number;
     tipo_red: string;
   }>> {
-    const [rows] = await this.pool.execute<RowDataPacket[]>(
+    const [rows] = await pool.execute<RowDataPacket[]>(
       `SELECT
         DATE(\`Fecha fin#\`) as fecha,
         CAST(SUM(CASE WHEN TipoRed_rank = 'HFC' THEN Ptos_referencial ELSE 0 END) AS UNSIGNED) as puntos_hfc,
@@ -505,7 +505,7 @@ export class MySQLStorage implements IStorage {
     puntos: number;
     rgu: number;
   }>> {
-    const [rows] = await this.pool.execute<RowDataPacket[]>(
+    const [rows] = await pool.execute<RowDataPacket[]>(
       `SELECT
         ROW_NUMBER() OVER (ORDER BY DATE(\`Fecha fin#\`) DESC, TipoRed_rank) as id,
         DATE(\`Fecha fin#\`) as fecha,
@@ -539,7 +539,7 @@ export class MySQLStorage implements IStorage {
     fechaFin: string;
     TipoRed_rank: string;
   }>> {
-    const [rows] = await this.pool.execute<RowDataPacket[]>(
+    const [rows] = await pool.execute<RowDataPacket[]>(
       `SELECT 
         \`Orden\`, 
         \`Dir# cliente\` as direccion, 
