@@ -204,15 +204,6 @@ export default function PeriodInfo() {
           <p className="text-slate-400 text-xs">RUT: {user?.rut}</p>
         </div>
 
-        {/* Botón para abrir el formulario de materiales */}
-        <button
-          onClick={() => setShowMaterialForm(true)}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-md"
-        >
-          Registrar Solicitud de Material
-        </button>
-
-
         {/* Información del Técnico */}
         <CollapsibleSection
           title="Información del Técnico"
