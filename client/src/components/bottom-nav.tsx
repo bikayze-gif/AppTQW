@@ -1,4 +1,4 @@
-import { LayoutGrid, Activity, FileText, Ticket, Box, LogOut, Plus, ShoppingCart } from "lucide-react";
+import { LayoutGrid, Activity, FileText, Ticket, Box, LogOut, Plus } from "lucide-react";
 import { useLocation } from "wouter";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -70,14 +70,14 @@ export function BottomNav({ onAddClick }: BottomNavProps) {
             className={`p-2 rounded-lg relative hover:bg-white/5 transition-colors ${isAnalytics ? "text-[#06b6d4]" : "text-slate-400 hover:text-white"}`}
             data-testid="button-nav-analytics"
           >
-            <FileText size={22} />
+            <Box size={22} />
           </button>
           <button
             onClick={() => setLocation("/tickets")}
             className={`p-2 rounded-lg relative hover:bg-white/5 transition-colors ${isTickets ? "text-[#06b6d4]" : "text-slate-400 hover:text-white"}`}
             data-testid="button-nav-ticket"
           >
-            <ShoppingCart size={22} />
+            <Ticket size={22} />
           </button>
           <button
             onClick={() => setShowLogoutModal(true)}

@@ -34,19 +34,19 @@ interface Tab {
 const tabs: Tab[] = [
   {
     id: "tab1",
-    label: "TAB 1",
+    label: "SOLICITUD MATERIAL",
     data: mockDataTab1,
     columns: ["columna1", "columna2", "columna3", "columna4"],
   },
   {
     id: "tab2",
-    label: "TAB 2",
+    label: "REVISIÓN SOPORTE",
     data: mockDataTab2,
     columns: ["columna1", "columna2", "columna3", "columna4"],
   },
   {
     id: "tab3",
-    label: "TAB 3",
+    label: "NOTIFICACIONES",
     data: mockDataTab3,
     columns: ["columna1", "columna2", "columna3", "columna4"],
   },
