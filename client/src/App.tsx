@@ -16,6 +16,7 @@ import Dashboard from "@/pages/dashboard";
 import PeriodInfo from "@/pages/period-info";
 import Analytics from "@/pages/analytics";
 import Activity from "@/pages/activity";
+import Tickets from "@/pages/tickets";
 import SupervisorHome from "@/pages/supervisor/home";
 import SupervisorNotes from "@/pages/supervisor/notes";
 import SupervisorMessenger from "@/pages/supervisor/messenger";
@@ -61,6 +62,9 @@ function Router() {
       </Route>
       <Route path="/analytics">
         <ProtectedRoute><Analytics /></ProtectedRoute>
+      </Route>
+      <Route path="/tickets">
+        <ProtectedRoute><Tickets /></ProtectedRoute>
       </Route>
       
       <Route component={NotFound} />

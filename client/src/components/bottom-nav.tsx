@@ -1,4 +1,4 @@
-import { LayoutGrid, Activity, FileText, Ticket, Box, LogOut, Plus } from "lucide-react";
+import { LayoutGrid, Activity, FileText, Ticket, Box, LogOut, Plus, ShoppingCart } from "lucide-react";
 import { useLocation } from "wouter";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -18,6 +18,7 @@ export function BottomNav({ onAddClick }: BottomNavProps) {
   const isDashboard = currentPath === "/dashboard";
   const isActivity = currentPath === "/activity";
   const isAnalytics = currentPath === "/analytics";
+  const isTickets = currentPath === "/tickets";
 
   const handleLogout = async () => {
     setShowLogoutModal(false);
@@ -49,7 +50,7 @@ export function BottomNav({ onAddClick }: BottomNavProps) {
             className={`p-2 rounded-lg relative hover:bg-white/5 transition-colors ${isDashboard ? "text-[#06b6d4]" : "text-slate-400 hover:text-white"}`}
             data-testid="button-nav-file"
           >
-            <Box size={22} /> {/* Cambiar el ícono del cubo aquí */}
+            <Box size={22} />
           </button>
         </div>
 
@@ -67,9 +68,16 @@ export function BottomNav({ onAddClick }: BottomNavProps) {
           <button
             onClick={() => setLocation("/analytics")}
             className={`p-2 rounded-lg relative hover:bg-white/5 transition-colors ${isAnalytics ? "text-[#06b6d4]" : "text-slate-400 hover:text-white"}`}
+            data-testid="button-nav-analytics"
+          >
+            <FileText size={22} />
+          </button>
+          <button
+            onClick={() => setLocation("/tickets")}
+            className={`p-2 rounded-lg relative hover:bg-white/5 transition-colors ${isTickets ? "text-[#06b6d4]" : "text-slate-400 hover:text-white"}`}
             data-testid="button-nav-ticket"
           >
-            <ShoppingCart size={22} /> {/* Cambiar a este ícono para "Analytics" */}
+            <ShoppingCart size={22} />
           </button>
           <button
             onClick={() => setShowLogoutModal(true)}
