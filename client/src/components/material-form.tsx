@@ -156,7 +156,10 @@ export function MaterialForm({ isOpen, onClose, onSubmit, userId }: MaterialForm
   const handleConfirmOrder = async () => {
     if (cartItems.length === 0) return;
     
+    console.log("handleConfirmOrder - userId received:", userId);
+    
     if (!userId || userId <= 0) {
+      console.error("Invalid userId:", userId);
       setSubmitResult({
         success: false,
         message: "Error: No se pudo identificar el usuario. Por favor, vuelva a iniciar sesión.",

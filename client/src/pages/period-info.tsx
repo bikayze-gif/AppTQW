@@ -212,15 +212,6 @@ export default function PeriodInfo() {
           Registrar Solicitud de Material
         </button>
 
-        {/* Formulario de Materiales (condicionalmente renderizado) */}
-        {showMaterialForm && (
-          <MaterialForm
-            isOpen={showMaterialForm}
-            onClose={() => setShowMaterialForm(false)}
-            onSubmit={handleMaterialSubmit}
-            userId={user?.id}
-          />
-        )}
 
         {/* Información del Técnico */}
         <CollapsibleSection
