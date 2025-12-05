@@ -31,8 +31,11 @@ const getStatusColor = (status: string) => {
 };
 
 const formatDate = (dateString: string) => {
-  const [year, month, day] = dateString.split('-');
-  return `${day}-${month.toLowerCase()}-${year.slice(2)}`;
+  const date = new Date(dateString);
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const year = date.getFullYear().toString().slice(2);
+  return `${day}-${month}-${year}`;
 };
 
 const ITEMS_PER_PAGE = 10;
@@ -236,13 +239,25 @@ export default function Activity() {
                   <Line 
                     type="monotone" 
                     dataKey="q_rgu_ftth" 
-                    stroke="#0891b2" 
+                    stroke="#f59e0b" 
                     strokeWidth={3}
                     dot={false}
                     name="RGU FTTH"
                   />
                 </LineChart>
               </ResponsiveContainer>
+              
+              {/* Leyenda personalizada */}
+              <div className="flex items-center justify-center gap-6 mt-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-0.5 bg-[#06b6d4]"></div>
+                  <span className="text-xs text-slate-300">Puntos HFC</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-0.5 bg-[#f59e0b]"></div>
+                  <span className="text-xs text-slate-300">RGU FTTH</span>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
