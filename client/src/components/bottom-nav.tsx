@@ -49,7 +49,7 @@ export function BottomNav({ onAddClick }: BottomNavProps) {
             className={`p-2 rounded-lg relative hover:bg-white/5 transition-colors ${isDashboard ? "text-[#06b6d4]" : "text-slate-400 hover:text-white"}`}
             data-testid="button-nav-file"
           >
-            <FileText size={22} />
+            <Box size={22} /> {/* Cambiar el ícono del cubo aquí */}
           </button>
         </div>
 
@@ -69,10 +69,7 @@ export function BottomNav({ onAddClick }: BottomNavProps) {
             className={`p-2 rounded-lg relative hover:bg-white/5 transition-colors ${isAnalytics ? "text-[#06b6d4]" : "text-slate-400 hover:text-white"}`}
             data-testid="button-nav-ticket"
           >
-            <Ticket size={22} />
-          </button>
-          <button className="text-slate-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/5" data-testid="button-nav-box">
-            <Box size={22} />
+            <ShoppingCart size={22} /> {/* Cambiar a este ícono para "Analytics" */}
           </button>
           <button
             onClick={() => setShowLogoutModal(true)}
