@@ -4,6 +4,7 @@ import { BottomNav } from "@/components/bottom-nav";
 import { AlertCircle, ChevronUp, ChevronDown } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/lib/auth-context";
+import { MaterialForm } from "@/components/material-form";
 
 const GLOBAL_PERIODO = "202509";
 
@@ -161,25 +162,10 @@ export default function PeriodInfo() {
     return formatMoney(String(hfc + ftth));
   };
 
-  const handleMaterialSubmit = async (formData: any) => {
-    try {
-      const response = await fetch("/api/solicitudes", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ ...formData, tecnico: user?.id }), // Asegurarse de que el técnico sea el ID del usuario
-      });
-
-      if (!response.ok) {
-        throw new Error("Error al enviar la solicitud");
-      }
-      alert("Solicitud enviada correctamente");
-      setShowMaterialForm(false);
-    } catch (error) {
-      console.error("Error submitting material form:", error);
-      alert("Hubo un error al enviar la solicitud. Por favor, inténtalo de nuevo.");
-    }
+  const handleMaterialSubmit = () => {
+    // El MaterialForm maneja completamente el envío de datos
+    // Esta función se llama después de confirmar, así que solo cerramos el formulario
+    setShowMaterialForm(false);
   };
 
   if (loading) {
@@ -332,130 +318,14 @@ export default function PeriodInfo() {
         </CollapsibleSection>
       </div>
 
+      <MaterialForm 
+        isOpen={showMaterialForm}
+        onClose={() => setShowMaterialForm(false)}
+        onSubmit={handleMaterialSubmit}
+        userId={user?.id}
+      />
+
       <BottomNav />
     </div>
   );
 }
-
-// Placeholder for MaterialForm component - assume it exists elsewhere
-// and handles the form submission and modal logic.
-interface MaterialFormProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit: (formData: any) => void;
-  userId?: number; // Added userId prop
-}
-
-const MaterialForm: React.FC<MaterialFormProps> = ({ isOpen, onClose, onSubmit, userId }) => {
-  const [material, setMaterial] = useState("");
-  const [cantidad, setCantidad] = useState(1);
-  const [fecha, setFecha] = useState("");
-  const [campoItem, setCampoItem] = useState("");
-
-  useEffect(() => {
-    if (userId) {
-      // Aquí podrías pre-llenar el campo 'tecnico' si fuera un campo visible en el form,
-      // pero ya se está manejando en handleMaterialSubmit.
-    }
-    // Establecer fecha actual por defecto si el formulario se abre
-    if (isOpen) {
-      setFecha(new Date().toISOString().split('T')[0]);
-    }
-  }, [isOpen, userId]);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit({
-      material,
-      cantidad,
-      fecha,
-      campo_item: campoItem,
-      // El 'tecnico' se manejará en el `handleMaterialSubmit` del componente padre
-      // para asegurar que se usa el `userId` correcto del contexto de autenticación.
-    });
-  };
-
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-slate-800 p-6 rounded-lg shadow-lg w-full max-w-md">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-white">Registrar Solicitud de Material</h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
-            &times;
-          </button>
-        </div>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="material" className="block text-sm font-medium text-slate-300 mb-1">
-              Material
-            </label>
-            <input
-              type="text"
-              id="material"
-              value={material}
-              onChange={(e) => setMaterial(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-700 rounded-md bg-slate-700 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="cantidad" className="block text-sm font-medium text-slate-300 mb-1">
-              Cantidad
-            </label>
-            <input
-              type="number"
-              id="cantidad"
-              value={cantidad}
-              onChange={(e) => setCantidad(parseInt(e.target.value))}
-              min="1"
-              className="w-full px-3 py-2 border border-slate-700 rounded-md bg-slate-700 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="fecha" className="block text-sm font-medium text-slate-300 mb-1">
-              Fecha
-            </label>
-            <input
-              type="date"
-              id="fecha"
-              value={fecha}
-              onChange={(e) => setFecha(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-700 rounded-md bg-slate-700 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="campo_item" className="block text-sm font-medium text-slate-300 mb-1">
-              Campo Item
-            </label>
-            <input
-              type="text"
-              id="campo_item"
-              value={campoItem}
-              onChange={(e) => setCampoItem(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-700 rounded-md bg-slate-700 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 border border-slate-700 rounded-md text-slate-300 hover:bg-slate-700/50 transition-colors"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
-            >
-              Guardar
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-};
