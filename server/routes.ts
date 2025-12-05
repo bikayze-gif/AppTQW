@@ -389,6 +389,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ============================================
+  // ACTIVITY ROUTES
+  // ============================================
+
+  // GET activity chart data
+  app.get("/api/activity/chart", requireAuth, async (req, res) => {
+    try {
+      const rut = req.session.user?.rut;
+      if (!rut) {
+        return res.status(401).json({ error: "Usuario no autenticado" });
+      }
+
+      const { days } = req.query;
+      const daysNum = parseInt(days as string) || 30;
+
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(endDate.getDate() - daysNum);
+
+      const formatDate = (date: Date) => {
+        return date.toISOString().split('T')[0];
+      };
+
+      const data = await storage.getActivityChartData(
+        rut,
+        formatDate(startDate),
+        formatDate(endDate)
+      );
+
+      res.json(data);
+    } catch (error) {
+      console.error("Error fetching activity chart data:", error);
+      res.status(500).json({ error: "Error al obtener datos del gráfico" });
+    }
+  });
+
+  // GET activity table data
+  app.get("/api/activity/table", requireAuth, async (req, res) => {
+    try {
+      const rut = req.session.user?.rut;
+      if (!rut) {
+        return res.status(401).json({ error: "Usuario no autenticado" });
+      }
+
+      const { days } = req.query;
+      const daysNum = parseInt(days as string) || 30;
+
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(endDate.getDate() - daysNum);
+
+      const formatDate = (date: Date) => {
+        return date.toISOString().split('T')[0];
+      };
+
+      const data = await storage.getActivityTableData(
+        rut,
+        formatDate(startDate),
+        formatDate(endDate)
+      );
+
+      res.json(data);
+    } catch (error) {
+      console.error("Error fetching activity table data:", error);
+      res.status(500).json({ error: "Error al obtener datos de la tabla" });
+    }
+  });
+
+  // GET order details for a specific date
+  app.get("/api/activity/details/:fecha", requireAuth, async (req, res) => {
+    try {
+      const rut = req.session.user?.rut;
+      if (!rut) {
+        return res.status(401).json({ error: "Usuario no autenticado" });
+      }
+
+      const { fecha } = req.params;
+      const data = await storage.getOrderDetails(fecha, rut);
+
+      res.json({
+        success: true,
+        fecha,
+        totalRegistros: data.length,
+        detalles: data,
+      });
+    } catch (error) {
+      console.error("Error fetching order details:", error);
+      res.status(500).json({ error: "Error al obtener detalles de órdenes" });
+    }
+  });
+
   // POST create material solicitud
   app.post("/api/materials/solicitud", requireAuth, async (req, res) => {
     try {

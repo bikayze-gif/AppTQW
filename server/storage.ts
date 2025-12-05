@@ -41,13 +41,13 @@ export interface IStorage {
   updateBilling(id: number, billing: Partial<InsertBilling>): Promise<Billing | undefined>;
   deleteBilling(id: number): Promise<boolean>;
   getTqwComisionData(rut: string, periodo: string): Promise<schema.TqwComisionRenew | undefined>;
-  
+
   // Materials operations
   getMaterialTipos(): Promise<string[]>;
   getMaterialFamilias(tipo: string): Promise<string[]>;
   getMaterialSubfamilias(tipo: string, familia: string): Promise<string[]>;
   getMaterialItems(tipo: string, familia: string, subfamilia: string): Promise<Array<{id: string, description: string}>>;
-  
+
   // Material solicitud operations
   getUserPerfil2(userId: number): Promise<string | null>;
   getItemCodeByDescription(description: string): Promise<string | null>;
@@ -61,7 +61,7 @@ export interface IStorage {
     flag_gestion_supervisor: number;
     campo_item: string;
   }): Promise<number>;
-  
+
   // Authentication operations
   getUserByEmail(email: string): Promise<User | undefined>;
   validateCredentials(email: string, password: string): Promise<AuthenticatedUser | null>;
@@ -148,9 +148,9 @@ export class MySQLStorage implements IStorage {
         LIMIT 1`,
         [email]
       );
-      
+
       const results = rows as any[];
-      
+
       if (!results || results.length === 0) {
         console.log("No user found for email:", email);
         return null;
@@ -176,9 +176,9 @@ export class MySQLStorage implements IStorage {
       // Validación de contraseña (soporte dual: bcrypt y texto plano legado)
       let passwordValid = false;
       const isBcrypt = storedPassword.startsWith('$2a$') || storedPassword.startsWith('$2b$') || storedPassword.startsWith('$2y$');
-      
+
       console.log("Password type:", isBcrypt ? "bcrypt" : "plaintext");
-      
+
       if (isBcrypt) {
         // Contraseña hasheada con bcrypt
         try {
@@ -232,14 +232,14 @@ export class MySQLStorage implements IStorage {
   async getRecentLoginAttempts(email: string, ip: string): Promise<number> {
     try {
       const fifteenMinutesAgo = new Date(Date.now() - LOCKOUT_DURATION_MINUTES * 60 * 1000);
-      
+
       const [rows] = await pool.execute(
         `SELECT COUNT(*) as count FROM login_attempts 
          WHERE email = ? AND ip_address = ? AND success = 0 
          AND created_at >= ?`,
         [email, ip, fifteenMinutesAgo]
       );
-      
+
       const results = rows as any[];
       return results[0]?.count || 0;
     } catch (error) {
@@ -290,12 +290,12 @@ export class MySQLStorage implements IStorage {
         .select()
         .from(schema.connectionLogs)
         .where(eq(schema.connectionLogs.id, id));
-      
+
       if (connection[0]) {
         const duracion = Math.floor(
           (Date.now() - new Date(connection[0].fecha_conexion!).getTime()) / 1000
         );
-        
+
         await db
           .update(schema.connectionLogs)
           .set({
@@ -447,6 +447,126 @@ export class MySQLStorage implements IStorage {
       console.error("Error creating material solicitud:", error);
       throw error;
     }
+  }
+
+  // ============================================
+  // ACTIVITY OPERATIONS
+  // ============================================
+
+  async getActivityChartData(rut: string, startDate: string, endDate: string): Promise<Array<{
+    fecha: string;
+    puntos_hfc: number;
+    puntos_ftth: number;
+    puntos: number;
+    q_rgu_hfc: number;
+    q_rgu_ftth: number;
+    q_rgu: number;
+    hfc: number;
+    ftth: number;
+    tipo_red: string;
+  }>> {
+    const [rows] = await this.pool.execute<RowDataPacket[]>(
+      `SELECT
+        DATE(\`Fecha fin#\`) as fecha,
+        CAST(SUM(CASE WHEN TipoRed_rank = 'HFC' THEN Ptos_referencial ELSE 0 END) AS UNSIGNED) as puntos_hfc,
+        CAST(SUM(CASE WHEN TipoRed_rank = 'FTTH' THEN Ptos_referencial ELSE 0 END) AS UNSIGNED) as puntos_ftth,
+        CAST(SUM(Ptos_referencial) AS UNSIGNED) as puntos,
+        ROUND(SUM(CASE WHEN TipoRed_rank = 'HFC' THEN Q_SSPP ELSE 0 END), 2) as q_rgu_hfc,
+        ROUND(SUM(CASE WHEN TipoRed_rank = 'FTTH' THEN Q_SSPP ELSE 0 END), 2) as q_rgu_ftth,
+        ROUND(SUM(Q_SSPP), 2) as q_rgu,
+        SUM(CASE WHEN TipoRed_rank = 'HFC' THEN total_HFC ELSE 0 END) as hfc,
+        SUM(CASE WHEN TipoRed_rank = 'FTTH' THEN total_FTTH ELSE 0 END) as ftth,
+        GROUP_CONCAT(DISTINCT TipoRed_rank ORDER BY TipoRed_rank SEPARATOR ', ') as tipo_red
+      FROM produccion_ndc_rank_red
+      WHERE \`Fecha fin#\` BETWEEN ? AND ?
+        AND rut = ?
+      GROUP BY DATE(\`Fecha fin#\`)
+      ORDER BY fecha ASC`,
+      [startDate, endDate, rut]
+    );
+    return rows as Array<{
+      fecha: string;
+      puntos_hfc: number;
+      puntos_ftth: number;
+      puntos: number;
+      q_rgu_hfc: number;
+      q_rgu_ftth: number;
+      q_rgu: number;
+      hfc: number;
+      ftth: number;
+      tipo_red: string;
+    }>;
+  }
+
+  async getActivityTableData(rut: string, startDate: string, endDate: string): Promise<Array<{
+    id: number;
+    fecha: string;
+    tipoRed: string;
+    puntos: number;
+    rgu: number;
+  }>> {
+    const [rows] = await this.pool.execute<RowDataPacket[]>(
+      `SELECT
+        ROW_NUMBER() OVER (ORDER BY DATE(\`Fecha fin#\`) DESC, TipoRed_rank) as id,
+        DATE(\`Fecha fin#\`) as fecha,
+        TipoRed_rank as tipoRed,
+        CAST(SUM(Ptos_referencial) AS UNSIGNED) as puntos,
+        ROUND(SUM(Q_SSPP), 2) as rgu
+      FROM produccion_ndc_rank_red
+      WHERE \`Fecha fin#\` BETWEEN ? AND ?
+        AND rut = ?
+      GROUP BY DATE(\`Fecha fin#\`), TipoRed_rank
+      ORDER BY fecha DESC, tipoRed`,
+      [startDate, endDate, rut]
+    );
+    return rows as Array<{
+      id: number;
+      fecha: string;
+      tipoRed: string;
+      puntos: number;
+      rgu: number;
+    }>;
+  }
+
+  async getOrderDetails(fecha: string, rut: string): Promise<Array<{
+    Orden: string;
+    direccion: string;
+    Actividad: string;
+    Trabajo: string;
+    Ptos_referencial: number;
+    Q_SSPP: number;
+    RGU: number;
+    fechaFin: string;
+    TipoRed_rank: string;
+  }>> {
+    const [rows] = await this.pool.execute<RowDataPacket[]>(
+      `SELECT 
+        \`Orden\`, 
+        \`Dir# cliente\` as direccion, 
+        \`Actividad\`, 
+        \`Trabajo\`, 
+        \`Ptos_referencial\`, 
+        \`Q_SSPP\`, 
+        \`RGU\`, 
+        \`Fecha fin#\` as fechaFin,
+        \`TipoRed_rank\`
+      FROM produccion_ndc_rank_red
+      WHERE DATE(\`Fecha fin#\`) = ?
+        AND rut = ?
+      ORDER BY \`Orden\` ASC`,
+      [fecha, rut]
+    );
+    return rows as Array<{
+      Orden: string;
+      direccion: string;
+      Actividad: string;
+      Trabajo: string;
+      Ptos_referencial: number;
+      Q_SSPP: number;
+      RGU: number;
+      fechaFin: string;
+      TipoRed_rank: string;
+    }>;
   }
 }
 

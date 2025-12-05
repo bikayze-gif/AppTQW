@@ -1,77 +1,9 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
-import { Search, X, ArrowUp, ArrowDown, Eye, ChevronLeft, FileText, Sheet } from "lucide-react";
+import { Search, X, ArrowUp, ArrowDown, ChevronLeft, FileText, Sheet } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-
-const chartDataFull = [
-  { day: "01", actividad1: 45, actividad2: 30 },
-  { day: "02", actividad1: 52, actividad2: 45 },
-  { day: "03", actividad1: 48, actividad2: 50 },
-  { day: "04", actividad1: 61, actividad2: 55 },
-  { day: "05", actividad1: 55, actividad2: 65 },
-  { day: "06", actividad1: 67, actividad2: 58 },
-  { day: "07", actividad1: 72, actividad2: 70 },
-  { day: "08", actividad1: 68, actividad2: 75 },
-  { day: "09", actividad1: 75, actividad2: 68 },
-  { day: "10", actividad1: 82, actividad2: 72 },
-  { day: "11", actividad1: 79, actividad2: 80 },
-  { day: "12", actividad1: 85, actividad2: 76 },
-  { day: "13", actividad1: 78, actividad2: 82 },
-  { day: "14", actividad1: 88, actividad2: 85 },
-  { day: "15", actividad1: 92, actividad2: 88 },
-  { day: "16", actividad1: 86, actividad2: 90 },
-  { day: "17", actividad1: 89, actividad2: 84 },
-  { day: "18", actividad1: 94, actividad2: 91 },
-  { day: "19", actividad1: 87, actividad2: 93 },
-  { day: "20", actividad1: 95, actividad2: 89 },
-  { day: "21", actividad1: 91, actividad2: 92 },
-  { day: "22", actividad1: 96, actividad2: 94 },
-  { day: "23", actividad1: 98, actividad2: 96 },
-  { day: "24", actividad1: 93, actividad2: 95 },
-  { day: "25", actividad1: 97, actividad2: 98 },
-  { day: "26", actividad1: 99, actividad2: 97 },
-  { day: "27", actividad1: 94, actividad2: 99 },
-  { day: "28", actividad1: 100, actividad2: 100 },
-  { day: "29", actividad1: 96, actividad2: 101 },
-  { day: "30", actividad1: 102, actividad2: 98 },
-];
-
-const tableData = [
-  { id: 1, fecha: "2025-01-15", tipoRed: "FTTH", puntos: 45, rgu: 4.75 },
-  { id: 2, fecha: "2025-01-15", tipoRed: "HFC", puntos: 0, rgu: 2.30 },
-  { id: 3, fecha: "2025-01-14", tipoRed: "FTTH", puntos: 52, rgu: 5.10 },
-  { id: 4, fecha: "2025-01-14", tipoRed: "HFC", puntos: 15, rgu: 1.85 },
-  { id: 5, fecha: "2025-01-13", tipoRed: "FTTH", puntos: 48, rgu: 4.90 },
-  { id: 6, fecha: "2025-01-13", tipoRed: "HFC", puntos: 0, rgu: 3.20 },
-  { id: 7, fecha: "2025-01-12", tipoRed: "FTTH", puntos: 61, rgu: 5.50 },
-  { id: 8, fecha: "2025-01-12", tipoRed: "HFC", puntos: 8, rgu: 2.15 },
-  { id: 9, fecha: "2025-01-11", tipoRed: "FTTH", puntos: 55, rgu: 4.80 },
-  { id: 10, fecha: "2025-01-11", tipoRed: "HFC", puntos: 22, rgu: 2.75 },
-  { id: 11, fecha: "2025-01-10", tipoRed: "FTTH", puntos: 67, rgu: 5.60 },
-  { id: 12, fecha: "2025-01-10", tipoRed: "HFC", puntos: 0, rgu: 1.95 },
-  { id: 13, fecha: "2025-01-09", tipoRed: "FTTH", puntos: 72, rgu: 6.10 },
-  { id: 14, fecha: "2025-01-09", tipoRed: "HFC", puntos: 5, rgu: 2.40 },
-  { id: 15, fecha: "2025-01-08", tipoRed: "FTTH", puntos: 68, rgu: 5.85 },
-];
-
-const dayDetailsData: Record<string, { summary: string; count: number; completed: number; inProgress: number; items: Array<{ code: string; value: number | string; type: "puntos" | "rgu" }>; activities: Array<{ name: string; responsible: string; status: string; time: string }> }> = {
-  "2025-01-15": { summary: "4 actividades completadas, 0 pendientes", count: 4, completed: 2, inProgress: 0, items: [{ code: "ACT-001", value: 150, type: "puntos" }, { code: "ACT-002", value: "rgu", type: "rgu" }, { code: "ACT-003", value: 200, type: "puntos" }], activities: [{ name: "Tarea A", responsible: "Juan", status: "Completado", time: "09:30" }] },
-  "2025-01-14": { summary: "3 actividades procesadas, 1 en progreso", count: 3, completed: 2, inProgress: 1, items: [{ code: "ACT-004", value: 120, type: "puntos" }, { code: "ACT-005", value: "rgu", type: "rgu" }], activities: [{ name: "Tarea B", responsible: "María", status: "En Progreso", time: "10:15" }] },
-  "2025-01-13": { summary: "2 tareas completadas hoy", count: 2, completed: 2, inProgress: 0, items: [{ code: "ACT-006", value: 180, type: "puntos" }, { code: "ACT-007", value: "rgu", type: "rgu" }], activities: [{ name: "Tarea C", responsible: "Carlos", status: "Completado", time: "08:45" }] },
-  "2025-01-12": { summary: "Actividades pendientes: 1", count: 2, completed: 0, inProgress: 0, items: [{ code: "ACT-008", value: 90, type: "puntos" }], activities: [{ name: "Tarea D", responsible: "Ana", status: "Pendiente", time: "14:20" }] },
-  "2025-01-11": { summary: "Día productivo: 3 completadas", count: 3, completed: 3, inProgress: 0, items: [{ code: "ACT-009", value: 250, type: "puntos" }, { code: "ACT-010", value: "rgu", type: "rgu" }, { code: "ACT-011", value: 175, type: "puntos" }], activities: [{ name: "Tarea E", responsible: "Pedro", status: "Completado", time: "11:00" }] },
-  "2025-01-10": { summary: "2 tareas en progreso", count: 2, completed: 0, inProgress: 2, items: [{ code: "ACT-012", value: 140, type: "puntos" }], activities: [{ name: "Tarea F", responsible: "Laura", status: "En Progreso", time: "15:30" }] },
-  "2025-01-09": { summary: "3 tareas completadas", count: 3, completed: 3, inProgress: 0, items: [{ code: "ACT-013", value: 210, type: "puntos" }, { code: "ACT-014", value: "rgu", type: "rgu" }], activities: [{ name: "Tarea G", responsible: "Luis", status: "Completado", time: "09:00" }] },
-  "2025-01-08": { summary: "2 tareas exitosas", count: 2, completed: 2, inProgress: 0, items: [{ code: "ACT-015", value: 165, type: "puntos" }, { code: "ACT-016", value: "rgu", type: "rgu" }], activities: [{ name: "Tarea H", responsible: "Sandra", status: "Completado", time: "13:45" }] },
-  "2025-01-07": { summary: "1 en progreso, actividades continúan", count: 2, completed: 1, inProgress: 1, items: [{ code: "ACT-017", value: 110, type: "puntos" }], activities: [{ name: "Tarea I", responsible: "Roberto", status: "En Progreso", time: "10:30" }] },
-  "2025-01-06": { summary: "Día completamente productivo", count: 2, completed: 2, inProgress: 0, items: [{ code: "ACT-018", value: 195, type: "puntos" }, { code: "ACT-019", value: "rgu", type: "rgu" }], activities: [{ name: "Tarea J", responsible: "Mónica", status: "Completado", time: "12:15" }] },
-  "2025-01-05": { summary: "1 tarea pendiente por revisar", count: 2, completed: 0, inProgress: 0, items: [{ code: "ACT-020", value: 85, type: "puntos" }], activities: [{ name: "Tarea K", responsible: "Fernando", status: "Pendiente", time: "16:00" }] },
-  "2025-01-04": { summary: "Tarea completada satisfactoriamente", count: 1, completed: 1, inProgress: 0, items: [{ code: "ACT-021", value: 220, type: "puntos" }, { code: "ACT-022", value: "rgu", type: "rgu" }], activities: [{ name: "Tarea L", responsible: "Beatriz", status: "Completado", time: "14:00" }] },
-  "2025-01-03": { summary: "En progreso: tareas del día", count: 2, completed: 0, inProgress: 1, items: [{ code: "ACT-023", value: 130, type: "puntos" }], activities: [{ name: "Tarea M", responsible: "Diego", status: "En Progreso", time: "11:20" }] },
-  "2025-01-02": { summary: "1 tarea completada", count: 1, completed: 1, inProgress: 0, items: [{ code: "ACT-024", value: "rgu", type: "rgu" }, { code: "ACT-025", value: 160, type: "puntos" }], activities: [{ name: "Tarea N", responsible: "Cristina", status: "Completado", time: "10:00" }] },
-  "2025-01-01": { summary: "Inicio del mes productivo", count: 1, completed: 1, inProgress: 0, items: [{ code: "ACT-026", value: 200, type: "puntos" }], activities: [{ name: "Tarea O", responsible: "Rodrigo", status: "Completado", time: "09:30" }] },
-};
+import { useQuery } from "@tanstack/react-query";
 
 const CustomDot = (props: any) => {
   const { cx, cy, stroke, payload, value } = props;
@@ -138,34 +70,46 @@ export default function Activity() {
     console.log(`Descargando reporte en Excel del mes ${selectedMonth}`);
   };
 
+  // Fetch chart data
+  const { data: chartDataApi, isLoading: isLoadingChart } = useQuery({
+    queryKey: ['/api/activity/chart', dayFilter],
+    queryFn: async () => {
+      const response = await fetch(`/api/activity/chart?days=${dayFilter}`, {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to fetch chart data');
+      return response.json();
+    }
+  });
+
+  // Transform API data for chart
   const chartData = useMemo(() => {
-    if (dayFilter === 7) return chartDataFull.slice(-7);
-    if (dayFilter === 15) return chartDataFull.slice(-15);
-    return chartDataFull;
-  }, [dayFilter]);
+    if (!chartDataApi) return [];
+    return chartDataApi.map((item: any) => ({
+      day: new Date(item.fecha).getDate().toString().padStart(2, '0'),
+      puntos_hfc: item.puntos_hfc,
+      q_rgu_ftth: item.q_rgu_ftth,
+    }));
+  }, [chartDataApi]);
+
+  // Fetch table data
+  const { data: tableDataApi, isLoading: isLoadingTable } = useQuery({
+    queryKey: ['/api/activity/table', dayFilter],
+    queryFn: async () => {
+      const response = await fetch(`/api/activity/table?days=${dayFilter}`, {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to fetch table data');
+      return response.json();
+    }
+  });
 
   const filteredAndSortedData = useMemo(() => {
-    let data = [...tableData];
-    
-    // Filter by day range
-    const today = new Date("2025-01-15");
-    let startDate = new Date(today);
-    if (dayFilter === 7) {
-      startDate.setDate(today.getDate() - 6);
-    } else if (dayFilter === 15) {
-      startDate.setDate(today.getDate() - 14);
-    } else {
-      startDate.setDate(today.getDate() - 29);
-    }
-    
-    data = data.filter((row) => {
-      const rowDate = new Date(row.fecha);
-      return rowDate >= startDate && rowDate <= today;
-    });
+    let data = tableDataApi || [];
     
     // Filter by search text
     if (searchText) {
-      data = data.filter((row) =>
+      data = data.filter((row: any) =>
         Object.values(row).some((val) =>
           String(val).toLowerCase().includes(searchText.toLowerCase())
         )
@@ -174,7 +118,7 @@ export default function Activity() {
     
     // Sort
     if (sortColumn) {
-      data.sort((a, b) => {
+      data = [...data].sort((a: any, b: any) => {
         const aVal = String(a[sortColumn as keyof typeof a]);
         const bVal = String(b[sortColumn as keyof typeof b]);
         const comparison = aVal.localeCompare(bVal, undefined, { numeric: true });
@@ -183,7 +127,7 @@ export default function Activity() {
     }
     
     return data;
-  }, [searchText, sortColumn, sortDirection, dayFilter]);
+  }, [tableDataApi, searchText, sortColumn, sortDirection]);
 
   const totalPages = Math.ceil(filteredAndSortedData.length / ITEMS_PER_PAGE);
   const paginatedData = useMemo(() => {
@@ -283,17 +227,19 @@ export default function Activity() {
                   />
                   <Line 
                     type="monotone" 
-                    dataKey="actividad1" 
+                    dataKey="puntos_hfc" 
                     stroke="#06b6d4" 
                     strokeWidth={3}
                     dot={false}
+                    name="Puntos HFC"
                   />
                   <Line 
                     type="monotone" 
-                    dataKey="actividad2" 
+                    dataKey="q_rgu_ftth" 
                     stroke="#0891b2" 
                     strokeWidth={3}
                     dot={false}
+                    name="RGU FTTH"
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -442,7 +388,7 @@ export default function Activity() {
                   {paginatedData.map((row, idx) => (
                     <tr
                       key={row.id}
-                      onClick={() => {
+                      onClick={async () => {
                         setSelectedDate(row.fecha);
                         setShowDrawer(true);
                       }}
