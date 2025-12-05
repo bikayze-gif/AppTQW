@@ -202,53 +202,8 @@ export default function Activity() {
               </div>
             </div>
             <div className="h-64 md:h-80 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 35 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                  <XAxis 
-                    dataKey="day" 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{ fill: '#94a3b8', fontSize: 11 }}
-                    label={{ value: 'Días', position: 'insideBottomRight', offset: -5, fill: '#94a3b8' }}
-                    dy={5}
-                  />
-                  <YAxis 
-                    type="number"
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{ fill: '#94a3b8', fontSize: 11 }}
-                    domain={[0, 100]}
-                    ticks={[0, 20, 40, 60, 80, 100]}
-                    tickFormatter={(value) => `${value}`}
-                    label={{ value: 'Actividad', angle: -90, position: 'insideLeft', fill: '#94a3b8', style: { textAnchor: 'middle' }, offset: 10 }}
-                    width={50}
-                  />
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(6, 182, 212, 0.3)', borderRadius: '8px', color: '#fff' }}
-                    labelStyle={{ color: '#06b6d4' }}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="puntos_hfc" 
-                    stroke="#06b6d4" 
-                    strokeWidth={3}
-                    dot={false}
-                    name="Puntos HFC"
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="q_rgu_ftth" 
-                    stroke="#f59e0b" 
-                    strokeWidth={3}
-                    dot={false}
-                    name="RGU FTTH"
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-              
-              {/* Leyenda personalizada */}
-              <div className="flex items-center justify-center gap-6 mt-4">
+              {/* Leyenda personalizada - Superior */}
+              <div className="flex items-center justify-center gap-6 mb-3">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-0.5 bg-[#06b6d4]"></div>
                   <span className="text-xs text-slate-300">Puntos HFC</span>
@@ -258,6 +213,79 @@ export default function Activity() {
                   <span className="text-xs text-slate-300">RGU FTTH</span>
                 </div>
               </div>
+              
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData} margin={{ top: 5, right: 60, left: 10, bottom: 35 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                  <XAxis 
+                    dataKey="day" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fill: '#94a3b8', fontSize: 11 }}
+                    label={{ value: 'Días', position: 'insideBottomRight', offset: -5, fill: '#94a3b8' }}
+                    dy={5}
+                  />
+                  {/* Eje Y izquierdo para Puntos HFC */}
+                  <YAxis 
+                    yAxisId="left"
+                    type="number"
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fill: '#06b6d4', fontSize: 11 }}
+                    domain={[0, 'auto']}
+                    label={{ 
+                      value: 'Puntos HFC', 
+                      angle: -90, 
+                      position: 'insideLeft', 
+                      fill: '#06b6d4', 
+                      style: { textAnchor: 'middle' }, 
+                      offset: 0 
+                    }}
+                    width={50}
+                  />
+                  {/* Eje Y derecho para RGU FTTH */}
+                  <YAxis 
+                    yAxisId="right"
+                    orientation="right"
+                    type="number"
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fill: '#f59e0b', fontSize: 11 }}
+                    domain={[0, 'auto']}
+                    label={{ 
+                      value: 'RGU FTTH', 
+                      angle: 90, 
+                      position: 'insideRight', 
+                      fill: '#f59e0b', 
+                      style: { textAnchor: 'middle' }, 
+                      offset: 0 
+                    }}
+                    width={50}
+                  />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(6, 182, 212, 0.3)', borderRadius: '8px', color: '#fff' }}
+                    labelStyle={{ color: '#06b6d4' }}
+                  />
+                  <Line 
+                    yAxisId="left"
+                    type="monotone" 
+                    dataKey="puntos_hfc" 
+                    stroke="#06b6d4" 
+                    strokeWidth={3}
+                    dot={false}
+                    name="Puntos HFC"
+                  />
+                  <Line 
+                    yAxisId="right"
+                    type="monotone" 
+                    dataKey="q_rgu_ftth" 
+                    stroke="#f59e0b" 
+                    strokeWidth={3}
+                    dot={false}
+                    name="RGU FTTH"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
