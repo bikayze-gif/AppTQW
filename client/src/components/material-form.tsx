@@ -31,6 +31,7 @@ export function MaterialForm({ isOpen, onClose, onSubmit }: MaterialFormProps) {
   const [subfamilias, setSubfamilias] = useState<string[]>([]);
   const [materiales, setMateriales] = useState<Array<{id: string, description: string}>>([]);
   const [loading, setLoading] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
 
   // Load tipos on mount
   useEffect(() => {
@@ -136,6 +137,13 @@ export function MaterialForm({ isOpen, onClose, onSubmit }: MaterialFormProps) {
     setCartItems((prev) => prev.filter((_, i) => i !== idx));
   };
 
+  const handleConfirmOrder = () => {
+    onSubmit(formData);
+    setCartItems([]);
+    setShowConfirmation(false);
+    onClose();
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -180,7 +188,7 @@ export function MaterialForm({ isOpen, onClose, onSubmit }: MaterialFormProps) {
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
+            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4" style={{ maxHeight: 'calc(100vh - 180px)' }}>
               {/* Tipo de Material */}
               <div>
                 <label className="text-sm font-semibold text-white mb-2 block">Tipo de Material</label>
@@ -300,7 +308,7 @@ export function MaterialForm({ isOpen, onClose, onSubmit }: MaterialFormProps) {
                     </span>
                   </div>
                   
-                  <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                  <div className="space-y-2 pr-1">
                     {cartItems.map((item, idx) => (
                       <motion.div
                         key={idx}
@@ -323,7 +331,7 @@ export function MaterialForm({ isOpen, onClose, onSubmit }: MaterialFormProps) {
                           </div>
                           <button
                             onClick={() => handleRemoveFromCart(idx)}
-                            className="flex-shrink-0 ml-2 p-1.5 text-red-400 hover:bg-red-500/20 hover:text-red-300 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                            className="flex-shrink-0 ml-2 p-1.5 text-red-400 hover:bg-red-500/20 hover:text-red-300 rounded-lg transition-all"
                             data-testid={`button-remove-item-${idx}`}
                             title="Eliminar"
                           >
@@ -344,19 +352,41 @@ export function MaterialForm({ isOpen, onClose, onSubmit }: MaterialFormProps) {
             </div>
 
             {/* Footer Action */}
-            {cartItems.length > 0 && (
+            {cartItems.length > 0 && !showConfirmation && (
               <div className="border-t border-white/10 bg-card/95 p-6">
                 <button
-                  onClick={() => {
-                    onSubmit(formData);
-                    setCartItems([]);
-                    onClose();
-                  }}
+                  onClick={() => setShowConfirmation(true)}
                   className="w-full bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/30 font-semibold py-3 rounded-lg transition-colors"
                   data-testid="button-confirm-order"
                 >
                   Confirmar Solicitud ({cartItems.length} items)
                 </button>
+              </div>
+            )}
+
+            {/* Confirmation Dialog */}
+            {showConfirmation && (
+              <div className="border-t border-white/10 bg-card/95 p-6 space-y-3">
+                <div className="text-center">
+                  <p className="text-white font-semibold mb-1">¿Confirmar Solicitud?</p>
+                  <p className="text-slate-400 text-sm">Se enviarán {cartItems.length} items</p>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => setShowConfirmation(false)}
+                    className="w-full bg-slate-700/50 hover:bg-slate-700/70 text-white border border-slate-600/50 font-semibold py-3 rounded-lg transition-colors"
+                    data-testid="button-cancel-confirmation"
+                  >
+                    No
+                  </button>
+                  <button
+                    onClick={handleConfirmOrder}
+                    className="w-full bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/30 font-semibold py-3 rounded-lg transition-colors"
+                    data-testid="button-confirm-yes"
+                  >
+                    Sí, Confirmar
+                  </button>
+                </div>
               </div>
             )}
           </motion.div>
