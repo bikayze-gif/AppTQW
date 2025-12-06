@@ -1,13 +1,17 @@
 import fs from "node:fs";
 import { type Server } from "node:http";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import express, { type Express, type Request } from "express";
 
 import runApp from "./app";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 export async function serveStatic(app: Express, server: Server) {
-  const distPath = path.resolve(import.meta.dirname, "public");
+  const distPath = path.resolve(__dirname, "public");
 
   if (!fs.existsSync(distPath)) {
     throw new Error(
@@ -24,5 +28,10 @@ export async function serveStatic(app: Express, server: Server) {
 }
 
 (async () => {
-  await runApp(serveStatic);
+  try {
+    await runApp(serveStatic);
+  } catch (error) {
+    console.error("Failed to start application:", error);
+    process.exit(1);
+  }
 })();
