@@ -528,7 +528,7 @@ export class MySQLStorage implements IStorage {
     }>;
   }
 
-  async getOrderDetails(rut: string, fecha: string): Promise<Array<{
+  async getOrderDetails(fecha: string, rut: string): Promise<Array<{
     Orden: string;
     'Dir# cliente': string;
     Actividad: string;

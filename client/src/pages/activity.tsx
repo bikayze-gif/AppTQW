@@ -583,7 +583,9 @@ export default function Activity() {
                     <tr
                       key={row.id}
                       onClick={async () => {
-                        setSelectedDate(row.fecha);
+                        // Extract only the date portion (YYYY-MM-DD)
+                        const dateOnly = row.fecha.split('T')[0];
+                        setSelectedDate(dateOnly);
                         setShowDrawer(true);
                       }}
                       className="hover:bg-white/5 transition-colors cursor-pointer"
