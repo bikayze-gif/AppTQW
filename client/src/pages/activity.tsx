@@ -306,14 +306,6 @@ export default function Activity() {
                     tickLine={false} 
                     tick={{ fill: '#06b6d4', fontSize: 11 }}
                     domain={[0, 'auto']}
-                    label={{ 
-                      value: 'Puntos HFC', 
-                      angle: -90, 
-                      position: 'insideLeft', 
-                      fill: '#06b6d4', 
-                      style: { textAnchor: 'middle' }, 
-                      offset: 0 
-                    }}
                     width={50}
                   />
                   {/* Eje Y derecho para RGU FTTH */}
@@ -325,14 +317,6 @@ export default function Activity() {
                     tickLine={false} 
                     tick={{ fill: '#f59e0b', fontSize: 11 }}
                     domain={[0, 'auto']}
-                    label={{ 
-                      value: 'RGU FTTH', 
-                      angle: 90, 
-                      position: 'insideRight', 
-                      fill: '#f59e0b', 
-                      style: { textAnchor: 'middle' }, 
-                      offset: 0 
-                    }}
                     width={50}
                   />
                   <Tooltip 

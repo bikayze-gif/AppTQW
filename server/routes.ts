@@ -4,6 +4,7 @@ import crypto from "crypto";
 import { storage } from "./storage";
 import { insertBillingSchema, loginSchema, materialSolicitudRequestSchema } from "@shared/schema";
 import { z } from "zod";
+import { pool } from "./db"; // Assuming pool is imported from './db'
 
 // Middleware para verificar autenticación
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
@@ -90,7 +91,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Crear token de sesión
       const sessionToken = crypto.randomBytes(32).toString("hex");
-      
+
       // Guardar sesión en base de datos
       await storage.createSession(user.rut, sessionToken);
 
@@ -113,7 +114,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Determinar redirección basada en perfil
         let redirectTo = "/supervisor"; // Por defecto, redirigir a supervisor
         const perfil = user.perfil?.toLowerCase() || "";
-        
+
         // Solo los técnicos residenciales van a period-info
         if (perfil.includes("tecnico") && perfil.includes("residencial")) {
           redirectTo = "/";
@@ -149,7 +150,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/logout", async (req, res) => {
     try {
       const connectionId = req.session.connectionId;
-      
+
       // Cerrar registro de conexión
       if (connectionId) {
         await storage.closeConnection(connectionId);
@@ -215,7 +216,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ============================================
-  // TQW COMMISSION ROUTES
+  // TQW COMMISSIONROUTES
   // ============================================
 
   // TQW Commission API route
@@ -234,7 +235,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Billing API routes
-  
+
   // GET all billing records
   app.get("/api/billing", async (req, res) => {
     try {
@@ -266,15 +267,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Parse and validate the incoming data
       const validatedData = insertBillingSchema.parse(req.body);
-      
+
       // Ensure fecha_gestion is in correct format (YYYY-MM-DD) or null
       const dataToInsert = {
         ...validatedData,
-        fecha_gestion: validatedData.fecha_gestion 
-          ? validatedData.fecha_gestion.split('T')[0] 
+        fecha_gestion: validatedData.fecha_gestion
+          ? validatedData.fecha_gestion.split('T')[0]
           : null,
       };
-      
+
       const billing = await storage.createBilling(dataToInsert);
       res.status(201).json(billing);
     } catch (error) {
@@ -291,17 +292,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const validatedData = insertBillingSchema.partial().parse(req.body);
-      
+
       // Ensure fecha_gestion is in correct format (YYYY-MM-DD) or null
       const dataToUpdate = {
         ...validatedData,
-        fecha_gestion: validatedData.fecha_gestion 
-          ? validatedData.fecha_gestion.split('T')[0] 
-          : validatedData.fecha_gestion === null 
-          ? null 
+        fecha_gestion: validatedData.fecha_gestion
+          ? validatedData.fecha_gestion.split('T')[0]
+          : validatedData.fecha_gestion === null
+          ? null
           : undefined,
       };
-      
+
       const billing = await storage.updateBilling(id, dataToUpdate);
       if (!billing) {
         return res.status(404).json({ error: "Billing record not found" });
@@ -401,12 +402,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Usuario no autenticado" });
       }
 
-      const { days } = req.query;
-      const daysNum = parseInt(days as string) || 30;
-
+      const daysNum = parseInt(req.query.days as string) || 30;
       const endDate = new Date();
-      const startDate = new Date();
-      startDate.setDate(endDate.getDate() - daysNum);
+      let startDate = new Date();
+
+      // Si es mes completo (30 días), ajustar para que sea desde día 25 del mes anterior
+      if (daysNum === 30) {
+        const currentDay = endDate.getDate();
+        const currentMonth = endDate.getMonth();
+        const currentYear = endDate.getFullYear();
+
+        // Si estamos antes del día 25, el mes completo es desde 25 del mes antepasado
+        if (currentDay < 25) {
+          startDate = new Date(currentYear, currentMonth - 1, 25);
+          endDate.setDate(24);
+        } else {
+          // Si estamos después del día 25, el mes completo es desde 25 del mes pasado
+          startDate = new Date(currentYear, currentMonth, 25);
+          endDate.setMonth(currentMonth + 1);
+          endDate.setDate(24);
+        }
+      } else {
+        startDate.setDate(endDate.getDate() - daysNum);
+      }
 
       const formatDate = (date: Date) => {
         return date.toISOString().split('T')[0];
@@ -433,12 +451,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Usuario no autenticado" });
       }
 
-      const { days } = req.query;
-      const daysNum = parseInt(days as string) || 30;
-
+      const daysNum = parseInt(req.query.days as string) || 30;
       const endDate = new Date();
-      const startDate = new Date();
-      startDate.setDate(endDate.getDate() - daysNum);
+      let startDate = new Date();
+
+      // Si es mes completo (30 días), ajustar para que sea desde día 25 del mes anterior
+      if (daysNum === 30) {
+        const currentDay = endDate.getDate();
+        const currentMonth = endDate.getMonth();
+        const currentYear = endDate.getFullYear();
+
+        // Si estamos antes del día 25, el mes completo es desde 25 del mes antepasado
+        if (currentDay < 25) {
+          startDate = new Date(currentYear, currentMonth - 1, 25);
+          endDate.setDate(24);
+        } else {
+          // Si estamos después del día 25, el mes completo es desde 25 del mes pasado
+          startDate = new Date(currentYear, currentMonth, 25);
+          endDate.setMonth(currentMonth + 1);
+          endDate.setDate(24);
+        }
+      } else {
+        startDate.setDate(endDate.getDate() - daysNum);
+      }
 
       const formatDate = (date: Date) => {
         return date.toISOString().split('T')[0];
@@ -488,14 +523,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Obtener el ID del usuario desde la sesión autenticada (más seguro que confiar en el cliente)
       const id_usuario = req.session.user?.id;
-      
+
       if (!id_usuario) {
         return res.status(401).json({ error: "Usuario no autenticado" });
       }
 
       // Validar permisos del usuario
       const userPerfil2 = await storage.getUserPerfil2(id_usuario);
-      
+
       // Validar permisos del supervisor si se proporciona
       let supervisorPerfil2: string | null = null;
       if (id_supervisor) {
@@ -515,7 +550,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (const item of items) {
         // Obtener el código del item
         let campo_item = item.item || item.itemCode || "";
-        
+
         // Si no tiene código, intentar buscarlo por descripción
         if (!campo_item && item.material) {
           const foundCode = await storage.getItemCodeByDescription(item.material);
@@ -552,9 +587,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
-          error: "Datos de solicitud inválidos", 
-          details: error.errors 
+        return res.status(400).json({
+          error: "Datos de solicitud inválidos",
+          details: error.errors
         });
       }
       console.error("Error creating material solicitud:", error);
