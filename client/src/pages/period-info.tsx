@@ -6,7 +6,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/lib/auth-context";
 import { MaterialForm } from "@/components/material-form";
 
-const GLOBAL_PERIODO = "202509";
+const GLOBAL_PERIODO = "202512";
 
 interface TqwData {
   RutTecnicoOrig: string;
@@ -122,9 +122,7 @@ export default function PeriodInfo() {
       }
 
       try {
-        // Default period is 202512
-        const periodo = "202512";
-        const response = await fetch(`/api/tqw-comision/${user.rut}/${periodo}`);
+        const response = await fetch(`/api/tqw-comision/${user.rut}/${GLOBAL_PERIODO}`);
         if (!response.ok) {
           throw new Error("No se encontraron datos para este RUT y período");
         }
