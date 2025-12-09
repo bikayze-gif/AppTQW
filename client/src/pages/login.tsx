@@ -6,8 +6,8 @@ import { useAuth } from "@/lib/auth-context";
 export default function Login() {
   const [, setLocation] = useLocation();
   const { login, isAuthenticated, isLoading: authLoading } = useAuth();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("richard.olave@telqway.cl");
+  const [password, setPassword] = useState("20139488");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [role, setRole] = useState<"technician" | "supervisor">("technician");
