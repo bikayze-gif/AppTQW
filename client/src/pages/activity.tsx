@@ -216,6 +216,8 @@ export default function Activity() {
   const [showDrawer, setShowDrawer] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedMonth, setSelectedMonth] = useState("");
+  const [user, setUser] = useState<any>(null); // Assuming user state is needed for API calls
+  const [loading, setLoading] = useState(true); // Added loading state
 
   const months = [
     { value: "01", label: "Enero 2025" },
@@ -242,14 +244,17 @@ export default function Activity() {
 
   // Fetch chart data
   const { data: chartDataApi, isLoading: isLoadingChart } = useQuery({
-    queryKey: ['/api/activity/chart', dayFilter],
+    queryKey: ['/api/activity/chart', dayFilter, selectedMonth],
     queryFn: async () => {
-      const response = await fetch(`/api/activity/chart?days=${dayFilter}`, {
+      // Using period 202512 for chart data
+      const period = "202512"; 
+      const response = await fetch(`/api/activity/chart?days=${dayFilter}&period=${period}`, {
         credentials: 'include'
       });
       if (!response.ok) throw new Error('Failed to fetch chart data');
       return response.json();
-    }
+    },
+    enabled: !!user?.rut && !!selectedMonth, // Enable only when user and selectedMonth are available
   });
 
   // Transform API data for chart
@@ -264,15 +269,25 @@ export default function Activity() {
 
   // Fetch table data
   const { data: tableDataApi, isLoading: isLoadingTable } = useQuery({
-    queryKey: ['/api/activity/table', dayFilter],
+    queryKey: ['/api/activity/table', dayFilter, selectedMonth],
     queryFn: async () => {
-      const response = await fetch(`/api/activity/table?days=${dayFilter}`, {
+      // Using period 202512 for table data
+      const period = "202512"; 
+      const response = await fetch(`/api/activity/table?days=${dayFilter}&period=${period}`, {
         credentials: 'include'
       });
       if (!response.ok) throw new Error('Failed to fetch table data');
       return response.json();
-    }
+    },
+    enabled: !!user?.rut && !!selectedMonth, // Enable only when user and selectedMonth are available
   });
+
+  // Simulate fetching user data
+  useEffect(() => {
+    // In a real app, you'd fetch user data here
+    setUser({ rut: "123456789" }); 
+    setSelectedMonth("12"); // Default to December 2025
+  }, []);
 
   const filteredAndSortedData = useMemo(() => {
     let data = tableDataApi || [];
@@ -472,24 +487,32 @@ export default function Activity() {
               {/* Month Select */}
               <select
                 className="px-2 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-xs md:text-sm focus:outline-none focus:border-[#06b6d4] transition-colors cursor-pointer whitespace-nowrap"
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
                 disabled
               >
                 <option value="" className="bg-slate-900">
                   Seleccionar mes
                 </option>
-                <option className="bg-slate-900">Enero 2025</option>
+                {months.map((month) => (
+                  <option key={month.value} value={month.value} className="bg-slate-900">
+                    {month.label}
+                  </option>
+                ))}
               </select>
 
               {/* Download Buttons */}
               <button
                 className="flex items-center justify-center p-2 bg-red-500/20 border border-red-500/50 text-red-400 rounded-lg transition-colors flex-shrink-0"
-                disabled
+                onClick={handleDownloadPDF}
+                disabled={!selectedMonth}
               >
                 <FileText size={16} />
               </button>
               <button
                 className="flex items-center justify-center p-2 bg-green-500/20 border border-green-500/50 text-green-400 rounded-lg transition-colors flex-shrink-0"
-                disabled
+                onClick={handleDownloadExcel}
+                disabled={!selectedMonth}
               >
                 <Sheet size={16} />
               </button>

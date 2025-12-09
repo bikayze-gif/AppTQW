@@ -122,7 +122,9 @@ export default function PeriodInfo() {
       }
 
       try {
-        const response = await fetch(`/api/tqw-comision/${user.rut}/${GLOBAL_PERIODO}`);
+        // Default period is 202512
+        const periodo = "202512";
+        const response = await fetch(`/api/tqw-comision/${user.rut}/${periodo}`);
         if (!response.ok) {
           throw new Error("No se encontraron datos para este RUT y período");
         }
