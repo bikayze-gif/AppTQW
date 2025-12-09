@@ -136,13 +136,13 @@ function OrderDetailsList({ selectedDate }: { selectedDate: string | null }) {
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-white/10 bg-white/5">
+                <th className="px-3 py-2 text-center font-semibold text-slate-300 whitespace-nowrap">Tipo Red</th>
+                <th className="px-3 py-2 text-right font-semibold text-slate-300 whitespace-nowrap">RGU</th>
+                <th className="px-3 py-2 text-right font-semibold text-slate-300 whitespace-nowrap">Puntos</th>
                 <th className="px-3 py-2 text-left font-semibold text-slate-300 whitespace-nowrap">Orden</th>
                 <th className="px-3 py-2 text-left font-semibold text-slate-300 whitespace-nowrap">Dirección Cliente</th>
                 <th className="px-3 py-2 text-left font-semibold text-slate-300 whitespace-nowrap">Actividad</th>
                 <th className="px-3 py-2 text-left font-semibold text-slate-300 whitespace-nowrap">Trabajo</th>
-                <th className="px-3 py-2 text-right font-semibold text-slate-300 whitespace-nowrap">Puntos</th>
-                <th className="px-3 py-2 text-right font-semibold text-slate-300 whitespace-nowrap">RGU</th>
-                <th className="px-3 py-2 text-center font-semibold text-slate-300 whitespace-nowrap">Tipo Red</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
@@ -157,6 +157,33 @@ function OrderDetailsList({ selectedDate }: { selectedDate: string | null }) {
                       isHFC ? 'bg-[#06b6d4]/5' : 'bg-[#f59e0b]/5'
                     }`}
                   >
+                    <td className="px-3 py-3 text-center whitespace-nowrap">
+                      <span className={`inline-flex px-2 py-1 rounded text-xs font-semibold ${
+                        isHFC 
+                          ? 'bg-[#06b6d4]/20 text-[#06b6d4] border border-[#06b6d4]/30' 
+                          : 'bg-[#f59e0b]/20 text-[#f59e0b] border border-[#f59e0b]/30'
+                      }`}>
+                        {order.TipoRed_rank || 'N/A'}
+                      </span>
+                    </td>
+                    <td className="px-3 py-3 text-right font-semibold whitespace-nowrap">
+                      {isFTTH ? (
+                        <span className="text-[#f59e0b]">
+                          {(parseFloat(order.Q_SSPP) || 0).toFixed(2)}
+                        </span>
+                      ) : (
+                        <span className="text-slate-600">-</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-3 text-right font-semibold whitespace-nowrap">
+                      {isHFC ? (
+                        <span className="text-[#06b6d4]">
+                          {Math.round(parseFloat(order.Ptos_referencial) || 0)}
+                        </span>
+                      ) : (
+                        <span className="text-slate-600">-</span>
+                      )}
+                    </td>
                     <td className="px-3 py-3 text-white font-medium whitespace-nowrap">
                       {order.Orden || 'N/A'}
                     </td>
@@ -168,33 +195,6 @@ function OrderDetailsList({ selectedDate }: { selectedDate: string | null }) {
                     </td>
                     <td className="px-3 py-3 text-slate-300 max-w-xs truncate">
                       {order.Trabajo || 'N/A'}
-                    </td>
-                    <td className="px-3 py-3 text-right font-semibold whitespace-nowrap">
-                      {isHFC ? (
-                        <span className="text-[#06b6d4]">
-                          {Math.round(parseFloat(order.Ptos_referencial) || 0)}
-                        </span>
-                      ) : (
-                        <span className="text-slate-600">-</span>
-                      )}
-                    </td>
-                    <td className="px-3 py-3 text-right font-semibold whitespace-nowrap">
-                      {isFTTH ? (
-                        <span className="text-[#f59e0b]">
-                          {(parseFloat(order.Q_SSPP) || 0).toFixed(2)}
-                        </span>
-                      ) : (
-                        <span className="text-slate-600">-</span>
-                      )}
-                    </td>
-                    <td className="px-3 py-3 text-center whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 rounded text-xs font-semibold ${
-                        isHFC 
-                          ? 'bg-[#06b6d4]/20 text-[#06b6d4] border border-[#06b6d4]/30' 
-                          : 'bg-[#f59e0b]/20 text-[#f59e0b] border border-[#f59e0b]/30'
-                      }`}>
-                        {order.TipoRed_rank || 'N/A'}
-                      </span>
                     </td>
                   </tr>
                 );
@@ -382,7 +382,7 @@ export default function Activity() {
               </div>
               
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData} margin={{ top: 5, right: 60, left: 10, bottom: 35 }}>
+                <LineChart data={chartData} margin={{ top: 5, right: 0, left: 0, bottom: 35 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
                   <XAxis 
                     dataKey="day" 
