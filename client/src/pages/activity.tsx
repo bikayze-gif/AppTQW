@@ -8,7 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 const CustomDot = (props: any) => {
   const { cx, cy, stroke, payload, value } = props;
   if (value === undefined) return null;
-  
+
   return (
     <g>
       <circle cx={cx} cy={cy} r={6} fill="#1e293b" stroke={stroke} strokeWidth={2.5} />
@@ -149,7 +149,7 @@ function OrderDetailsList({ selectedDate }: { selectedDate: string | null }) {
               {details.map((order: any, idx: number) => {
                 const isHFC = order.TipoRed_rank === 'HFC';
                 const isFTTH = order.TipoRed_rank === 'FTTH';
-                
+
                 return (
                   <tr
                     key={idx}
@@ -276,7 +276,7 @@ export default function Activity() {
 
   const filteredAndSortedData = useMemo(() => {
     let data = tableDataApi || [];
-    
+
     // Filter by search text
     if (searchText) {
       data = data.filter((row: any) =>
@@ -285,7 +285,7 @@ export default function Activity() {
         )
       );
     }
-    
+
     // Sort
     if (sortColumn) {
       data = [...data].sort((a: any, b: any) => {
@@ -295,7 +295,7 @@ export default function Activity() {
         return sortDirection === "asc" ? comparison : -comparison;
       });
     }
-    
+
     return data;
   }, [tableDataApi, searchText, sortColumn, sortDirection]);
 
@@ -326,7 +326,7 @@ export default function Activity() {
       </header>
 
       <main className="px-2 md:px-6 space-y-6 max-w-6xl mx-auto pt-4">
-        
+
         {/* Chart Card */}
         <Card className="bg-card border-none shadow-xl rounded-2xl md:rounded-3xl overflow-hidden">
           <CardContent className="p-2 md:p-6 pt-4">
@@ -380,7 +380,7 @@ export default function Activity() {
                   <span className="text-xs text-slate-300">RGU FTTH</span>
                 </div>
               </div>
-              
+
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData} margin={{ top: 5, right: 0, left: 0, bottom: 35 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
@@ -465,40 +465,43 @@ export default function Activity() {
             )}
           </div>
 
-          {/* Month Select */}
-          <select
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value)}
-            className="px-2 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-xs md:text-sm focus:outline-none focus:border-[#06b6d4] transition-colors cursor-pointer whitespace-nowrap"
-            data-testid="month-select"
-          >
-            <option value="" disabled className="bg-slate-900">
-              Seleccionar mes
-            </option>
-            {months.map((month) => (
-              <option key={month.value} value={month.value} className="bg-slate-900">
-                {month.label}
-              </option>
-            ))}
-          </select>
+          {/* Month Select & Download Buttons - Temporarily Disabled with Blur */}
+          <div className="relative flex flex-row gap-2 items-center">
+            {/* Blurred Container */}
+            <div className="blur-[3px] pointer-events-none select-none flex flex-row gap-2 items-center">
+              {/* Month Select */}
+              <select
+                className="px-2 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-xs md:text-sm focus:outline-none focus:border-[#06b6d4] transition-colors cursor-pointer whitespace-nowrap"
+                disabled
+              >
+                <option value="" className="bg-slate-900">
+                  Seleccionar mes
+                </option>
+                <option className="bg-slate-900">Enero 2025</option>
+              </select>
 
-          {/* Download Buttons */}
-          <button
-            onClick={handleDownloadPDF}
-            className="flex items-center justify-center p-2 bg-red-500/20 border border-red-500/50 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors flex-shrink-0"
-            data-testid="download-pdf"
-            title="Descargar en PDF"
-          >
-            <FileText size={16} />
-          </button>
-          <button
-            onClick={handleDownloadExcel}
-            className="flex items-center justify-center p-2 bg-green-500/20 border border-green-500/50 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors flex-shrink-0"
-            data-testid="download-excel"
-            title="Descargar en Excel"
-          >
-            <Sheet size={16} />
-          </button>
+              {/* Download Buttons */}
+              <button
+                className="flex items-center justify-center p-2 bg-red-500/20 border border-red-500/50 text-red-400 rounded-lg transition-colors flex-shrink-0"
+                disabled
+              >
+                <FileText size={16} />
+              </button>
+              <button
+                className="flex items-center justify-center p-2 bg-green-500/20 border border-green-500/50 text-green-400 rounded-lg transition-colors flex-shrink-0"
+                disabled
+              >
+                <Sheet size={16} />
+              </button>
+            </div>
+
+            {/* Overlay Badge */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+              <span className="text-xs bg-yellow-500/90 text-black px-3 py-1 rounded-md border border-yellow-600 font-bold shadow-lg">
+                Próximamente
+              </span>
+            </div>
+          </div>
         </div>
 
         {/* Table */}
@@ -663,7 +666,7 @@ export default function Activity() {
               className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
               data-testid="drawer-backdrop"
             />
-            
+
             {/* Drawer Panel */}
             <motion.div
               initial={{ x: "100%" }}
