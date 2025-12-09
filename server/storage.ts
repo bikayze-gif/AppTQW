@@ -528,44 +528,62 @@ export class MySQLStorage implements IStorage {
     }>;
   }
 
-  async getOrderDetails(fecha: string, rut: string): Promise<Array<{
+  async getOrderDetails(rut: string, fecha: string): Promise<Array<{
     Orden: string;
-    direccion: string;
+    'Dir# cliente': string;
     Actividad: string;
     Trabajo: string;
     Ptos_referencial: number;
     Q_SSPP: number;
     RGU: number;
-    fechaFin: string;
+    'Fecha fin#': string;
     TipoRed_rank: string;
+    'Nombre tecnico': string;
+    Empresa: string;
+    Zona: string;
+    Localidad: string;
+    Estado: string;
+    producto: string;
   }>> {
     const [rows] = await pool.execute<RowDataPacket[]>(
-      `SELECT 
-        \`Orden\`, 
-        \`Dir# cliente\` as direccion, 
-        \`Actividad\`, 
-        \`Trabajo\`, 
-        \`Ptos_referencial\`, 
-        \`Q_SSPP\`, 
-        \`RGU\`, 
-        \`Fecha fin#\` as fechaFin,
-        \`TipoRed_rank\`
+      `SELECT
+        Orden,
+        \`Dir# cliente\`,
+        Actividad,
+        Trabajo,
+        Ptos_referencial,
+        Q_SSPP,
+        RGU,
+        \`Fecha fin#\`,
+        TipoRed_rank,
+        \`Nombre tecnico\`,
+        Empresa,
+        Zona,
+        Localidad,
+        Estado,
+        producto
       FROM produccion_ndc_rank_red
       WHERE DATE(\`Fecha fin#\`) = ?
         AND rut = ?
-      ORDER BY \`Orden\` ASC`,
+      ORDER BY Orden ASC`,
       [fecha, rut]
     );
     return rows as Array<{
       Orden: string;
-      direccion: string;
+      'Dir# cliente': string;
       Actividad: string;
       Trabajo: string;
       Ptos_referencial: number;
       Q_SSPP: number;
       RGU: number;
-      fechaFin: string;
+      'Fecha fin#': string;
       TipoRed_rank: string;
+      'Nombre tecnico': string;
+      Empresa: string;
+      Zona: string;
+      Localidad: string;
+      Estado: string;
+      producto: string;
     }>;
   }
 }

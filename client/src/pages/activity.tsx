@@ -79,36 +79,130 @@ function OrderDetailsList({ selectedDate }: { selectedDate: string | null }) {
     );
   }
 
+  // Calcular resúmenes por tipo de red
+  let totalPuntosHFC = 0;
+  let totalRguFTTH = 0;
+  let countHFC = 0;
+  let countFTTH = 0;
+
+  details.forEach((order: any) => {
+    if (order.TipoRed_rank === 'HFC' && order.Ptos_referencial) {
+      totalPuntosHFC += parseFloat(order.Ptos_referencial) || 0;
+      countHFC++;
+    }
+    if (order.TipoRed_rank === 'FTTH' && order.Q_SSPP) {
+      totalRguFTTH += parseFloat(order.Q_SSPP) || 0;
+      countFTTH++;
+    }
+  });
+
+  const tipoRedPredominante = countHFC > countFTTH ? 'HFC' : 'FTTH';
+
   return (
-    <div className="flex-1 overflow-y-auto p-6 space-y-3">
-      <h3 className="text-sm font-semibold text-white mb-3">
-        Órdenes del Día ({details.length})
-      </h3>
-      {details.map((order: any, idx: number) => (
-        <div
-          key={idx}
-          className="bg-white/5 rounded-lg p-4 border border-white/10 hover:border-[#06b6d4]/30 transition-colors"
-        >
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <div>
-              <span className="text-slate-400">Orden:</span>
-              <p className="text-white font-semibold">{order.orden || 'N/A'}</p>
+    <div className="flex-1 overflow-y-auto">
+      {/* Resumen de Métricas */}
+      <div className="p-6 border-b border-white/5 bg-white/5">
+        <h3 className="text-sm font-semibold text-white mb-4">Resumen de Métricas</h3>
+        <div className="grid grid-cols-2 gap-4">
+          {countHFC > 0 && (
+            <div className="bg-gradient-to-br from-[#06b6d4]/20 to-[#06b6d4]/5 rounded-lg p-4 border border-[#06b6d4]/30">
+              <p className="text-xs text-slate-400 mb-1">Puntos HFC</p>
+              <p className="text-2xl font-bold text-[#06b6d4]">{Math.round(totalPuntosHFC)}</p>
+              <p className="text-xs text-slate-400 mt-1">{countHFC} órdenes</p>
             </div>
-            <div>
-              <span className="text-slate-400">Tipo Red:</span>
-              <p className="text-white font-semibold">{order.TipoRed_rank || 'N/A'}</p>
+          )}
+          {countFTTH > 0 && (
+            <div className="bg-gradient-to-br from-[#f59e0b]/20 to-[#f59e0b]/5 rounded-lg p-4 border border-[#f59e0b]/30">
+              <p className="text-xs text-slate-400 mb-1">RGU FTTH</p>
+              <p className="text-2xl font-bold text-[#f59e0b]">{totalRguFTTH.toFixed(2)}</p>
+              <p className="text-xs text-slate-400 mt-1">{countFTTH} órdenes</p>
             </div>
-            <div>
-              <span className="text-slate-400">Puntos:</span>
-              <p className="text-[#06b6d4] font-semibold">{order.Ptos_referencial || 0}</p>
-            </div>
-            <div>
-              <span className="text-slate-400">RGU:</span>
-              <p className="text-[#f59e0b] font-semibold">{order.Q_SSPP || 0}</p>
-            </div>
-          </div>
+          )}
         </div>
-      ))}
+        <div className="mt-4 p-3 bg-white/5 rounded-lg">
+          <p className="text-xs text-slate-400">Tipo de red predominante:</p>
+          <p className={`text-sm font-semibold ${tipoRedPredominante === 'HFC' ? 'text-[#06b6d4]' : 'text-[#f59e0b]'}`}>
+            {tipoRedPredominante}
+          </p>
+        </div>
+      </div>
+
+      {/* Tabla de Órdenes Detalladas */}
+      <div className="p-6">
+        <h3 className="text-sm font-semibold text-white mb-4">
+          Detalle de Órdenes ({details.length})
+        </h3>
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b border-white/10 bg-white/5">
+                <th className="px-3 py-2 text-left font-semibold text-slate-300 whitespace-nowrap">Orden</th>
+                <th className="px-3 py-2 text-left font-semibold text-slate-300 whitespace-nowrap">Dirección Cliente</th>
+                <th className="px-3 py-2 text-left font-semibold text-slate-300 whitespace-nowrap">Actividad</th>
+                <th className="px-3 py-2 text-left font-semibold text-slate-300 whitespace-nowrap">Trabajo</th>
+                <th className="px-3 py-2 text-right font-semibold text-slate-300 whitespace-nowrap">Puntos</th>
+                <th className="px-3 py-2 text-right font-semibold text-slate-300 whitespace-nowrap">RGU</th>
+                <th className="px-3 py-2 text-center font-semibold text-slate-300 whitespace-nowrap">Tipo Red</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {details.map((order: any, idx: number) => {
+                const isHFC = order.TipoRed_rank === 'HFC';
+                const isFTTH = order.TipoRed_rank === 'FTTH';
+                
+                return (
+                  <tr
+                    key={idx}
+                    className={`hover:bg-white/5 transition-colors ${
+                      isHFC ? 'bg-[#06b6d4]/5' : 'bg-[#f59e0b]/5'
+                    }`}
+                  >
+                    <td className="px-3 py-3 text-white font-medium whitespace-nowrap">
+                      {order.Orden || 'N/A'}
+                    </td>
+                    <td className="px-3 py-3 text-slate-300 max-w-xs truncate">
+                      {order['Dir# cliente'] || 'N/A'}
+                    </td>
+                    <td className="px-3 py-3 text-slate-300 max-w-xs truncate">
+                      {order.Actividad || 'N/A'}
+                    </td>
+                    <td className="px-3 py-3 text-slate-300 max-w-xs truncate">
+                      {order.Trabajo || 'N/A'}
+                    </td>
+                    <td className="px-3 py-3 text-right font-semibold whitespace-nowrap">
+                      {isHFC ? (
+                        <span className="text-[#06b6d4]">
+                          {Math.round(parseFloat(order.Ptos_referencial) || 0)}
+                        </span>
+                      ) : (
+                        <span className="text-slate-600">-</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-3 text-right font-semibold whitespace-nowrap">
+                      {isFTTH ? (
+                        <span className="text-[#f59e0b]">
+                          {(parseFloat(order.Q_SSPP) || 0).toFixed(2)}
+                        </span>
+                      ) : (
+                        <span className="text-slate-600">-</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-3 text-center whitespace-nowrap">
+                      <span className={`inline-flex px-2 py-1 rounded text-xs font-semibold ${
+                        isHFC 
+                          ? 'bg-[#06b6d4]/20 text-[#06b6d4] border border-[#06b6d4]/30' 
+                          : 'bg-[#f59e0b]/20 text-[#f59e0b] border border-[#f59e0b]/30'
+                      }`}>
+                        {order.TipoRed_rank || 'N/A'}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }
@@ -231,11 +325,11 @@ export default function Activity() {
         <h1 className="text-lg md:text-xl font-bold tracking-tight text-white">Actividad</h1>
       </header>
 
-      <main className="px-4 md:px-6 space-y-6 max-w-6xl mx-auto pt-4">
+      <main className="px-2 md:px-6 space-y-6 max-w-6xl mx-auto pt-4">
         
         {/* Chart Card */}
         <Card className="bg-card border-none shadow-xl rounded-2xl md:rounded-3xl overflow-hidden">
-          <CardContent className="p-3 md:p-6 pt-4">
+          <CardContent className="p-2 md:p-6 pt-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-base md:text-lg font-bold text-white">Gráfico de Actividades</h2>
               <div className="flex gap-2">
