@@ -40,6 +40,79 @@ const formatDate = (dateString: string) => {
 
 const ITEMS_PER_PAGE = 10;
 
+// Componente para mostrar detalles de órdenes
+function OrderDetailsList({ selectedDate }: { selectedDate: string | null }) {
+  const { data: orderDetails, isLoading } = useQuery({
+    queryKey: ['/api/activity/details', selectedDate],
+    queryFn: async () => {
+      if (!selectedDate) return null;
+      const response = await fetch(`/api/activity/details/${selectedDate}`, {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to fetch order details');
+      return response.json();
+    },
+    enabled: !!selectedDate,
+  });
+
+  if (!selectedDate) return null;
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="text-center py-8">
+          <p className="text-slate-400 text-sm">Cargando detalles...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const details = orderDetails?.detalles || [];
+
+  if (details.length === 0) {
+    return (
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="text-center py-8">
+          <p className="text-slate-400 text-sm">No hay órdenes para este día</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex-1 overflow-y-auto p-6 space-y-3">
+      <h3 className="text-sm font-semibold text-white mb-3">
+        Órdenes del Día ({details.length})
+      </h3>
+      {details.map((order: any, idx: number) => (
+        <div
+          key={idx}
+          className="bg-white/5 rounded-lg p-4 border border-white/10 hover:border-[#06b6d4]/30 transition-colors"
+        >
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div>
+              <span className="text-slate-400">Orden:</span>
+              <p className="text-white font-semibold">{order.orden || 'N/A'}</p>
+            </div>
+            <div>
+              <span className="text-slate-400">Tipo Red:</span>
+              <p className="text-white font-semibold">{order.TipoRed_rank || 'N/A'}</p>
+            </div>
+            <div>
+              <span className="text-slate-400">Puntos:</span>
+              <p className="text-[#06b6d4] font-semibold">{order.Ptos_referencial || 0}</p>
+            </div>
+            <div>
+              <span className="text-slate-400">RGU:</span>
+              <p className="text-[#f59e0b] font-semibold">{order.Q_SSPP || 0}</p>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function Activity() {
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
@@ -440,8 +513,12 @@ export default function Activity() {
                     >
                       <td className="px-3 md:px-6 py-3 text-xs md:text-sm text-slate-400" data-testid={`activity-date-${idx}`}>{formatDate(row.fecha)}</td>
                       <td className="px-3 md:px-6 py-3 text-xs md:text-sm text-slate-200" data-testid={`activity-tipoRed-${idx}`}>{row.tipoRed}</td>
-                      <td className="px-3 md:px-6 py-3 text-xs md:text-sm text-slate-200" data-testid={`activity-puntos-${idx}`}>{row.puntos}</td>
-                      <td className="px-3 md:px-6 py-3 text-xs md:text-sm text-[#06b6d4] font-semibold" data-testid={`activity-rgu-${idx}`}>{row.rgu}</td>
+                      <td className="px-3 md:px-6 py-3 text-xs md:text-sm text-slate-200" data-testid={`activity-puntos-${idx}`}>
+                        {row.tipoRed === 'HFC' ? row.puntos : 0}
+                      </td>
+                      <td className="px-3 md:px-6 py-3 text-xs md:text-sm text-[#06b6d4] font-semibold" data-testid={`activity-rgu-${idx}`}>
+                        {row.tipoRed === 'FTTH' ? row.rgu : 0}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -531,85 +608,8 @@ export default function Activity() {
                 </button>
               </div>
 
-              {/* Summary */}
-              {dayDetailsData[selectedDate] && (
-                <div className="p-6 border-b border-white/5">
-                  <p className="text-sm text-slate-300">{dayDetailsData[selectedDate].summary}</p>
-                  <div className="grid grid-cols-3 gap-3 mt-4">
-                    <div className="bg-white/5 rounded-lg p-3 text-center">
-                      <p className="text-xl font-bold text-[#06b6d4]">{dayDetailsData[selectedDate].count}</p>
-                      <p className="text-xs text-slate-400 mt-1">Total</p>
-                    </div>
-                    <div className="bg-white/5 rounded-lg p-3 text-center">
-                      <p className="text-xl font-bold text-green-400">{dayDetailsData[selectedDate].completed}</p>
-                      <p className="text-xs text-slate-400 mt-1">Completadas</p>
-                    </div>
-                    <div className="bg-white/5 rounded-lg p-3 text-center">
-                      <p className="text-xl font-bold text-blue-400">{dayDetailsData[selectedDate].inProgress}</p>
-                      <p className="text-xs text-slate-400 mt-1">En Progreso</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Items Table */}
-              {dayDetailsData[selectedDate] && dayDetailsData[selectedDate].items && dayDetailsData[selectedDate].items.length > 0 && (
-                <div className="px-6 py-4 border-b border-white/5">
-                  <h3 className="text-sm font-semibold text-white mb-3">Entregas del Día</h3>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-xs">
-                      <thead>
-                        <tr className="border-b border-white/10">
-                          <th className="text-left py-2 px-2 text-slate-300 font-medium">Código</th>
-                          <th className="text-right py-2 px-2 text-slate-300 font-medium">Valor</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-white/5">
-                        {dayDetailsData[selectedDate].items.map((item, idx) => (
-                          <tr key={idx} className="hover:bg-white/5 transition-colors">
-                            <td className="py-2 px-2 text-slate-300" data-testid={`item-code-${idx}`}>{item.code}</td>
-                            <td className="py-2 px-2 text-right">
-                              <span 
-                                className={`font-semibold ${item.type === 'puntos' ? 'text-[#06b6d4]' : 'text-violet-400'}`}
-                                data-testid={`item-value-${idx}`}
-                              >
-                                {item.type === 'puntos' ? `${item.value} pts` : item.value}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              {/* Activities List */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-3">
-                {tableData
-                  .filter((item) => item.fecha === selectedDate)
-                  .map((item) => (
-                    <div
-                      key={item.id}
-                      className="bg-white/5 rounded-lg p-4 border border-white/10 hover:border-[#06b6d4]/30 transition-colors"
-                      data-testid={`detail-activity-${item.id}`}
-                    >
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <h3 className="text-sm font-semibold text-white flex-1">{item.actividad}</h3>
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getStatusColor(item.estado)}`}>
-                          {item.estado}
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-400 mb-2">Por: {item.responsable}</p>
-                      <p className="text-xs text-slate-500">Registrado: 10:00 AM</p>
-                    </div>
-                  ))}
-                {tableData.filter((item) => item.fecha === selectedDate).length === 0 && (
-                  <div className="text-center py-8">
-                    <p className="text-slate-400 text-sm">No hay actividades para este día</p>
-                  </div>
-                )}
-              </div>
+              {/* Order Details List */}
+              <OrderDetailsList selectedDate={selectedDate} />
             </motion.div>
           </>
         )}
