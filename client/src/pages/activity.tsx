@@ -696,7 +696,7 @@ export default function Activity() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="fixed right-0 top-0 bottom-0 w-full md:w-96 bg-card border-l border-white/10 shadow-2xl z-50 flex flex-col overflow-hidden"
+              className="fixed right-0 top-0 bottom-0 w-full md:w-[60%] lg:w-[60%] bg-card border-l border-white/10 shadow-2xl z-50 flex flex-col overflow-hidden"
               data-testid="drawer-panel"
             >
               {/* Header */}
