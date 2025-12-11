@@ -94,8 +94,8 @@ function CalidadDetailsList({ selectedMes, resumen, detalles }: {
                     </td>
                     <td className="px-3 py-3 text-center whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 rounded text-xs font-semibold ${isHFC
-                          ? 'bg-[#06b6d4]/20 text-[#06b6d4] border border-[#06b6d4]/30'
-                          : 'bg-[#f59e0b]/20 text-[#f59e0b] border border-[#f59e0b]/30'
+                        ? 'bg-[#06b6d4]/20 text-[#06b6d4] border border-[#06b6d4]/30'
+                        : 'bg-[#f59e0b]/20 text-[#f59e0b] border border-[#f59e0b]/30'
                         }`}>
                         {orden.TIPO_RED_CALCULADO || 'N/A'}
                       </span>
@@ -146,8 +146,9 @@ export default function Calidad() {
     },
   });
 
-  const summaryData = summaryResponse?.data;
-  const queriedRut = summaryResponse?.rut;
+  // Handle both old format (array) and new format ({ data, rut })
+  const summaryData = Array.isArray(summaryResponse) ? summaryResponse : summaryResponse?.data;
+  const queriedRut = Array.isArray(summaryResponse) ? null : summaryResponse?.rut;
 
   const { data: detailsData, isLoading: isLoadingDetails } = useQuery({
     queryKey: ['/api/calidad-reactiva/details', selectedMes],
@@ -247,8 +248,8 @@ export default function Calidad() {
                     key={months}
                     onClick={() => setMonthsFilter(months as 3 | 6 | 12)}
                     className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${monthsFilter === months
-                        ? "bg-purple-500 text-white"
-                        : "bg-white/10 text-white hover:bg-white/20"
+                      ? "bg-purple-500 text-white"
+                      : "bg-white/10 text-white hover:bg-white/20"
                       }`}
                     data-testid={`filter-${months}months`}
                   >
@@ -496,10 +497,10 @@ export default function Calidad() {
                         </td>
                         <td className="px-3 md:px-6 py-3 text-right">
                           <span className={`inline-flex px-2 py-1 rounded text-xs font-bold ${row.eficiencia_general >= 90
-                              ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                              : row.eficiencia_general >= 80
-                                ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
-                                : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                            ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                            : row.eficiencia_general >= 80
+                              ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+                              : 'bg-red-500/20 text-red-400 border border-red-500/30'
                             }`}>
                             {row.eficiencia_general}%
                           </span>
