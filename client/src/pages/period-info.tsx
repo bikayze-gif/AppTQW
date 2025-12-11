@@ -54,11 +54,11 @@ interface StatCardProps {
 
 function StatCard({ icon, label, value, unit = "", iconColor = "text-purple-400" }: StatCardProps) {
   return (
-    <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-3 sm:p-4 backdrop-blur-sm hover:bg-slate-800/70 transition-colors">
+    <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-2 sm:p-3 backdrop-blur-sm hover:bg-slate-800/70 transition-colors">
       <div className="flex flex-col items-center text-center">
-        <div className={`text-2xl sm:text-3xl mb-1.5 sm:mb-2 ${iconColor}`}>{icon}</div>
-        <div className="text-xs sm:text-sm text-slate-400 font-medium">{label}</div>
-        <div className="text-lg sm:text-xl font-bold text-white mt-0.5 sm:mt-1">
+        <div className={`text-xl sm:text-2xl mb-1 ${iconColor}`}>{icon}</div>
+        <div className="text-[10px] sm:text-xs text-slate-400 font-medium">{label}</div>
+        <div className="text-base sm:text-lg font-bold text-white mt-0.5">
           {value}{unit}
         </div>
       </div>
@@ -78,17 +78,17 @@ function CollapsibleSection({ title, isOpen, onToggle, children }: CollapsibleSe
     <div className="border border-slate-700/50 rounded-lg overflow-hidden bg-slate-800/30 backdrop-blur-sm">
       <button
         onClick={onToggle}
-        className="w-full flex items-center justify-between p-4 hover:bg-slate-700/30 transition-colors"
+        className="w-full flex items-center justify-between p-3 hover:bg-slate-700/30 transition-colors"
       >
-        <h2 className="text-lg font-bold text-white">{title}</h2>
+        <h2 className="text-base font-bold text-white">{title}</h2>
         {isOpen ? (
-          <ChevronUp className="w-5 h-5 text-slate-300" />
+          <ChevronUp className="w-4 h-4 text-slate-300" />
         ) : (
-          <ChevronDown className="w-5 h-5 text-slate-300" />
+          <ChevronDown className="w-4 h-4 text-slate-300" />
         )}
       </button>
       {isOpen && (
-        <div className="p-4 border-t border-slate-700/50 space-y-3">
+        <div className="p-3 border-t border-slate-700/50 space-y-2.5">
           {children}
         </div>
       )}
@@ -191,17 +191,17 @@ export default function PeriodInfo() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 pb-28">
-      <div className="max-w-5xl mx-auto p-3 sm:p-4 space-y-4 sm:space-y-6">
+      <div className="max-w-5xl mx-auto p-2 sm:p-3 space-y-3 sm:space-y-4">
         {/* Header */}
-        <div className="bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 rounded-lg p-6 backdrop-blur-sm">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="text-2xl">📅</div>
-            <h1 className="text-3xl font-bold text-white">
+        <div className="bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 rounded-lg p-4 backdrop-blur-sm">
+          <div className="flex items-center gap-2 mb-1.5">
+            <div className="text-xl">📅</div>
+            <h1 className="text-2xl font-bold text-white">
               PERIODO {GLOBAL_PERIODO.slice(0, 4)}-{GLOBAL_PERIODO.slice(4)}
             </h1>
           </div>
-          <p className="text-slate-300 text-sm">{user?.nombre || data.NombreTecnico || "Técnico: Sin datos"}</p>
-          <p className="text-slate-400 text-xs">RUT: {user?.rut}</p>
+          <p className="text-slate-300 text-xs">{user?.nombre || data.NombreTecnico || "Técnico: Sin datos"}</p>
+          <p className="text-slate-400 text-[10px]">RUT: {user?.rut}</p>
         </div>
 
         {/* Información del Técnico */}
@@ -210,7 +210,7 @@ export default function PeriodInfo() {
           isOpen={sections.tecnico}
           onToggle={() => setSections(prev => ({ ...prev, tecnico: !prev.tecnico }))}
         >
-          <div className="grid grid-cols-3 gap-3 sm:gap-4">
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
             <StatCard icon="📍" label="Zona" value={data.Zona_Factura23 || "N/A"} iconColor="text-rose-400" />
             <StatCard icon="🔄" label="Modelo Turno" value={data.modelo_turno || "N/A"} iconColor="text-purple-400" />
             <StatCard icon="⭐" label="Categoría" value={data.categoria || "N/A"} iconColor="text-yellow-400" />
@@ -223,17 +223,17 @@ export default function PeriodInfo() {
           isOpen={sections.comisiones}
           onToggle={() => setSections(prev => ({ ...prev, comisiones: !prev.comisiones }))}
         >
-          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3">
             <StatCard icon="💵" label="Cálculo HFC" value={formatMoney(data.Comision_HFC)} iconColor="text-green-400" />
             <StatCard icon="💵" label="Cálculo FTTH" value={formatMoney(data.Comision_FTTH)} iconColor="text-green-400" />
           </div>
-          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3">
             <StatCard icon="💵" label="Comisión HFC Ponderada" value={formatMoney(data.Comision_HFC_Ponderada)} iconColor="text-green-400" />
             <StatCard icon="💵" label="Comisión FTTH Ponderada" value={formatMoney(data.Comision_FTTH_Ponderada)} iconColor="text-green-400" />
           </div>
-          <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 rounded-lg p-4 text-center">
-            <p className="text-slate-300 text-sm mb-1">Comisión Total</p>
-            <p className="text-2xl font-bold text-green-400">{calcularComisionTotal()}</p>
+          <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 rounded-lg p-3 text-center">
+            <p className="text-slate-300 text-xs mb-1">Comisión Total</p>
+            <p className="text-xl font-bold text-green-400">{calcularComisionTotal()}</p>
           </div>
         </CollapsibleSection>
 
@@ -243,21 +243,21 @@ export default function PeriodInfo() {
           isOpen={sections.produccion}
           onToggle={() => setSections(prev => ({ ...prev, produccion: !prev.produccion }))}
         >
-          <div className="grid grid-cols-3 gap-3 sm:gap-4">
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
             <StatCard icon="📊" label="Puntos HFC" value={formatNumber(data.Puntos)} iconColor="text-blue-400" />
             <StatCard icon="📅" label="Cantidad Días HFC" value={formatNumber(data.Dias_Cantidad_HFC)} iconColor="text-orange-400" />
             <StatCard icon="📈" label="Promedio HFC" value={formatNumber(data.Promedio_HFC, 2)} iconColor="text-purple-400" />
           </div>
-          <div className="grid grid-cols-3 gap-3 sm:gap-4">
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
             <StatCard icon="📡" label="RGU FTTH" value={formatNumber(data.Q_RGU)} iconColor="text-blue-400" />
             <StatCard icon="📅" label="Cantidad Días FTTH" value={formatNumber(data.Dias_Cantidad_FTTH)} iconColor="text-orange-400" />
             <StatCard icon="📈" label="Promedio RGU" value={formatNumber(data.Promedio_RGU, 2)} iconColor="text-purple-400" />
           </div>
-          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3">
             <StatCard icon="🎯" label="Meta Producción HFC" value={formatNumber(data.Meta_Produccion_HFC)} iconColor="text-green-400" />
             <StatCard icon="✅" label="Cumplimiento HFC" value={formatPercent(data._CumplimientoProduccionHFC)} unit="%" iconColor="text-orange-400" />
           </div>
-          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3">
             <StatCard icon="🎯" label="Meta Producción FTTH" value={formatNumber(data.Meta_Produccion_FTTH, 1)} iconColor="text-green-400" />
             <StatCard icon="✅" label="Cumplimiento FTTH" value={formatPercent(data._cumplimientoProduccionRGU)} unit="%" iconColor="text-orange-400" />
           </div>
@@ -269,12 +269,12 @@ export default function PeriodInfo() {
           isOpen={sections.calidad}
           onToggle={() => setSections(prev => ({ ...prev, calidad: !prev.calidad }))}
         >
-          <div className="grid grid-cols-3 gap-3 sm:gap-4">
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
             <StatCard icon="📊" label="KPI Calidad HFC" value={formatPercent(data.Ratio_CalidadHFC)} unit="%" iconColor="text-green-400" />
             <StatCard icon="✅" label="Meta Calidad HFC" value={formatPercent(data.Meta_Calidad_HFC)} unit="%" iconColor="text-green-400" />
             <StatCard icon="%" label="Cumplimiento Calidad HFC" value={formatPercent(data._cumplimientoMeta_Calidad_HFC)} unit="%" iconColor="text-orange-400" />
           </div>
-          <div className="grid grid-cols-3 gap-3 sm:gap-4">
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
             <StatCard icon="📊" label="KPI Calidad FTTH" value={formatPercent(data.Ratio_CalidadFTTH)} unit="%" iconColor="text-green-400" />
             <StatCard icon="✅" label="Meta Calidad FTTH" value={formatPercent(data.Meta_Calidad_FTTH)} unit="%" iconColor="text-green-400" />
             <StatCard icon="%" label="Cumplimiento Calidad FTTH" value={formatPercent(data._cumplimientoMeta_Calidad_FTTH)} unit="%" iconColor="text-orange-400" />
@@ -287,12 +287,12 @@ export default function PeriodInfo() {
           isOpen={sections.asistencia}
           onToggle={() => setSections(prev => ({ ...prev, asistencia: !prev.asistencia }))}
         >
-          <div className="grid grid-cols-3 gap-3 sm:gap-4">
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
             <StatCard icon="📅" label="Días Operativos" value={formatNumber(data.Q_OPERATIVO_TURNO)} iconColor="text-blue-400" />
             <StatCard icon="📅" label="Días Ausente" value={formatNumber(data.Q_AUSENTE_TURNO)} iconColor="text-blue-400" />
             <StatCard icon="📅" label="Días Vacaciones" value={formatNumber(data.Q_VACACIONES_TURNO)} iconColor="text-blue-400" />
           </div>
-          <div className="grid grid-cols-3 gap-3 sm:gap-4">
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
             <StatCard icon="📅" label="Días Licencia" value={formatNumber(data.Q_LICENCIA_TURNO)} iconColor="text-blue-400" />
             <StatCard icon="📊" label="Factor Ausencia" value={formatPercent(data.FACTOR_AUSENCIA)} unit="%" iconColor="text-purple-400" />
             <StatCard icon="📊" label="Factor Vacaciones" value={formatPercent(data.FACTOR_VACACIONES)} unit="%" iconColor="text-purple-400" />
