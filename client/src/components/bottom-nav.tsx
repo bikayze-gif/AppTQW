@@ -59,44 +59,56 @@ export function BottomNav({ onAddClick }: BottomNavProps) {
   return (
     <div>
       <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-slate-900 to-slate-900/95 backdrop-blur-lg border-t border-white/10 z-50">
-        <div className="flex items-center justify-around px-2 py-2 max-w-lg mx-auto">
+        <div className="flex items-center justify-around px-3 py-3 max-w-lg mx-auto">
           <NavButton
             icon={LayoutGrid}
             label="Home"
             href="/"
             isActive={isPeriodInfo}
-            iconSize={18}
+            iconSize={20}
           />
           <NavButton
             icon={Activity}
             label="Actividad"
             href="/activity"
             isActive={isActivity}
-            iconSize={18}
+            iconSize={20}
           />
+          
+          {/* Botón + Central */}
+          <button
+            onClick={onAddClick}
+            className="flex items-center justify-center w-14 h-14 -mt-6 rounded-full bg-gradient-to-br from-[#06b6d4] to-[#0891b2] shadow-lg shadow-[#06b6d4]/50 hover:shadow-xl hover:shadow-[#06b6d4]/60 transition-all hover:scale-110 active:scale-95"
+            data-testid="button-add-menu"
+          >
+            <Plus size={28} className="text-white" strokeWidth={2.5} />
+          </button>
+          
           <NavButton
-            icon={Box} // Changed from FileText
+            icon={Box}
             label="Calidad"
             href="/calidad"
             isActive={isCalidad}
-            iconSize={18}
+            iconSize={20}
           />
           <NavButton
             icon={Ticket}
             label="Tickets"
             href="/tickets"
             isActive={isTickets}
-            iconSize={18}
+            iconSize={20}
           />
-          <button
-            onClick={() => setShowLogoutModal(true)}
-            className="text-slate-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/5"
-            data-testid="button-nav-logout"
-          >
-            <LogOut size={18} />
-          </button>
         </div>
       </nav>
+
+      {/* Botón Logout flotante (esquina superior derecha) */}
+      <button
+        onClick={() => setShowLogoutModal(true)}
+        className="fixed top-4 right-4 z-40 text-slate-400 hover:text-white transition-colors p-2.5 rounded-lg hover:bg-white/10 backdrop-blur-sm"
+        data-testid="button-nav-logout"
+      >
+        <LogOut size={20} />
+      </button>
 
       {/* Logout Modal */}
       <AnimatePresence>
@@ -123,14 +135,14 @@ export function BottomNav({ onAddClick }: BottomNavProps) {
                 <div className="flex gap-3">
                   <button
                     onClick={() => setShowLogoutModal(false)}
-                    className="flex-1 px-4 py-2 rounded-lg bg-white/10 text-white font-medium hover:bg-white/20 transition-colors"
+                    className="flex-1 px-4 py-2.5 rounded-lg bg-white/10 text-white font-medium hover:bg-white/20 transition-colors"
                     data-testid="button-cancel-logout"
                   >
                     Cancelar
                   </button>
                   <button
                     onClick={handleLogout}
-                    className="flex-1 px-4 py-2 rounded-lg bg-red-500 text-white font-medium hover:bg-red-600 transition-colors"
+                    className="flex-1 px-4 py-2.5 rounded-lg bg-red-500 text-white font-medium hover:bg-red-600 transition-colors"
                     data-testid="button-confirm-logout"
                   >
                     Cerrar Sesión
