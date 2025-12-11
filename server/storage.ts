@@ -606,9 +606,10 @@ export class MySQLStorage implements IStorage {
     eficiencia_hfc: number;
     eficiencia_ftth: number;
   }>> {
+    const safeMonths = Math.max(1, Math.min(months, 36));
     const [rows] = await pool.execute<RowDataPacket[]>(
       `SELECT
-        mes_contable,
+        DATE_FORMAT(mes_contable, '%Y-%m-01') as mes_contable_fmt,
         YEAR(mes_contable) as anio,
         MONTH(mes_contable) as mes,
         COUNT(*) as total,
@@ -620,10 +621,10 @@ export class MySQLStorage implements IStorage {
         SUM(CASE WHEN CALIDAD_30 = '1' AND TIPO_RED_CALCULADO IN ('FTTH', 'DUAL') THEN 1 ELSE 0 END) as no_cumple_ftth
       FROM TB_CALIDAD_NARANJA_BASE
       WHERE RUT_TECNICO_FS = ?
-      GROUP BY mes_contable
-      ORDER BY mes_contable DESC
+      GROUP BY DATE_FORMAT(mes_contable, '%Y-%m-01'), YEAR(mes_contable), MONTH(mes_contable)
+      ORDER BY mes_contable_fmt DESC
       LIMIT ?`,
-      [rut, months]
+      [rut, safeMonths]
     );
 
     return rows.map((row: any) => {
@@ -637,7 +638,7 @@ export class MySQLStorage implements IStorage {
       const total_ftth = cumple_ftth + no_cumple_ftth;
 
       return {
-        mes_contable: row.mes_contable,
+        mes_contable: String(row.mes_contable_fmt),
         anio: Number(row.anio),
         mes: Number(row.mes),
         total,
