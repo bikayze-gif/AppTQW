@@ -13,7 +13,7 @@ function NavButton({
   label,
   href,
   isActive,
-  iconSize = 20,
+  iconSize = 18,
 }: {
   icon: LucideIcon;
   label: string;
@@ -26,14 +26,14 @@ function NavButton({
   return (
     <button
       onClick={() => setLocation(href)}
-      className={`flex flex-col items-center gap-0.5 px-2.5 py-1.5 rounded-lg transition-all ${
+      className={`flex flex-col items-center gap-0.5 px-1.5 py-1.5 rounded-lg transition-all ${
         isActive
           ? "text-[#06b6d4]"
           : "text-slate-400 hover:text-white"
       }`}
     >
       <Icon size={iconSize} className={isActive ? "animate-bounce-subtle" : ""} />
-      <span className="text-[9px] font-medium">{label}</span>
+      <span className="text-[9px] font-medium whitespace-nowrap">{label}</span>
     </button>
   );
 }
@@ -59,56 +59,62 @@ export function BottomNav({ onAddClick }: BottomNavProps) {
   return (
     <div>
       <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-slate-900 to-slate-900/95 backdrop-blur-lg border-t border-white/10 z-50">
-        <div className="flex items-center justify-around px-3 py-3 max-w-lg mx-auto">
+        <div className="grid grid-cols-7 items-end gap-0.5 px-2 py-2.5 max-w-2xl mx-auto">
           <NavButton
             icon={LayoutGrid}
             label="Home"
             href="/"
             isActive={isPeriodInfo}
-            iconSize={20}
+            iconSize={18}
           />
           <NavButton
             icon={Activity}
             label="Actividad"
             href="/activity"
             isActive={isActivity}
-            iconSize={20}
+            iconSize={18}
           />
-          
-          {/* Botón + Central */}
-          <button
-            onClick={onAddClick}
-            className="flex items-center justify-center w-14 h-14 -mt-6 rounded-full bg-gradient-to-br from-[#06b6d4] to-[#0891b2] shadow-lg shadow-[#06b6d4]/50 hover:shadow-xl hover:shadow-[#06b6d4]/60 transition-all hover:scale-110 active:scale-95"
-            data-testid="button-add-menu"
-          >
-            <Plus size={28} className="text-white" strokeWidth={2.5} />
-          </button>
-          
           <NavButton
             icon={Box}
             label="Calidad"
             href="/calidad"
             isActive={isCalidad}
-            iconSize={20}
+            iconSize={18}
           />
+          
+          {/* Botón + Central */}
+          <button
+            onClick={onAddClick}
+            className="flex items-center justify-center w-12 h-12 -mt-4 mx-auto rounded-full bg-gradient-to-br from-[#06b6d4] to-[#0891b2] shadow-lg shadow-[#06b6d4]/50 hover:shadow-xl hover:shadow-[#06b6d4]/60 transition-all hover:scale-110 active:scale-95"
+            data-testid="button-add-menu"
+          >
+            <Plus size={24} className="text-white" strokeWidth={2.5} />
+          </button>
+          
           <NavButton
             icon={Ticket}
             label="Tickets"
             href="/tickets"
             isActive={isTickets}
-            iconSize={20}
+            iconSize={18}
           />
+          <NavButton
+            icon={FileText}
+            label="Analytics"
+            href="/analytics"
+            isActive={isAnalytics}
+            iconSize={18}
+          />
+          <button
+            onClick={() => setShowLogoutModal(true)}
+            className="flex flex-col items-center gap-0.5 px-1.5 py-1.5 rounded-lg transition-all text-slate-400 hover:text-white"
+            data-testid="button-nav-logout"
+          >
+            <LogOut size={18} />
+            <span className="text-[9px] font-medium">Salir</span>
+          </button>
         </div>
       </nav>
-
-      {/* Botón Logout flotante (esquina superior derecha) */}
-      <button
-        onClick={() => setShowLogoutModal(true)}
-        className="fixed top-4 right-4 z-40 text-slate-400 hover:text-white transition-colors p-2.5 rounded-lg hover:bg-white/10 backdrop-blur-sm"
-        data-testid="button-nav-logout"
-      >
-        <LogOut size={20} />
-      </button>
 
       {/* Logout Modal */}
       <AnimatePresence>
