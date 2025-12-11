@@ -607,7 +607,9 @@ export class MySQLStorage implements IStorage {
     eficiencia_ftth: number;
   }>> {
     const safeMonths = Math.max(1, Math.min(months, 36));
-    const [rows] = await pool.execute<RowDataPacket[]>(
+    
+    // Usar query() en lugar de execute() para evitar problemas con LIMIT
+    const [rows] = await pool.query<RowDataPacket[]>(
       `SELECT
         DATE_FORMAT(mes_contable, '%Y-%m-01') as mes_contable_fmt,
         YEAR(mes_contable) as anio,
