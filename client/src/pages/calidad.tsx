@@ -17,10 +17,18 @@ function CalidadDetailsList({ selectedMes, resumen, detalles }: {
   resumen: any;
   detalles: any[];
 }) {
+  const [filtroCalidad, setFiltroCalidad] = useState<'todos' | 'cumple' | 'no_cumple'>('todos');
+
   if (!selectedMes) return null;
 
   const cumple = detalles.filter(d => d.CALIDAD_30 === '0');
   const noCumple = detalles.filter(d => d.CALIDAD_30 === '1');
+
+  const detallesFiltrados = detalles.filter(d => {
+    if (filtroCalidad === 'cumple') return d.CALIDAD_30 === '0';
+    if (filtroCalidad === 'no_cumple') return d.CALIDAD_30 === '1';
+    return true;
+  });
 
   return (
     <div className="flex-1 overflow-y-auto">
@@ -58,26 +66,62 @@ function CalidadDetailsList({ selectedMes, resumen, detalles }: {
       </div>
 
       <div className="p-6">
-        <h3 className="text-sm font-semibold text-white mb-4">
-          Detalle de Órdenes ({detalles.length})
-        </h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-semibold text-white">
+            Detalle de Órdenes ({detallesFiltrados.length})
+          </h3>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setFiltroCalidad('todos')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                filtroCalidad === 'todos'
+                  ? 'bg-purple-500 text-white'
+                  : 'bg-white/10 text-white hover:bg-white/20'
+              }`}
+            >
+              Todos
+            </button>
+            <button
+              onClick={() => setFiltroCalidad('cumple')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                filtroCalidad === 'cumple'
+                  ? 'bg-green-500 text-white'
+                  : 'bg-white/10 text-white hover:bg-white/20'
+              }`}
+            >
+              Cumple
+            </button>
+            <button
+              onClick={() => setFiltroCalidad('no_cumple')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                filtroCalidad === 'no_cumple'
+                  ? 'bg-red-500 text-white'
+                  : 'bg-white/10 text-white hover:bg-white/20'
+              }`}
+            >
+              No Cumple
+            </button>
+          </div>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-white/10 bg-white/5">
                 <th className="px-3 py-2 text-center font-semibold text-slate-300 whitespace-nowrap">Estado</th>
-                <th className="px-3 py-2 text-center font-semibold text-slate-300 whitespace-nowrap">Tipo Red</th>
-                <th className="px-3 py-2 text-left font-semibold text-slate-300 whitespace-nowrap">Pedido</th>
-                <th className="px-3 py-2 text-left font-semibold text-slate-300 whitespace-nowrap">Cliente</th>
-                <th className="px-3 py-2 text-left font-semibold text-slate-300 whitespace-nowrap">Actividad</th>
                 <th className="px-3 py-2 text-left font-semibold text-slate-300 whitespace-nowrap">Fecha</th>
-                <th className="px-3 py-2 text-left font-semibold text-slate-300 whitespace-nowrap">Comuna</th>
+                <th className="px-3 py-2 text-center font-semibold text-slate-300 whitespace-nowrap">Tipo Red</th>
+                <th className="px-3 py-2 text-left font-semibold text-slate-300 whitespace-nowrap">ID Act. 1</th>
+                <th className="px-3 py-2 text-left font-semibold text-slate-300 whitespace-nowrap">ID Act. 2</th>
+                <th className="px-3 py-2 text-left font-semibold text-slate-300 whitespace-nowrap">Desc. Cierre 1</th>
+                <th className="px-3 py-2 text-left font-semibold text-slate-300 whitespace-nowrap">Desc. Cierre 2</th>
+                <th className="px-3 py-2 text-left font-semibold text-slate-300 whitespace-nowrap">Desc. Act. 1</th>
+                <th className="px-3 py-2 text-left font-semibold text-slate-300 whitespace-nowrap">Desc. Act. 2</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {detalles.map((orden: any, idx: number) => {
+              {detallesFiltrados.map((orden: any, idx: number) => {
                 const cumpleOrden = orden.CALIDAD_30 === '0';
-                const isHFC = orden.TIPO_RED_CALCULADO === 'HFC';
+                const isHFC = orden.TIPO_RED === 'HFC';
 
                 return (
                   <tr
@@ -92,28 +136,34 @@ function CalidadDetailsList({ selectedMes, resumen, detalles }: {
                         <XCircle className="w-4 h-4 text-red-400 mx-auto" />
                       )}
                     </td>
+                    <td className="px-3 py-3 text-slate-300 whitespace-nowrap">
+                      {orden.FECHA_EJECUCION ? new Date(orden.FECHA_EJECUCION).toLocaleDateString('es-CL') : 'N/A'}
+                    </td>
                     <td className="px-3 py-3 text-center whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 rounded text-xs font-semibold ${isHFC
                         ? 'bg-[#06b6d4]/20 text-[#06b6d4] border border-[#06b6d4]/30'
                         : 'bg-[#f59e0b]/20 text-[#f59e0b] border border-[#f59e0b]/30'
                         }`}>
-                        {orden.TIPO_RED_CALCULADO || 'N/A'}
+                        {orden.TIPO_RED || 'N/A'}
                       </span>
                     </td>
                     <td className="px-3 py-3 text-white font-medium whitespace-nowrap">
-                      {orden.num_pedido || 'N/A'}
+                      {orden.id_actividad || 'N/A'}
+                    </td>
+                    <td className="px-3 py-3 text-white font-medium whitespace-nowrap">
+                      {orden.id_actividad_2 || 'N/A'}
                     </td>
                     <td className="px-3 py-3 text-slate-300 max-w-xs truncate">
-                      {orden.nombre_cuenta || 'N/A'}
+                      {orden.DESCRIPCION_CIERRE || 'N/A'}
                     </td>
                     <td className="px-3 py-3 text-slate-300 max-w-xs truncate">
-                      {orden.ACTIVIDAD_FINAL || orden.ACTIVIDAD || 'N/A'}
-                    </td>
-                    <td className="px-3 py-3 text-slate-300 whitespace-nowrap">
-                      {orden.FECHA_EJECUCION ? new Date(orden.FECHA_EJECUCION).toLocaleDateString('es-CL') : 'N/A'}
+                      {orden.DESCRIPCION_CIERRE_2 || 'N/A'}
                     </td>
                     <td className="px-3 py-3 text-slate-300 max-w-xs truncate">
-                      {orden.Comuna || 'N/A'}
+                      {orden.descripcion_actividad || 'N/A'}
+                    </td>
+                    <td className="px-3 py-3 text-slate-300 max-w-xs truncate">
+                      {orden.descripcion_actividad_2 || 'N/A'}
                     </td>
                   </tr>
                 );
@@ -392,6 +442,9 @@ export default function Calidad() {
 
         <Card className="bg-card border-none shadow-xl rounded-2xl md:rounded-3xl overflow-hidden">
           <CardContent className="p-0">
+            <div className="p-4 border-b border-white/5 bg-white/5">
+              <h2 className="text-base md:text-lg font-bold text-white">Detalle por mes contable</h2>
+            </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -441,7 +494,7 @@ export default function Calidad() {
                       className="px-3 md:px-6 py-3 text-right font-semibold text-slate-300 text-xs md:text-sm cursor-pointer hover:bg-white/10 transition-colors"
                     >
                       <div className="flex items-center justify-end gap-2">
-                        Eficiencia
+                        Calidad Reactiva
                         {sortColumn === "eficiencia_general" && (
                           <span>
                             {sortDirection === "asc" ? (

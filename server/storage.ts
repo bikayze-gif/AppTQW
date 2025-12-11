@@ -607,7 +607,7 @@ export class MySQLStorage implements IStorage {
     eficiencia_ftth: number;
   }>> {
     const safeMonths = Math.max(1, Math.min(months, 36));
-    
+
     // Usar query() en lugar de execute() para evitar problemas con LIMIT
     const [rows] = await pool.query<RowDataPacket[]>(
       `SELECT
@@ -658,52 +658,44 @@ export class MySQLStorage implements IStorage {
   }
 
   async getCalidadReactivaDetails(rut: string, mesContable: string): Promise<Array<{
-    LLAVE1: string;
-    num_pedido: string;
-    id_cliente: string;
-    nombre_cuenta: string;
-    ACTIVIDAD: string;
-    ACTIVIDAD_FINAL: string;
-    TIPO_ACTIVIDAD: string;
     FECHA_EJECUCION: string;
-    TIPO_RED_CALCULADO: string;
+    TIPO_RED: string;
+    id_actividad: string;
+    id_actividad_2: string;
+    DESCRIPCION_CIERRE: string;
+    DESCRIPCION_CIERRE_2: string;
+    descripcion_actividad: string;
+    descripcion_actividad_2: string;
     CALIDAD_30: string;
-    Comuna: string;
-    ZONA: string;
   }>> {
     const [rows] = await pool.execute<RowDataPacket[]>(
       `SELECT
-        LLAVE1,
-        num_pedido,
-        id_cliente,
-        nombre_cuenta,
-        ACTIVIDAD,
-        ACTIVIDAD_FINAL,
-        TIPO_ACTIVIDAD,
         FECHA_EJECUCION,
-        TIPO_RED_CALCULADO,
-        CALIDAD_30,
-        Comuna,
-        ZONA
+        TIPO_RED_CALCULADO as TIPO_RED,
+        id_actividad,
+        id_actividad_2,
+        DESCRIPCION_CIERRE,
+        DESCRIPCION_CIERRE_2,
+        descripcion_actividad,
+        descripcion_actividad_2,
+        CALIDAD_30
       FROM TB_CALIDAD_NARANJA_BASE
       WHERE RUT_TECNICO_FS = ?
-        AND mes_contable = ?
+        AND DATE_FORMAT(mes_contable, '%Y-%m-01') = ?
       ORDER BY FECHA_EJECUCION DESC`,
       [rut, mesContable]
     );
+
     return rows as Array<{
-      LLAVE1: string;
-      num_pedido: string;
-      id_cliente: string;
-      nombre_cuenta: string;
-      ACTIVIDAD: string;
-      ACTIVIDAD_FINAL: string;
-      TIPO_ACTIVIDAD: string;
       FECHA_EJECUCION: string;
-      TIPO_RED_CALCULADO: string;
+      TIPO_RED: string;
+      id_actividad: string;
+      id_actividad_2: string;
+      DESCRIPCION_CIERRE: string;
+      DESCRIPCION_CIERRE_2: string;
+      descripcion_actividad: string;
+      descripcion_actividad_2: string;
       CALIDAD_30: string;
-      Comuna: string;
-      ZONA: string;
     }>;
   }
 }
