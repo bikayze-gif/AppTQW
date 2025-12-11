@@ -299,8 +299,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fecha_gestion: validatedData.fecha_gestion
           ? validatedData.fecha_gestion.split('T')[0]
           : validatedData.fecha_gestion === null
-          ? null
-          : undefined,
+            ? null
+            : undefined,
       };
 
       const billing = await storage.updateBilling(id, dataToUpdate);
@@ -612,7 +612,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const months = parseInt(req.query.months as string) || 12;
       const data = await storage.getCalidadReactivaSummary(rut, months);
 
-      res.json(data);
+      console.log(`[Calidad API] Summary requested for RUT: ${rut}, Records found: ${data.length}`);
+
+      res.json({
+        data,
+        rut,
+        debug_info: `Querying for RUT: ${rut}`
+      });
     } catch (error) {
       console.error("Error fetching calidad reactiva summary:", error);
       res.status(500).json({ error: "Error al obtener datos de calidad reactiva" });

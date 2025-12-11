@@ -12,8 +12,8 @@ const MONTH_NAMES = [
   "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"
 ];
 
-function CalidadDetailsList({ selectedMes, resumen, detalles }: { 
-  selectedMes: string | null; 
+function CalidadDetailsList({ selectedMes, resumen, detalles }: {
+  selectedMes: string | null;
   resumen: any;
   detalles: any[];
 }) {
@@ -82,9 +82,8 @@ function CalidadDetailsList({ selectedMes, resumen, detalles }: {
                 return (
                   <tr
                     key={idx}
-                    className={`hover:bg-white/5 transition-colors ${
-                      cumpleOrden ? 'bg-green-500/5' : 'bg-red-500/5'
-                    }`}
+                    className={`hover:bg-white/5 transition-colors ${cumpleOrden ? 'bg-green-500/5' : 'bg-red-500/5'
+                      }`}
                   >
                     <td className="px-3 py-3 text-center whitespace-nowrap">
                       {cumpleOrden ? (
@@ -94,11 +93,10 @@ function CalidadDetailsList({ selectedMes, resumen, detalles }: {
                       )}
                     </td>
                     <td className="px-3 py-3 text-center whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 rounded text-xs font-semibold ${
-                        isHFC 
-                          ? 'bg-[#06b6d4]/20 text-[#06b6d4] border border-[#06b6d4]/30' 
+                      <span className={`inline-flex px-2 py-1 rounded text-xs font-semibold ${isHFC
+                          ? 'bg-[#06b6d4]/20 text-[#06b6d4] border border-[#06b6d4]/30'
                           : 'bg-[#f59e0b]/20 text-[#f59e0b] border border-[#f59e0b]/30'
-                      }`}>
+                        }`}>
                         {orden.TIPO_RED_CALCULADO || 'N/A'}
                       </span>
                     </td>
@@ -137,7 +135,7 @@ export default function Calidad() {
   const [showDrawer, setShowDrawer] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const { data: summaryData, isLoading: isLoadingSummary } = useQuery({
+  const { data: summaryResponse, isLoading: isLoadingSummary } = useQuery({
     queryKey: ['/api/calidad-reactiva/summary', monthsFilter],
     queryFn: async () => {
       const response = await fetch(`/api/calidad-reactiva/summary?months=${monthsFilter}`, {
@@ -147,6 +145,9 @@ export default function Calidad() {
       return response.json();
     },
   });
+
+  const summaryData = summaryResponse?.data;
+  const queriedRut = summaryResponse?.rut;
 
   const { data: detailsData, isLoading: isLoadingDetails } = useQuery({
     queryKey: ['/api/calidad-reactiva/details', selectedMes],
@@ -245,11 +246,10 @@ export default function Calidad() {
                   <button
                     key={months}
                     onClick={() => setMonthsFilter(months as 3 | 6 | 12)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                      monthsFilter === months
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${monthsFilter === months
                         ? "bg-purple-500 text-white"
                         : "bg-white/10 text-white hover:bg-white/20"
-                    }`}
+                      }`}
                     data-testid={`filter-${months}months`}
                   >
                     {months} meses
@@ -266,29 +266,29 @@ export default function Calidad() {
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={chartDataGeneral} margin={{ top: 5, right: 20, left: 0, bottom: 25 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                    <XAxis 
-                      dataKey="mes" 
-                      axisLine={false} 
-                      tickLine={false} 
+                    <XAxis
+                      dataKey="mes"
+                      axisLine={false}
+                      tickLine={false}
                       tick={{ fill: '#94a3b8', fontSize: 10 }}
                       dy={5}
                     />
-                    <YAxis 
-                      axisLine={false} 
-                      tickLine={false} 
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
                       tick={{ fill: '#a855f7', fontSize: 11 }}
                       domain={[0, 100]}
                       tickFormatter={(v) => `${v}%`}
                       width={45}
                     />
-                    <Tooltip 
+                    <Tooltip
                       contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(168, 85, 247, 0.3)', borderRadius: '8px', color: '#fff' }}
                       formatter={(value: number) => [`${value}%`, 'Eficiencia']}
                     />
-                    <Line 
-                      type="monotone" 
-                      dataKey="eficiencia" 
-                      stroke="#a855f7" 
+                    <Line
+                      type="monotone"
+                      dataKey="eficiencia"
+                      stroke="#a855f7"
                       strokeWidth={3}
                       dot={{ fill: '#a855f7', strokeWidth: 2, r: 4 }}
                       name="Eficiencia General"
@@ -324,37 +324,37 @@ export default function Calidad() {
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={chartDataTecnologia} margin={{ top: 5, right: 20, left: 0, bottom: 25 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                    <XAxis 
-                      dataKey="mes" 
-                      axisLine={false} 
-                      tickLine={false} 
+                    <XAxis
+                      dataKey="mes"
+                      axisLine={false}
+                      tickLine={false}
                       tick={{ fill: '#94a3b8', fontSize: 10 }}
                       dy={5}
                     />
-                    <YAxis 
-                      axisLine={false} 
-                      tickLine={false} 
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
                       tick={{ fill: '#94a3b8', fontSize: 11 }}
                       domain={[0, 100]}
                       tickFormatter={(v) => `${v}%`}
                       width={45}
                     />
-                    <Tooltip 
+                    <Tooltip
                       contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(6, 182, 212, 0.3)', borderRadius: '8px', color: '#fff' }}
                       formatter={(value: number, name: string) => [`${value}%`, name.toUpperCase()]}
                     />
-                    <Line 
-                      type="monotone" 
-                      dataKey="hfc" 
-                      stroke="#06b6d4" 
+                    <Line
+                      type="monotone"
+                      dataKey="hfc"
+                      stroke="#06b6d4"
                       strokeWidth={2.5}
                       dot={{ fill: '#06b6d4', strokeWidth: 2, r: 3 }}
                       name="hfc"
                     />
-                    <Line 
-                      type="monotone" 
-                      dataKey="ftth" 
-                      stroke="#f59e0b" 
+                    <Line
+                      type="monotone"
+                      dataKey="ftth"
+                      stroke="#f59e0b"
                       strokeWidth={2.5}
                       dot={{ fill: '#f59e0b', strokeWidth: 2, r: 3 }}
                       name="ftth"
@@ -395,7 +395,7 @@ export default function Calidad() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-white/5 bg-white/5">
-                    <th 
+                    <th
                       onClick={() => handleSort("mes_contable")}
                       className="px-3 md:px-6 py-3 text-left font-semibold text-slate-300 text-xs md:text-sm cursor-pointer hover:bg-white/10 transition-colors"
                     >
@@ -412,7 +412,7 @@ export default function Calidad() {
                         )}
                       </div>
                     </th>
-                    <th 
+                    <th
                       onClick={() => handleSort("total")}
                       className="px-3 md:px-6 py-3 text-right font-semibold text-slate-300 text-xs md:text-sm cursor-pointer hover:bg-white/10 transition-colors"
                     >
@@ -435,7 +435,7 @@ export default function Calidad() {
                     <th className="px-3 md:px-6 py-3 text-right font-semibold text-slate-300 text-xs md:text-sm">
                       No Cumplen
                     </th>
-                    <th 
+                    <th
                       onClick={() => handleSort("eficiencia_general")}
                       className="px-3 md:px-6 py-3 text-right font-semibold text-slate-300 text-xs md:text-sm cursor-pointer hover:bg-white/10 transition-colors"
                     >
@@ -464,7 +464,14 @@ export default function Calidad() {
                   ) : paginatedData.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="px-6 py-8 text-center text-slate-400">
-                        No hay datos disponibles
+                        <div className="flex flex-col items-center gap-2">
+                          <p>No hay datos disponibles</p>
+                          {queriedRut && (
+                            <p className="text-xs text-slate-500 bg-white/5 px-2 py-1 rounded">
+                              Consultado para RUT: {queriedRut}
+                            </p>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ) : (
@@ -488,13 +495,12 @@ export default function Calidad() {
                           {row.no_cumple}
                         </td>
                         <td className="px-3 md:px-6 py-3 text-right">
-                          <span className={`inline-flex px-2 py-1 rounded text-xs font-bold ${
-                            row.eficiencia_general >= 90 
+                          <span className={`inline-flex px-2 py-1 rounded text-xs font-bold ${row.eficiencia_general >= 90
                               ? 'bg-green-500/20 text-green-400 border border-green-500/30'
                               : row.eficiencia_general >= 80
-                              ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
-                              : 'bg-red-500/20 text-red-400 border border-red-500/30'
-                          }`}>
+                                ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+                                : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                            }`}>
                             {row.eficiencia_general}%
                           </span>
                         </td>
@@ -572,7 +578,7 @@ export default function Calidad() {
                   <p className="text-slate-400">Cargando detalles...</p>
                 </div>
               ) : (
-                <CalidadDetailsList 
+                <CalidadDetailsList
                   selectedMes={selectedMes}
                   resumen={detailsData?.resumen}
                   detalles={detailsData?.detalles || []}
