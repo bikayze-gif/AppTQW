@@ -59,9 +59,9 @@ function OrderDetailsList({ selectedDate }: { selectedDate: string | null }) {
 
   if (isLoading) {
     return (
-      <div className="flex-1 overflow-y-auto p-6">
-        <div className="text-center py-8">
-          <p className="text-slate-400 text-sm">Cargando detalles...</p>
+      <div className="flex-1 overflow-y-auto p-4">
+        <div className="text-center py-6">
+          <p className="text-slate-400 text-xs">Cargando detalles...</p>
         </div>
       </div>
     );
@@ -71,9 +71,9 @@ function OrderDetailsList({ selectedDate }: { selectedDate: string | null }) {
 
   if (details.length === 0) {
     return (
-      <div className="flex-1 overflow-y-auto p-6">
-        <div className="text-center py-8">
-          <p className="text-slate-400 text-sm">No hay órdenes para este día</p>
+      <div className="flex-1 overflow-y-auto p-4">
+        <div className="text-center py-6">
+          <p className="text-slate-400 text-xs">No hay órdenes para este día</p>
         </div>
       </div>
     );
@@ -101,25 +101,25 @@ function OrderDetailsList({ selectedDate }: { selectedDate: string | null }) {
   return (
     <div className="flex-1 overflow-y-auto">
       {/* Resumen de Métricas */}
-      <div className="p-6 border-b border-white/5 bg-white/5">
-        <h3 className="text-sm font-semibold text-white mb-4">Resumen de Métricas</h3>
-        <div className="grid grid-cols-2 gap-4">
+      <div className="p-4 border-b border-white/5 bg-white/5">
+        <h3 className="text-xs font-semibold text-white mb-3">Resumen de Métricas</h3>
+        <div className="grid grid-cols-2 gap-3">
           {countHFC > 0 && (
-            <div className="bg-gradient-to-br from-[#06b6d4]/20 to-[#06b6d4]/5 rounded-lg p-4 border border-[#06b6d4]/30">
+            <div className="bg-gradient-to-br from-[#06b6d4]/20 to-[#06b6d4]/5 rounded-lg p-3 border border-[#06b6d4]/30">
               <p className="text-xs text-slate-400 mb-1">Puntos HFC</p>
-              <p className="text-2xl font-bold text-[#06b6d4]">{Math.round(totalPuntosHFC)}</p>
+              <p className="text-xl font-bold text-[#06b6d4]">{Math.round(totalPuntosHFC)}</p>
               <p className="text-xs text-slate-400 mt-1">{countHFC} órdenes</p>
             </div>
           )}
           {countFTTH > 0 && (
-            <div className="bg-gradient-to-br from-[#f59e0b]/20 to-[#f59e0b]/5 rounded-lg p-4 border border-[#f59e0b]/30">
+            <div className="bg-gradient-to-br from-[#f59e0b]/20 to-[#f59e0b]/5 rounded-lg p-3 border border-[#f59e0b]/30">
               <p className="text-xs text-slate-400 mb-1">RGU FTTH</p>
-              <p className="text-2xl font-bold text-[#f59e0b]">{totalRguFTTH.toFixed(2)}</p>
+              <p className="text-xl font-bold text-[#f59e0b]">{totalRguFTTH.toFixed(2)}</p>
               <p className="text-xs text-slate-400 mt-1">{countFTTH} órdenes</p>
             </div>
           )}
         </div>
-        <div className="mt-4 p-3 bg-white/5 rounded-lg">
+        <div className="mt-3 p-2 bg-white/5 rounded-lg">
           <p className="text-xs text-slate-400">Tipo de red predominante:</p>
           <p className={`text-sm font-semibold ${tipoRedPredominante === 'HFC' ? 'text-[#06b6d4]' : 'text-[#f59e0b]'}`}>
             {tipoRedPredominante}
@@ -128,21 +128,21 @@ function OrderDetailsList({ selectedDate }: { selectedDate: string | null }) {
       </div>
 
       {/* Tabla de Órdenes Detalladas */}
-      <div className="p-6">
-        <h3 className="text-sm font-semibold text-white mb-4">
+      <div className="p-4">
+        <h3 className="text-xs font-semibold text-white mb-3">
           Detalle de Órdenes ({details.length})
         </h3>
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-white/10 bg-white/5">
-                <th className="px-3 py-2 text-center font-semibold text-slate-300 whitespace-nowrap">Tipo Red</th>
-                <th className="px-3 py-2 text-right font-semibold text-slate-300 whitespace-nowrap">RGU</th>
-                <th className="px-3 py-2 text-right font-semibold text-slate-300 whitespace-nowrap">Puntos</th>
-                <th className="px-3 py-2 text-left font-semibold text-slate-300 whitespace-nowrap">Orden</th>
-                <th className="px-3 py-2 text-left font-semibold text-slate-300 whitespace-nowrap">Dirección Cliente</th>
-                <th className="px-3 py-2 text-left font-semibold text-slate-300 whitespace-nowrap">Actividad</th>
-                <th className="px-3 py-2 text-left font-semibold text-slate-300 whitespace-nowrap">Trabajo</th>
+                <th className="px-2 py-2 text-center font-semibold text-slate-300 whitespace-nowrap">Tipo Red</th>
+                <th className="px-2 py-2 text-right font-semibold text-slate-300 whitespace-nowrap">RGU</th>
+                <th className="px-2 py-2 text-right font-semibold text-slate-300 whitespace-nowrap">Puntos</th>
+                <th className="px-2 py-2 text-left font-semibold text-slate-300 whitespace-nowrap">Orden</th>
+                <th className="px-2 py-2 text-left font-semibold text-slate-300 whitespace-nowrap">Dirección Cliente</th>
+                <th className="px-2 py-2 text-left font-semibold text-slate-300 whitespace-nowrap">Actividad</th>
+                <th className="px-2 py-2 text-left font-semibold text-slate-300 whitespace-nowrap">Trabajo</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
@@ -157,7 +157,7 @@ function OrderDetailsList({ selectedDate }: { selectedDate: string | null }) {
                       isHFC ? 'bg-[#06b6d4]/5' : 'bg-[#f59e0b]/5'
                     }`}
                   >
-                    <td className="px-3 py-3 text-center whitespace-nowrap">
+                    <td className="px-2 py-2 text-center whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 rounded text-xs font-semibold ${
                         isHFC 
                           ? 'bg-[#06b6d4]/20 text-[#06b6d4] border border-[#06b6d4]/30' 
@@ -166,7 +166,7 @@ function OrderDetailsList({ selectedDate }: { selectedDate: string | null }) {
                         {order.TipoRed_rank || 'N/A'}
                       </span>
                     </td>
-                    <td className="px-3 py-3 text-right font-semibold whitespace-nowrap">
+                    <td className="px-2 py-2 text-right font-semibold whitespace-nowrap">
                       {isFTTH ? (
                         <span className="text-[#f59e0b]">
                           {(parseFloat(order.Q_SSPP) || 0).toFixed(2)}
@@ -175,7 +175,7 @@ function OrderDetailsList({ selectedDate }: { selectedDate: string | null }) {
                         <span className="text-slate-600">-</span>
                       )}
                     </td>
-                    <td className="px-3 py-3 text-right font-semibold whitespace-nowrap">
+                    <td className="px-2 py-2 text-right font-semibold whitespace-nowrap">
                       {isHFC ? (
                         <span className="text-[#06b6d4]">
                           {Math.round(parseFloat(order.Ptos_referencial) || 0)}
@@ -184,16 +184,16 @@ function OrderDetailsList({ selectedDate }: { selectedDate: string | null }) {
                         <span className="text-slate-600">-</span>
                       )}
                     </td>
-                    <td className="px-3 py-3 text-white font-medium whitespace-nowrap">
+                    <td className="px-2 py-2 text-white font-medium whitespace-nowrap">
                       {order.Orden || 'N/A'}
                     </td>
-                    <td className="px-3 py-3 text-slate-300 max-w-xs truncate">
+                    <td className="px-2 py-2 text-slate-300 max-w-xs truncate">
                       {order['Dir# cliente'] || 'N/A'}
                     </td>
-                    <td className="px-3 py-3 text-slate-300 max-w-xs truncate">
+                    <td className="px-2 py-2 text-slate-300 max-w-xs truncate">
                       {order.Actividad || 'N/A'}
                     </td>
-                    <td className="px-3 py-3 text-slate-300 max-w-xs truncate">
+                    <td className="px-2 py-2 text-slate-300 max-w-xs truncate">
                       {order.Trabajo || 'N/A'}
                     </td>
                   </tr>
@@ -334,23 +334,22 @@ export default function Activity() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white font-sans pb-24">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-sm border-b border-white/5 px-4 md:px-6 pt-6 pb-4 flex items-center justify-center">
-        <h1 className="text-lg md:text-xl font-bold tracking-tight text-white">Actividad</h1>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white font-sans pb-20">
+      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-sm border-b border-white/5 px-3 md:px-5 pt-5 pb-3 flex items-center justify-center">
+        <h1 className="text-base md:text-lg font-bold tracking-tight text-white">Actividad</h1>
       </header>
 
-      <main className="px-2 md:px-6 space-y-6 max-w-6xl mx-auto pt-4">
+      <main className="px-2 md:px-5 space-y-5 max-w-6xl mx-auto pt-3">
 
         {/* Chart Card */}
         <Card className="bg-card border-none shadow-xl rounded-2xl md:rounded-3xl overflow-hidden">
-          <CardContent className="p-2 md:p-6 pt-4">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base md:text-lg font-bold text-white">Gráfico de Actividades</h2>
+          <CardContent className="p-2 md:p-4 pt-3">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm md:text-base font-bold text-white">Gráfico de Actividades</h2>
               <div className="flex gap-2">
                 <button
                   onClick={() => setDayFilter(7)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  className={`px-2 py-1 rounded-lg text-xs font-medium transition-colors ${
                     dayFilter === 7
                       ? "bg-[#06b6d4] text-black"
                       : "bg-white/10 text-white hover:bg-white/20"
@@ -361,7 +360,7 @@ export default function Activity() {
                 </button>
                 <button
                   onClick={() => setDayFilter(15)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  className={`px-2 py-1 rounded-lg text-xs font-medium transition-colors ${
                     dayFilter === 15
                       ? "bg-[#06b6d4] text-black"
                       : "bg-white/10 text-white hover:bg-white/20"
@@ -372,7 +371,7 @@ export default function Activity() {
                 </button>
                 <button
                   onClick={() => setDayFilter(30)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  className={`px-2 py-1 rounded-lg text-xs font-medium transition-colors ${
                     dayFilter === 30
                       ? "bg-[#06b6d4] text-black"
                       : "bg-white/10 text-white hover:bg-white/20"
@@ -383,28 +382,28 @@ export default function Activity() {
                 </button>
               </div>
             </div>
-            <div className="h-64 md:h-80 w-full">
+            <div className="h-56 md:h-72 w-full">
               {/* Leyenda personalizada - Superior */}
-              <div className="flex items-center justify-center gap-6 mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-0.5 bg-[#06b6d4]"></div>
+              <div className="flex items-center justify-center gap-4 mb-2">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-6 h-0.5 bg-[#06b6d4]"></div>
                   <span className="text-xs text-slate-300">Puntos HFC</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-0.5 bg-[#f59e0b]"></div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-6 h-0.5 bg-[#f59e0b]"></div>
                   <span className="text-xs text-slate-300">RGU FTTH</span>
                 </div>
               </div>
 
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData} margin={{ top: 5, right: 0, left: 0, bottom: 35 }}>
+                <LineChart data={chartData} margin={{ top: 5, right: 0, left: 0, bottom: 25 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
                   <XAxis 
                     dataKey="day" 
                     axisLine={false} 
                     tickLine={false} 
-                    tick={{ fill: '#94a3b8', fontSize: 11 }}
-                    label={{ value: 'Días', position: 'insideBottomRight', offset: -5, fill: '#94a3b8' }}
+                    tick={{ fill: '#94a3b8', fontSize: 9 }}
+                    label={{ value: 'Días', position: 'insideBottomRight', offset: -5, fill: '#94a3b8', fontSize: 10 }}
                     dy={5}
                   />
                   {/* Eje Y izquierdo para Puntos HFC */}
@@ -413,9 +412,9 @@ export default function Activity() {
                     type="number"
                     axisLine={false} 
                     tickLine={false} 
-                    tick={{ fill: '#06b6d4', fontSize: 11 }}
+                    tick={{ fill: '#06b6d4', fontSize: 9 }}
                     domain={[0, 'auto']}
-                    width={50}
+                    width={40}
                   />
                   {/* Eje Y derecho para RGU FTTH */}
                   <YAxis 
@@ -424,9 +423,9 @@ export default function Activity() {
                     type="number"
                     axisLine={false} 
                     tickLine={false} 
-                    tick={{ fill: '#f59e0b', fontSize: 11 }}
+                    tick={{ fill: '#f59e0b', fontSize: 9 }}
                     domain={[0, 'auto']}
-                    width={50}
+                    width={40}
                   />
                   <Tooltip 
                     contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(6, 182, 212, 0.3)', borderRadius: '8px', color: '#fff' }}
@@ -437,7 +436,7 @@ export default function Activity() {
                     type="monotone" 
                     dataKey="puntos_hfc" 
                     stroke="#06b6d4" 
-                    strokeWidth={3}
+                    strokeWidth={2}
                     dot={false}
                     name="Puntos HFC"
                   />
@@ -446,7 +445,7 @@ export default function Activity() {
                     type="monotone" 
                     dataKey="q_rgu_ftth" 
                     stroke="#f59e0b" 
-                    strokeWidth={3}
+                    strokeWidth={2}
                     dot={false}
                     name="RGU FTTH"
                   />
@@ -460,22 +459,22 @@ export default function Activity() {
         <div className="flex flex-row gap-2 items-center">
           {/* Search Bar */}
           <div className="relative flex-1 min-w-0">
-            <Search className="absolute left-3 top-3 text-slate-400" size={18} />
+            <Search className="absolute left-3 top-2.5 text-slate-400" size={16} />
             <input
               type="text"
               placeholder="Buscar..."
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#06b6d4] text-sm"
+              className="w-full pl-9 pr-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#06b6d4] text-xs"
               data-testid="search-input"
             />
             {searchText && (
               <button
                 onClick={() => setSearchText("")}
-                className="absolute right-3 top-3 text-slate-400 hover:text-white"
+                className="absolute right-3 top-2.5 text-slate-400 hover:text-white"
                 data-testid="clear-search"
               >
-                <X size={18} />
+                <X size={16} />
               </button>
             )}
           </div>
@@ -486,7 +485,7 @@ export default function Activity() {
             <div className="blur-[3px] pointer-events-none select-none flex flex-row gap-2 items-center">
               {/* Month Select */}
               <select
-                className="px-2 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-xs md:text-sm focus:outline-none focus:border-[#06b6d4] transition-colors cursor-pointer whitespace-nowrap"
+                className="px-2 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-xs focus:outline-none focus:border-[#06b6d4] transition-colors cursor-pointer whitespace-nowrap"
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
                 disabled
@@ -503,24 +502,24 @@ export default function Activity() {
 
               {/* Download Buttons */}
               <button
-                className="flex items-center justify-center p-2 bg-red-500/20 border border-red-500/50 text-red-400 rounded-lg transition-colors flex-shrink-0"
+                className="flex items-center justify-center p-1.5 bg-red-500/20 border border-red-500/50 text-red-400 rounded-lg transition-colors flex-shrink-0"
                 onClick={handleDownloadPDF}
                 disabled={!selectedMonth}
               >
-                <FileText size={16} />
+                <FileText size={14} />
               </button>
               <button
-                className="flex items-center justify-center p-2 bg-green-500/20 border border-green-500/50 text-green-400 rounded-lg transition-colors flex-shrink-0"
+                className="flex items-center justify-center p-1.5 bg-green-500/20 border border-green-500/50 text-green-400 rounded-lg transition-colors flex-shrink-0"
                 onClick={handleDownloadExcel}
                 disabled={!selectedMonth}
               >
-                <Sheet size={16} />
+                <Sheet size={14} />
               </button>
             </div>
 
             {/* Overlay Badge */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-              <span className="text-xs bg-yellow-500/90 text-black px-3 py-1 rounded-md border border-yellow-600 font-bold shadow-lg">
+              <span className="text-xs bg-yellow-500/90 text-black px-2 py-1 rounded-md border border-yellow-600 font-bold shadow-lg">
                 Próximamente
               </span>
             </div>
@@ -531,21 +530,21 @@ export default function Activity() {
         <Card className="bg-card border-none shadow-xl rounded-2xl md:rounded-3xl overflow-hidden">
           <CardContent className="p-0">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b border-white/5 bg-white/5">
                     <th 
                       onClick={() => handleSort("fecha")}
-                      className="px-3 md:px-6 py-3 text-left font-semibold text-slate-300 text-xs md:text-sm cursor-pointer hover:bg-white/10 transition-colors"
+                      className="px-2 md:px-4 py-2 text-left font-semibold text-slate-300 text-xs md:text-sm cursor-pointer hover:bg-white/10 transition-colors"
                     >
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
                         Fecha
                         {sortColumn === "fecha" && (
                           <span>
                             {sortDirection === "asc" ? (
-                              <ArrowUp size={14} className="text-[#06b6d4]" />
+                              <ArrowUp size={12} className="text-[#06b6d4]" />
                             ) : (
-                              <ArrowDown size={14} className="text-[#06b6d4]" />
+                              <ArrowDown size={12} className="text-[#06b6d4]" />
                             )}
                           </span>
                         )}
@@ -553,16 +552,16 @@ export default function Activity() {
                     </th>
                     <th 
                       onClick={() => handleSort("tipoRed")}
-                      className="px-3 md:px-6 py-3 text-left font-semibold text-slate-300 text-xs md:text-sm cursor-pointer hover:bg-white/10 transition-colors"
+                      className="px-2 md:px-4 py-2 text-left font-semibold text-slate-300 text-xs md:text-sm cursor-pointer hover:bg-white/10 transition-colors"
                     >
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
                         Tipo Red
                         {sortColumn === "tipoRed" && (
                           <span>
                             {sortDirection === "asc" ? (
-                              <ArrowUp size={14} className="text-[#06b6d4]" />
+                              <ArrowUp size={12} className="text-[#06b6d4]" />
                             ) : (
-                              <ArrowDown size={14} className="text-[#06b6d4]" />
+                              <ArrowDown size={12} className="text-[#06b6d4]" />
                             )}
                           </span>
                         )}
@@ -570,16 +569,16 @@ export default function Activity() {
                     </th>
                     <th 
                       onClick={() => handleSort("puntos")}
-                      className="px-3 md:px-6 py-3 text-left font-semibold text-slate-300 text-xs md:text-sm cursor-pointer hover:bg-white/10 transition-colors"
+                      className="px-2 md:px-4 py-2 text-left font-semibold text-slate-300 text-xs md:text-sm cursor-pointer hover:bg-white/10 transition-colors"
                     >
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
                         Puntos
                         {sortColumn === "puntos" && (
                           <span>
                             {sortDirection === "asc" ? (
-                              <ArrowUp size={14} className="text-[#06b6d4]" />
+                              <ArrowUp size={12} className="text-[#06b6d4]" />
                             ) : (
-                              <ArrowDown size={14} className="text-[#06b6d4]" />
+                              <ArrowDown size={12} className="text-[#06b6d4]" />
                             )}
                           </span>
                         )}
@@ -587,16 +586,16 @@ export default function Activity() {
                     </th>
                     <th 
                       onClick={() => handleSort("rgu")}
-                      className="px-3 md:px-6 py-3 text-left font-semibold text-slate-300 text-xs md:text-sm cursor-pointer hover:bg-white/10 transition-colors"
+                      className="px-2 md:px-4 py-2 text-left font-semibold text-slate-300 text-xs md:text-sm cursor-pointer hover:bg-white/10 transition-colors"
                     >
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
                         RGU
                         {sortColumn === "rgu" && (
                           <span>
                             {sortDirection === "asc" ? (
-                              <ArrowUp size={14} className="text-[#06b6d4]" />
+                              <ArrowUp size={12} className="text-[#06b6d4]" />
                             ) : (
-                              <ArrowDown size={14} className="text-[#06b6d4]" />
+                              <ArrowDown size={12} className="text-[#06b6d4]" />
                             )}
                           </span>
                         )}
@@ -617,12 +616,12 @@ export default function Activity() {
                       className="hover:bg-white/5 transition-colors cursor-pointer"
                       data-testid={`activity-row-${idx}`}
                     >
-                      <td className="px-3 md:px-6 py-3 text-xs md:text-sm text-slate-400" data-testid={`activity-date-${idx}`}>{formatDate(row.fecha)}</td>
-                      <td className="px-3 md:px-6 py-3 text-xs md:text-sm text-slate-200" data-testid={`activity-tipoRed-${idx}`}>{row.tipoRed}</td>
-                      <td className="px-3 md:px-6 py-3 text-xs md:text-sm text-slate-200" data-testid={`activity-puntos-${idx}`}>
+                      <td className="px-2 md:px-4 py-2 text-xs md:text-sm text-slate-400" data-testid={`activity-date-${idx}`}>{formatDate(row.fecha)}</td>
+                      <td className="px-2 md:px-4 py-2 text-xs md:text-sm text-slate-200" data-testid={`activity-tipoRed-${idx}`}>{row.tipoRed}</td>
+                      <td className="px-2 md:px-4 py-2 text-xs md:text-sm text-slate-200" data-testid={`activity-puntos-${idx}`}>
                         {row.tipoRed === 'HFC' ? row.puntos : 0}
                       </td>
-                      <td className="px-3 md:px-6 py-3 text-xs md:text-sm text-[#06b6d4] font-semibold" data-testid={`activity-rgu-${idx}`}>
+                      <td className="px-2 md:px-4 py-2 text-xs md:text-sm text-[#06b6d4] font-semibold" data-testid={`activity-rgu-${idx}`}>
                         {row.tipoRed === 'FTTH' ? row.rgu : 0}
                       </td>
                     </tr>
@@ -632,7 +631,7 @@ export default function Activity() {
             </div>
 
             {/* Pagination Controls */}
-            <div className="border-t border-white/5 px-4 md:px-6 py-4 flex items-center justify-between bg-white/5">
+            <div className="border-t border-white/5 px-3 md:px-5 py-3 flex items-center justify-between bg-white/5">
               <div className="text-xs md:text-sm text-slate-400">
                 Mostrando {((currentPage - 1) * ITEMS_PER_PAGE) + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filteredAndSortedData.length)} de {filteredAndSortedData.length}
               </div>
@@ -640,17 +639,17 @@ export default function Activity() {
                 <button
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className="px-3 py-1 rounded-lg text-sm font-medium bg-white/10 text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white/20 transition-colors"
+                  className="px-2 py-1 rounded-lg text-xs font-medium bg-white/10 text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white/20 transition-colors"
                   data-testid="pagination-prev"
                 >
                   Anterior
                 </button>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                     <button
                       key={page}
                       onClick={() => handlePageChange(page)}
-                      className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                      className={`px-1.5 py-0.5 rounded text-xs font-medium transition-colors ${
                         currentPage === page
                           ? "bg-[#06b6d4] text-black"
                           : "bg-white/10 text-white hover:bg-white/20"
@@ -664,7 +663,7 @@ export default function Activity() {
                 <button
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage === totalPages}
-                  className="px-3 py-1 rounded-lg text-sm font-medium bg-white/10 text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white/20 transition-colors"
+                  className="px-2 py-1 rounded-lg text-xs font-medium bg-white/10 text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white/20 transition-colors"
                   data-testid="pagination-next"
                 >
                   Siguiente
@@ -700,17 +699,17 @@ export default function Activity() {
               data-testid="drawer-panel"
             >
               {/* Header */}
-              <div className="border-b border-white/5 p-6 flex items-center justify-between">
+              <div className="border-b border-white/5 p-4 flex items-center justify-between">
                 <div>
-                  <h2 className="text-lg font-bold text-white">Detalles del Día</h2>
-                  <p className="text-sm text-slate-400 mt-1">{formatDate(selectedDate)}</p>
+                  <h2 className="text-base font-bold text-white">Detalles del Día</h2>
+                  <p className="text-xs text-slate-400 mt-1">{formatDate(selectedDate)}</p>
                 </div>
                 <button
                   onClick={() => setShowDrawer(false)}
-                  className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                  className="p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
                   data-testid="button-close-drawer"
                 >
-                  <ChevronLeft size={20} />
+                  <ChevronLeft size={18} />
                 </button>
               </div>
 

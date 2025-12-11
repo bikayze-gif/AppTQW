@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowUp, ArrowDown, Search, X } from "lucide-react";
@@ -62,9 +61,9 @@ export default function Tickets() {
 
   const filteredAndSortedData = useMemo(() => {
     if (!activeTabData) return [];
-    
+
     let data = [...activeTabData.data];
-    
+
     // Filter
     if (searchText) {
       data = data.filter((row) =>
@@ -73,7 +72,7 @@ export default function Tickets() {
         )
       );
     }
-    
+
     // Sort
     if (sortColumn) {
       data.sort((a, b) => {
@@ -83,7 +82,7 @@ export default function Tickets() {
         return sortDirection === "asc" ? comparison : -comparison;
       });
     }
-    
+
     return data;
   }, [activeTabData, searchText, sortColumn, sortDirection]);
 
@@ -97,13 +96,12 @@ export default function Tickets() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white font-sans pb-24">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-sm border-b border-white/5 px-4 md:px-6 pt-6 pb-4 flex items-center justify-center">
-        <h1 className="text-lg md:text-xl font-bold tracking-tight text-white">Tickets</h1>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white font-sans pb-20">
+      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-sm border-b border-white/5 px-3 md:px-5 pt-5 pb-3 flex items-center justify-center">
+        <h1 className="text-base md:text-lg font-bold tracking-tight text-white">Tickets</h1>
       </header>
 
-      <main className="px-4 md:px-6 space-y-4 max-w-6xl mx-auto pt-4">
+      <main className="px-2 md:px-5 space-y-5 max-w-6xl mx-auto pt-3">
         {/* Tabs Navigation */}
         <div className="flex gap-2 overflow-x-auto pb-2 border-b border-white/10">
           {tabs.map((tab) => (

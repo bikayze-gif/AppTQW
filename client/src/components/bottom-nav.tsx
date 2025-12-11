@@ -8,6 +8,37 @@ interface BottomNavProps {
   onAddClick?: () => void;
 }
 
+function NavButton({
+  icon: Icon,
+  label,
+  href,
+  isActive,
+  iconSize = 20,
+}: {
+  icon: LucideIcon;
+  label: string;
+  href: string;
+  isActive: boolean;
+  iconSize?: number;
+}) {
+  const [, setLocation] = useLocation();
+
+  return (
+    <button
+      onClick={() => setLocation(href)}
+      className={`flex flex-col items-center gap-0.5 px-2.5 py-1.5 rounded-lg transition-all ${
+        isActive
+          ? "text-[#06b6d4]"
+          : "text-slate-400 hover:text-white"
+      }`}
+    >
+      <Icon size={iconSize} className={isActive ? "animate-bounce-subtle" : ""} />
+      <span className="text-[9px] font-medium">{label}</span>
+    </button>
+  );
+}
+
+
 export function BottomNav({ onAddClick }: BottomNavProps) {
   const [currentPath] = useLocation();
   const [, setLocation] = useLocation();
@@ -26,68 +57,46 @@ export function BottomNav({ onAddClick }: BottomNavProps) {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-[#1A1F33] border-t border-white/5 px-4 pb-4 pt-3 z-40">
-      <div className="flex items-center justify-center max-w-full mx-auto">
-
-        {/* Left Group - 3 icons */}
-        <div className="flex gap-4 items-center md:gap-6 lg:gap-8">
-          <button
-            onClick={() => setLocation("/")}
-            className={`p-2 rounded-lg relative hover:bg-white/5 transition-colors ${isPeriodInfo ? "text-[#06b6d4]" : "text-slate-400 hover:text-white"}`}
-            data-testid="button-nav-grid"
-          >
-            <LayoutGrid size={22} />
-          </button>
-          <button
-            onClick={() => setLocation("/activity")}
-            className={`p-2 rounded-lg relative hover:bg-white/5 transition-colors ${isActivity ? "text-[#06b6d4]" : "text-slate-400 hover:text-white"}`}
-            data-testid="button-nav-activity"
-          >
-            <Activity size={22} />
-          </button>
-          <button
-            onClick={() => setLocation("/calidad")} // Changed route
-            className={`p-2 rounded-lg relative hover:bg-white/5 transition-colors ${isCalidad ? "text-[#06b6d4]" : "text-slate-400 hover:text-white"}`} // Changed condition
-            data-testid="button-nav-file"
-          >
-            <Box size={22} />
-          </button>
-        </div>
-
-        {/* Center FAB - Integrated */}
-        <button
-          onClick={onAddClick}
-          className="bg-[#06b6d4] hover:bg-[#0891b2] text-black rounded-full p-3 shadow-lg shadow-cyan-500/30 transition-all active:scale-95 flex-shrink-0 flex items-center justify-center mx-6 md:mx-8 lg:mx-10"
-          data-testid="button-add-material"
-        >
-          <Plus size={26} strokeWidth={3} />
-        </button>
-
-        {/* Right Group - 3 icons */}
-        <div className="flex gap-4 items-center md:gap-6 lg:gap-8">
-          <button
-            onClick={() => setLocation("/analytics")}
-            className={`p-2 rounded-lg relative hover:bg-white/5 transition-colors ${isAnalytics ? "text-[#06b6d4]" : "text-slate-400 hover:text-white"}`}
-            data-testid="button-nav-analytics"
-          >
-            <Box size={22} />
-          </button>
-          <button
-            onClick={() => setLocation("/tickets")}
-            className={`p-2 rounded-lg relative hover:bg-white/5 transition-colors ${isTickets ? "text-[#06b6d4]" : "text-slate-400 hover:text-white"}`}
-            data-testid="button-nav-ticket"
-          >
-            <Ticket size={22} />
-          </button>
+    <div>
+      <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-slate-900 to-slate-900/95 backdrop-blur-lg border-t border-white/10 z-50">
+        <div className="flex items-center justify-around px-2 py-2 max-w-lg mx-auto">
+          <NavButton
+            icon={LayoutGrid}
+            label="Home"
+            href="/"
+            isActive={isPeriodInfo}
+            iconSize={18}
+          />
+          <NavButton
+            icon={Activity}
+            label="Actividad"
+            href="/activity"
+            isActive={isActivity}
+            iconSize={18}
+          />
+          <NavButton
+            icon={Box} // Changed from FileText
+            label="Calidad"
+            href="/calidad"
+            isActive={isCalidad}
+            iconSize={18}
+          />
+          <NavButton
+            icon={Ticket}
+            label="Tickets"
+            href="/tickets"
+            isActive={isTickets}
+            iconSize={18}
+          />
           <button
             onClick={() => setShowLogoutModal(true)}
             className="text-slate-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/5"
             data-testid="button-nav-logout"
           >
-            <LogOut size={22} />
+            <LogOut size={18} />
           </button>
         </div>
-      </div>
+      </nav>
 
       {/* Logout Modal */}
       <AnimatePresence>

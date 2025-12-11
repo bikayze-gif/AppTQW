@@ -283,21 +283,21 @@ export default function Calidad() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white font-sans pb-24">
-      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-sm border-b border-white/5 px-4 md:px-6 pt-6 pb-4 flex items-center justify-center">
-        <h1 className="text-lg md:text-xl font-bold tracking-tight text-white">Calidad Reactiva</h1>
+      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-sm border-b border-white/5 px-3 md:px-5 pt-5 pb-3 flex items-center justify-center">
+        <h1 className="text-base md:text-lg font-bold tracking-tight text-white">Calidad Reactiva</h1>
       </header>
 
-      <main className="px-2 md:px-6 space-y-6 max-w-6xl mx-auto pt-4">
-        <Card className="bg-card border-none shadow-xl rounded-2xl md:rounded-3xl overflow-hidden">
-          <CardContent className="p-2 md:p-6 pt-4">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base md:text-lg font-bold text-white">Eficiencia General</h2>
-              <div className="flex gap-2">
+      <main className="px-2 md:px-5 space-y-5 max-w-6xl mx-auto pt-3">
+        <Card className="bg-card border-none shadow-xl rounded-xl md:rounded-2xl overflow-hidden">
+          <CardContent className="p-2 md:p-5 pt-3">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm md:text-base font-bold text-white">Eficiencia General</h2>
+              <div className="flex gap-1.5">
                 {[3, 6, 12].map((months) => (
                   <button
                     key={months}
                     onClick={() => setMonthsFilter(months as 3 | 6 | 12)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${monthsFilter === months
+                    className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${monthsFilter === months
                       ? "bg-purple-500 text-white"
                       : "bg-white/10 text-white hover:bg-white/20"
                       }`}
@@ -308,7 +308,7 @@ export default function Calidad() {
                 ))}
               </div>
             </div>
-            <div className="h-64 md:h-72 w-full">
+            <div className="h-52 md:h-60 w-full">
               {isLoadingSummary ? (
                 <div className="flex items-center justify-center h-full">
                   <p className="text-slate-400">Cargando...</p>
@@ -351,22 +351,22 @@ export default function Calidad() {
           </CardContent>
         </Card>
 
-        <Card className="bg-card border-none shadow-xl rounded-2xl md:rounded-3xl overflow-hidden">
-          <CardContent className="p-2 md:p-6 pt-4">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base md:text-lg font-bold text-white">Eficiencia por Tecnología</h2>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-0.5 bg-[#06b6d4]"></div>
+        <Card className="bg-card border-none shadow-xl rounded-xl md:rounded-2xl overflow-hidden">
+          <CardContent className="p-2 md:p-5 pt-3">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm md:text-base font-bold text-white">Eficiencia por Tecnología</h2>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-5 h-0.5 bg-[#06b6d4]"></div>
                   <span className="text-xs text-slate-300">HFC</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-0.5 bg-[#f59e0b]"></div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-5 h-0.5 bg-[#f59e0b]"></div>
                   <span className="text-xs text-slate-300">FTTH</span>
                 </div>
               </div>
             </div>
-            <div className="h-56 md:h-64 w-full">
+            <div className="h-48 md:h-52 w-full">
               {isLoadingSummary ? (
                 <div className="flex items-center justify-center h-full">
                   <p className="text-slate-400">Cargando...</p>
@@ -440,13 +440,13 @@ export default function Calidad() {
           </div>
         </div>
 
-        <Card className="bg-card border-none shadow-xl rounded-2xl md:rounded-3xl overflow-hidden">
+        <Card className="bg-card border-none shadow-xl rounded-xl md:rounded-2xl overflow-hidden">
           <CardContent className="p-0">
-            <div className="p-4 border-b border-white/5 bg-white/5">
-              <h2 className="text-base md:text-lg font-bold text-white">Detalle por mes contable</h2>
+            <div className="p-3 border-b border-white/5 bg-white/5">
+              <h2 className="text-sm md:text-base font-bold text-white">Detalle por mes contable</h2>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b border-white/5 bg-white/5">
                     <th

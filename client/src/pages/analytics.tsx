@@ -142,7 +142,7 @@ export default function Analytics() {
   const [rutCliente, setRutCliente] = useState("");
   const [observations, setObservations] = useState("");
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
-  
+
   const [isTransferOpen, setIsTransferOpen] = useState(false);
   const [transferSerie, setTransferSerie] = useState<string>("");
   const [escalamientoSupervisor, setEscalamientoSupervisor] = useState<string | null>(null);
@@ -168,9 +168,9 @@ export default function Analytics() {
 
   const filteredAndSortedData = useMemo(() => {
     if (!activeTabData) return [];
-    
+
     let data = [...activeTabData.data];
-    
+
     // Filter
     if (searchText) {
       data = data.filter((row) =>
@@ -179,7 +179,7 @@ export default function Analytics() {
         )
       );
     }
-    
+
     // Sort
     if (sortColumn) {
       data.sort((a, b) => {
@@ -189,7 +189,7 @@ export default function Analytics() {
         return sortDirection === "asc" ? comparison : -comparison;
       });
     }
-    
+
     return data;
   }, [activeTabData, searchText, sortColumn, sortDirection]);
 
@@ -289,20 +289,20 @@ export default function Analytics() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white font-sans pb-24">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white font-sans pb-20">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-sm border-b border-white/5 px-4 md:px-6 pt-6 pb-4 flex items-center justify-center">
-        <h1 className="text-lg md:text-xl font-bold tracking-tight text-white">Análitica</h1>
+      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-sm border-b border-white/5 px-3 md:px-5 pt-5 pb-3 flex items-center justify-center">
+        <h1 className="text-base md:text-lg font-bold tracking-tight text-white">Análitica</h1>
       </header>
 
-      <main className="px-4 md:px-6 space-y-4 max-w-6xl mx-auto pt-4">
+      <main className="px-2 md:px-5 space-y-5 max-w-6xl mx-auto pt-3">
         {/* Tabs Navigation */}
         <div className="flex gap-2 overflow-x-auto pb-2 border-b border-white/10">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-2 rounded-t-lg font-medium transition-colors whitespace-nowrap ${
+              className={`px-3 py-1.5 rounded-t-lg font-medium transition-colors whitespace-nowrap ${
                 activeTab === tab.id
                   ? "bg-[#06b6d4]/20 text-[#06b6d4] border-b-2 border-[#06b6d4]"
                   : "text-slate-400 hover:text-white hover:bg-white/5"
@@ -316,23 +316,23 @@ export default function Analytics() {
 
         {/* Search Bar */}
         {activeTabData && (
-          <div className="relative mb-4">
-            <Search className="absolute left-3 top-3 text-slate-400" size={18} />
+          <div className="relative mb-3">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
             <input
               type="text"
               placeholder="Buscar en tabla..."
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#06b6d4]"
+              className="w-full pl-9 pr-4 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#06b6d4]"
               data-testid="search-input"
             />
             {searchText && (
               <button
                 onClick={() => setSearchText("")}
-                className="absolute right-3 top-3 text-slate-400 hover:text-white"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
                 data-testid="clear-search"
               >
-                <X size={18} />
+                <X size={16} />
               </button>
             )}
           </div>
@@ -340,13 +340,13 @@ export default function Analytics() {
 
         {/* Table */}
         {activeTabData && (
-          <Card className="bg-card border-none shadow-xl rounded-2xl md:rounded-3xl overflow-hidden">
+          <Card className="bg-card border-none shadow-xl rounded-xl md:rounded-2xl overflow-hidden">
             <CardContent className="p-0">
               {activeTabData.isSpecialFormat ? (
                 // Special format for RECEPCIÓN, DIRECTA, REVERSA
                 <div>
                   {/* Column Headers */}
-                  <div className="bg-gradient-to-r from-[#06b6d4]/20 to-[#06b6d4]/10 border-b-2 border-[#06b6d4]/50 px-4 md:px-6 py-4 grid grid-cols-12 gap-4 items-center">
+                  <div className="bg-gradient-to-r from-[#06b6d4]/20 to-[#06b6d4]/10 border-b-2 border-[#06b6d4]/50 px-3 md:px-5 py-3 grid grid-cols-12 gap-3 items-center">
                     <button
                       onClick={() => handleSort("serie")}
                       className="col-span-6 text-left hover:bg-white/10 px-2 py-1 rounded transition-colors cursor-pointer"
@@ -393,14 +393,14 @@ export default function Analytics() {
                     {filteredAndSortedData.map((row, idx) => (
                       <div
                         key={row.id}
-                        className="px-4 md:px-6 py-4 grid grid-cols-12 gap-4 items-center hover:bg-white/5 transition-colors"
+                        className="px-3 md:px-5 py-3 grid grid-cols-12 gap-3 items-center hover:bg-white/5 transition-colors"
                         data-testid={`row-${activeTab}-${idx}`}
                       >
                         <div className="col-span-6 overflow-hidden">
                           <span className="text-slate-200 text-xs whitespace-nowrap overflow-ellipsis">{row.serie}</span>
                         </div>
                         <div className="col-span-3">
-                          <span className="inline-flex items-center px-3 py-1 rounded text-xs font-bold bg-yellow-500 text-black" style={{fontSize: '0.65rem'}}>
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-yellow-500 text-black" style={{fontSize: '0.6rem'}}>
                             {row.estado}
                           </span>
                         </div>
@@ -408,13 +408,13 @@ export default function Analytics() {
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <button
-                                className="p-2 border border-slate-500 rounded text-slate-300 hover:bg-white/10 hover:border-white/50 transition-colors"
+                                className="p-1.5 border border-slate-500 rounded text-slate-300 hover:bg-white/10 hover:border-white/50 transition-colors"
                                 data-testid={`action-menu-${idx}`}
                               >
-                                <MoreVertical size={18} />
+                                <MoreVertical size={16} />
                               </button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuContent align="end" className="w-44">
                               {activeTabData?.actions?.map((action, actionIdx) => {
                                 const ActionIcon = action.icon;
                                 const colorClass = action.color === "red-400" ? "text-red-400" : 
@@ -426,7 +426,7 @@ export default function Analytics() {
                                 return (
                                   <DropdownMenuItem
                                     key={actionIdx}
-                                    className={`flex items-center gap-2 cursor-pointer ${itemColorClass}`}
+                                    className={`flex items-center gap-2 cursor-pointer ${itemColorClass} text-sm py-1.5 px-2`}
                                     data-testid={`action-${action.label.toLowerCase()}-${idx}`}
                                     onClick={() => {
                                       if (action.label === "Declarar" && activeTab === "directa") {
@@ -443,7 +443,7 @@ export default function Analytics() {
                                       }
                                     }}
                                   >
-                                    <ActionIcon size={16} className={colorClass} />
+                                    <ActionIcon size={14} className={colorClass} />
                                     <span>{action.label}</span>
                                   </DropdownMenuItem>
                                 );
@@ -465,7 +465,7 @@ export default function Analytics() {
                           <th
                             key={col}
                             onClick={() => handleSort(col)}
-                            className="px-4 md:px-6 py-4 text-left font-semibold text-[#06b6d4] text-xs uppercase cursor-pointer hover:bg-white/10 transition-colors tracking-wide"
+                            className="px-3 md:px-5 py-3 text-left font-semibold text-[#06b6d4] text-xs uppercase cursor-pointer hover:bg-white/10 transition-colors tracking-wide"
                             data-testid={`header-${col}`}
                           >
                             <div className="flex items-center gap-2">
@@ -473,9 +473,9 @@ export default function Analytics() {
                               {sortColumn === col && (
                                 <span>
                                   {sortDirection === "asc" ? (
-                                    <ArrowUp size={14} className="text-[#06b6d4]" />
+                                    <ArrowUp size={12} className="text-[#06b6d4]" />
                                   ) : (
-                                    <ArrowDown size={14} className="text-[#06b6d4]" />
+                                    <ArrowDown size={12} className="text-[#06b6d4]" />
                                   )}
                                 </span>
                               )}
@@ -497,7 +497,7 @@ export default function Analytics() {
                             return (
                               <td
                                 key={`${row.id}-${col}`}
-                                className="px-4 md:px-6 py-4 text-xs"
+                                className="px-3 md:px-5 py-3 text-xs"
                                 data-testid={`cell-${col}-${idx}`}
                               >
                                 {isStatus && typeof value === "string" ? (
@@ -529,7 +529,7 @@ export default function Analytics() {
       <Sheet open={isDeriveOpen} onOpenChange={setIsDeriveOpen}>
         <SheetContent side="right" className="w-full sm:w-96 p-0 bg-slate-900 border-l border-white/10">
           {/* Header */}
-          <div className="h-16 border-b border-white/10 flex items-center px-6">
+          <div className="h-16 border-b border-white/10 flex items-center px-5">
             <SheetClose asChild>
               <button className="p-2 hover:bg-white/10 rounded-lg transition-colors -ml-2">
                 <ArrowLeft size={20} className="text-slate-400" />
@@ -542,24 +542,24 @@ export default function Analytics() {
 
           {/* Content */}
           <div className="overflow-y-auto h-[calc(100vh-64px)]">
-            <div className="p-6 space-y-6">
+            <div className="p-5 space-y-5">
               {/* Serie Seleccionada */}
               <div>
-                <label className="block text-sm font-semibold text-white mb-3">
+                <label className="block text-sm font-semibold text-white mb-2">
                   SERIE SELECCIONADA
                 </label>
                 <input
                   type="text"
                   value={deriveSerie}
                   readOnly
-                  className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-lg text-white focus:outline-none cursor-not-allowed"
+                  className="w-full px-4 py-2 bg-slate-800 border border-white/10 rounded-lg text-white focus:outline-none cursor-not-allowed"
                   data-testid="input-derive-serie"
                 />
               </div>
 
               {/* RUT */}
               <div>
-                <label className="block text-sm font-semibold text-white mb-3">
+                <label className="block text-sm font-semibold text-white mb-2">
                   RUT
                 </label>
                 <input
@@ -567,14 +567,14 @@ export default function Analytics() {
                   placeholder="Ej. 12345678-9"
                   value={deriveRut}
                   onChange={(e) => setDeriveRut(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500"
+                  className="w-full px-4 py-2 bg-slate-800 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500"
                   data-testid="input-derive-rut"
                 />
               </div>
 
               {/* Orden de trabajo */}
               <div>
-                <label className="block text-sm font-semibold text-white mb-3">
+                <label className="block text-sm font-semibold text-white mb-2">
                   ORDEN DE TRABAJO <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -582,34 +582,34 @@ export default function Analytics() {
                   placeholder="Ingrese la orden de trabajo"
                   value={deriveWorkOrder}
                   onChange={(e) => setDeriveWorkOrder(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500"
+                  className="w-full px-4 py-2 bg-slate-800 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500"
                   data-testid="input-derive-work-order"
                 />
               </div>
 
               {/* Transferencia supervisor */}
               <div>
-                <label className="block text-sm font-semibold text-white mb-3">
+                <label className="block text-sm font-semibold text-white mb-2 uppercase">
                   TRANSFERENCIA SUPERVISOR
                 </label>
                 <input
                   type="text"
                   value="Se asignará automáticamente"
                   readOnly
-                  className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-lg text-slate-400 focus:outline-none cursor-not-allowed"
+                  className="w-full px-4 py-2 bg-slate-800 border border-white/10 rounded-lg text-slate-400 focus:outline-none cursor-not-allowed"
                   data-testid="input-derive-supervisor"
                 />
               </div>
 
               {/* Seleccionar motivo */}
               <div>
-                <label className="block text-sm font-semibold text-white mb-3">
+                <label className="block text-sm font-semibold text-white mb-2 uppercase">
                   SELECCIONAR MOTIVO <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={deriveMotivo}
                   onChange={(e) => setDeriveMotivo(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                  className="w-full px-4 py-2 bg-slate-800 border border-white/10 rounded-lg text-white focus:outline-none focus:border-blue-500"
                   data-testid="select-derive-motivo"
                 >
                   <option value="">SELECCIONAR</option>
@@ -622,7 +622,7 @@ export default function Analytics() {
 
               {/* Serie fisica retirada */}
               <div>
-                <label className="block text-sm font-semibold text-white mb-3">
+                <label className="block text-sm font-semibold text-white mb-2">
                   SERIE FISICA RETIRADA
                 </label>
                 <input
@@ -630,32 +630,32 @@ export default function Analytics() {
                   placeholder="Ingrese la serie física retirada (opcional)"
                   value={deriveSerieFisica}
                   onChange={(e) => setDeriveSerieFisica(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500"
+                  className="w-full px-4 py-2 bg-slate-800 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500"
                   data-testid="input-derive-serie-fisica"
                 />
               </div>
 
               {/* Observaciones */}
               <div>
-                <label className="block text-sm font-semibold text-white mb-3">
+                <label className="block text-sm font-semibold text-white mb-2">
                   OBSERVACIONES <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   placeholder="Describa los detalles de la transferencia reversa"
                   value={deriveObservations}
                   onChange={(e) => setDeriveObservations(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 resize-none"
-                  rows={5}
+                  className="w-full px-4 py-2 bg-slate-800 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 resize-none"
+                  rows={4}
                   data-testid="input-derive-observations"
                 />
               </div>
 
               {/* Cargar Archivo */}
               <div>
-                <label className="block text-sm font-semibold text-white mb-3">
+                <label className="block text-sm font-semibold text-white mb-2">
                   Cargar Archivo
                 </label>
-                <div className="flex gap-3 mb-2">
+                <div className="flex gap-2 mb-2">
                   <button
                     onClick={() => {
                       const input = document.createElement("input");
@@ -669,12 +669,12 @@ export default function Analytics() {
                       };
                       input.click();
                     }}
-                    className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white hover:bg-slate-700 transition-colors text-sm font-medium"
+                    className="px-4 py-2 bg-slate-800 border border-white/10 rounded-lg text-white hover:bg-slate-700 transition-colors text-sm font-medium"
                     data-testid="button-derive-select-file"
                   >
                     Seleccionar archivo
                   </button>
-                  <div className="flex-1 px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-slate-400 text-sm flex items-center">
+                  <div className="flex-1 px-4 py-2 bg-slate-800 border border-white/10 rounded-lg text-slate-400 text-sm flex items-center">
                     {deriveFoto ? deriveFoto : "Ningún arc... eleccionado"}
                   </div>
                 </div>
@@ -688,7 +688,7 @@ export default function Analytics() {
               <button
                 onClick={handleDeriveSubmit}
                 disabled={!deriveWorkOrder.trim() || !deriveMotivo || !deriveObservations.trim()}
-                className="w-full py-3 bg-amber-400 hover:bg-amber-500 disabled:bg-amber-400/50 disabled:cursor-not-allowed text-black font-semibold rounded-lg transition-colors mt-8"
+                className="w-full py-2 bg-amber-400 hover:bg-amber-500 disabled:bg-amber-400/50 disabled:cursor-not-allowed text-black font-semibold rounded-lg transition-colors mt-6"
                 data-testid="button-solicitar-requerimiento"
               >
                 Solicitar requerimiento
@@ -702,7 +702,7 @@ export default function Analytics() {
       <Sheet open={isDeclareDeliveryOpen} onOpenChange={setIsDeclareDeliveryOpen}>
         <SheetContent side="right" className="w-full sm:w-96 p-0 bg-slate-900 border-l border-white/10">
           {/* Header */}
-          <div className="h-16 border-b border-white/10 flex items-center px-6">
+          <div className="h-16 border-b border-white/10 flex items-center px-5">
             <SheetClose asChild>
               <button className="p-2 hover:bg-white/10 rounded-lg transition-colors -ml-2">
                 <ArrowLeft size={20} className="text-slate-400" />
@@ -715,27 +715,27 @@ export default function Analytics() {
 
           {/* Content */}
           <div className="overflow-y-auto h-[calc(100vh-64px)]">
-            <div className="p-6 space-y-6">
+            <div className="p-5 space-y-5">
               {/* Serie Seleccionada */}
               <div>
-                <label className="block text-sm font-semibold text-white mb-3">
+                <label className="block text-sm font-semibold text-white mb-2">
                   SERIE SELECCIONADA
                 </label>
                 <input
                   type="text"
                   value={deliverySerie}
                   readOnly
-                  className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-lg text-white focus:outline-none cursor-not-allowed"
+                  className="w-full px-4 py-2 bg-slate-800 border border-white/10 rounded-lg text-white focus:outline-none cursor-not-allowed"
                   data-testid="input-delivery-serie"
                 />
               </div>
 
               {/* Cargar Archivo */}
               <div>
-                <label className="block text-sm font-semibold text-white mb-3">
+                <label className="block text-sm font-semibold text-white mb-2">
                   Cargar Archivo <span className="text-red-500">*</span>
                 </label>
-                <div className="flex gap-3 mb-2">
+                <div className="flex gap-2 mb-2">
                   <button
                     onClick={() => {
                       const input = document.createElement("input");
@@ -749,12 +749,12 @@ export default function Analytics() {
                       };
                       input.click();
                     }}
-                    className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white hover:bg-slate-700 transition-colors text-sm font-medium"
+                    className="px-4 py-2 bg-slate-800 border border-white/10 rounded-lg text-white hover:bg-slate-700 transition-colors text-sm font-medium"
                     data-testid="button-delivery-select-file"
                   >
                     Seleccionar archivo
                   </button>
-                  <div className="flex-1 px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-slate-400 text-sm flex items-center">
+                  <div className="flex-1 px-4 py-2 bg-slate-800 border border-white/10 rounded-lg text-slate-400 text-sm flex items-center">
                     {deliveryFoto ? deliveryFoto : "Ningún archi... seleccionado"}
                   </div>
                 </div>
@@ -768,7 +768,7 @@ export default function Analytics() {
               <button
                 onClick={handleDeclareDeliverySubmit}
                 disabled={!deliveryFoto}
-                className="px-6 py-3 bg-amber-400 hover:bg-amber-500 disabled:bg-amber-400/50 disabled:cursor-not-allowed text-black font-semibold rounded-lg transition-colors mt-8"
+                className="px-6 py-2 bg-amber-400 hover:bg-amber-500 disabled:bg-amber-400/50 disabled:cursor-not-allowed text-black font-semibold rounded-lg transition-colors mt-6"
                 data-testid="button-declare-delivery"
               >
                 Declarar entregada
@@ -782,7 +782,7 @@ export default function Analytics() {
       <Sheet open={isTransferOpen} onOpenChange={setIsTransferOpen}>
         <SheetContent side="right" className="w-full sm:w-96 p-0 bg-slate-900 border-l border-white/10">
           {/* Header */}
-          <div className="h-16 border-b border-white/10 flex items-center px-6">
+          <div className="h-16 border-b border-white/10 flex items-center px-5">
             <SheetClose asChild>
               <button className="p-2 hover:bg-white/10 rounded-lg transition-colors -ml-2">
                 <ArrowLeft size={20} className="text-slate-400" />
@@ -795,24 +795,24 @@ export default function Analytics() {
 
           {/* Content */}
           <div className="overflow-y-auto h-[calc(100vh-64px)]">
-            <div className="p-6 space-y-6">
+            <div className="p-5 space-y-5">
               {/* Serie Seleccionada */}
               <div>
-                <label className="block text-sm font-semibold text-white mb-3">
+                <label className="block text-sm font-semibold text-white mb-2">
                   SERIE SELECCIONADA
                 </label>
                 <input
                   type="text"
                   value={transferSerie}
                   readOnly
-                  className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-lg text-white focus:outline-none cursor-not-allowed"
+                  className="w-full px-4 py-2 bg-slate-800 border border-white/10 rounded-lg text-white focus:outline-none cursor-not-allowed"
                   data-testid="input-transfer-serie"
                 />
               </div>
 
               {/* Escalamiento a Supervisor */}
               <div>
-                <label className="block text-sm font-semibold text-white mb-3 uppercase">
+                <label className="block text-sm font-semibold text-white mb-2 uppercase">
                   Escalamiento a Supervisor
                 </label>
                 <div className="space-y-2">
@@ -824,14 +824,14 @@ export default function Analytics() {
                         setEscalamientoBodega(null);
                         setTransferTecnico("");
                       }}
-                      className={`w-full px-4 py-3 rounded-lg font-medium transition-colors flex items-center gap-2 text-left ${
+                      className={`w-full px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 text-left ${
                         escalamientoSupervisor === option
                           ? "bg-cyan-500 text-black"
                           : "bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30"
                       }`}
                       data-testid={`button-escalamiento-supervisor-${option.toLowerCase().replace(/\s/g, "-")}`}
                     >
-                      <Send size={18} />
+                      <Send size={16} />
                       {option}
                     </button>
                   ))}
@@ -840,7 +840,7 @@ export default function Analytics() {
 
               {/* Escalamiento a Bodega */}
               <div>
-                <label className="block text-sm font-semibold text-white mb-3 uppercase">
+                <label className="block text-sm font-semibold text-white mb-2 uppercase">
                   Escalamiento a Bodega
                 </label>
                 <div className="space-y-2">
@@ -852,14 +852,14 @@ export default function Analytics() {
                         setEscalamientoSupervisor(null);
                         setTransferTecnico("");
                       }}
-                      className={`w-full px-4 py-3 rounded-lg font-medium transition-colors flex items-center gap-2 text-left ${
+                      className={`w-full px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 text-left ${
                         escalamientoBodega === option
                           ? "bg-red-600 text-white"
                           : "bg-red-500/20 text-red-400 hover:bg-red-500/30"
                       }`}
                       data-testid={`button-escalamiento-bodega-${option.toLowerCase().replace(/\s/g, "-")}`}
                     >
-                      <Send size={18} />
+                      <Send size={16} />
                       {option}
                     </button>
                   ))}
@@ -869,23 +869,23 @@ export default function Analytics() {
               {/* Transferencia Entre Tecnicos */}
               {!escalamientoSupervisor && !escalamientoBodega && (
                 <div>
-                  <label className="block text-sm font-semibold text-white mb-3 uppercase">
+                  <label className="block text-sm font-semibold text-white mb-2 uppercase">
                     Transferencia Entre Tecnicos
                   </label>
-                  <button className="w-full px-4 py-3 bg-amber-400 hover:bg-amber-500 text-black font-medium rounded-lg transition-colors flex items-center gap-2 justify-center">
-                    <Send size={18} />
+                  <button className="w-full px-4 py-2 bg-amber-400 hover:bg-amber-500 text-black font-medium rounded-lg transition-colors flex items-center gap-2 justify-center">
+                    <Send size={16} />
                     Transferencia a otro tecnico
                   </button>
 
                   {/* Tecnico a quien transfiere */}
-                  <div className="mt-4">
-                    <label className="block text-sm font-semibold text-white mb-3">
+                  <div className="mt-3">
+                    <label className="block text-sm font-semibold text-white mb-2">
                       Técnico a quien transfiere <span className="text-red-500">*</span>
                     </label>
                     <select
                       value={transferTecnico}
                       onChange={(e) => setTransferTecnico(e.target.value)}
-                      className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                      className="w-full px-4 py-2 bg-slate-800 border border-white/10 rounded-lg text-white focus:outline-none focus:border-blue-500"
                       data-testid="select-transfer-tecnico"
                     >
                       <option value="">Seleccione el técnico a transferir</option>
@@ -899,10 +899,10 @@ export default function Analytics() {
 
               {/* Cargar Foto */}
               <div>
-                <label className="block text-sm font-semibold text-white mb-3">
+                <label className="block text-sm font-semibold text-white mb-2">
                   Cargar Foto
                 </label>
-                <div className="flex gap-3 mb-2">
+                <div className="flex gap-2 mb-2">
                   <button
                     onClick={() => {
                       const input = document.createElement("input");
@@ -916,12 +916,12 @@ export default function Analytics() {
                       };
                       input.click();
                     }}
-                    className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white hover:bg-slate-700 transition-colors text-sm font-medium"
+                    className="px-4 py-2 bg-slate-800 border border-white/10 rounded-lg text-white hover:bg-slate-700 transition-colors text-sm font-medium"
                     data-testid="button-transfer-select-file"
                   >
                     Seleccionar archivo
                   </button>
-                  <div className="flex-1 px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-slate-400 text-sm flex items-center">
+                  <div className="flex-1 px-4 py-2 bg-slate-800 border border-white/10 rounded-lg text-slate-400 text-sm flex items-center">
                     {transferFoto ? transferFoto : "Ningún arc... eleccionado"}
                   </div>
                 </div>
@@ -933,15 +933,15 @@ export default function Analytics() {
 
               {/* Motivo */}
               <div>
-                <label className="block text-sm font-semibold text-white mb-3">
+                <label className="block text-sm font-semibold text-white mb-2">
                   MOTIVO <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   placeholder=""
                   value={transferMotivo}
                   onChange={(e) => setTransferMotivo(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 resize-none"
-                  rows={4}
+                  className="w-full px-4 py-2 bg-slate-800 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 resize-none"
+                  rows={3}
                   data-testid="input-transfer-motivo"
                 />
               </div>
@@ -950,7 +950,7 @@ export default function Analytics() {
               <button
                 onClick={handleTransferSubmit}
                 disabled={!transferMotivo.trim()}
-                className="w-full py-3 bg-green-600 hover:bg-green-700 disabled:bg-green-600/50 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors mt-8"
+                className="w-full py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-600/50 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors mt-6"
                 data-testid="button-enviar-requerimiento"
               >
                 Enviar requerimiento
@@ -964,7 +964,7 @@ export default function Analytics() {
       <Sheet open={isDeclareOpen} onOpenChange={setIsDeclareOpen}>
         <SheetContent side="right" className="w-full sm:w-96 p-0 bg-slate-900 border-l border-white/10">
           {/* Header */}
-          <div className="h-16 border-b border-white/10 flex items-center px-6">
+          <div className="h-16 border-b border-white/10 flex items-center px-5">
             <SheetClose asChild>
               <button className="p-2 hover:bg-white/10 rounded-lg transition-colors -ml-2">
                 <ArrowLeft size={20} className="text-slate-400" />
@@ -977,24 +977,24 @@ export default function Analytics() {
 
           {/* Content */}
           <div className="overflow-y-auto h-[calc(100vh-64px)]">
-            <div className="p-6 space-y-6">
+            <div className="p-5 space-y-5">
               {/* Serie Seleccionada */}
               <div>
-                <label className="block text-sm font-semibold text-white mb-3">
+                <label className="block text-sm font-semibold text-white mb-2">
                   SERIE SELECCIONADA
                 </label>
                 <input
                   type="text"
                   value={selectedSerie}
                   readOnly
-                  className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-lg text-white focus:outline-none cursor-not-allowed"
+                  className="w-full px-4 py-2 bg-slate-800 border border-white/10 rounded-lg text-white focus:outline-none cursor-not-allowed"
                   data-testid="input-serie-selected"
                 />
               </div>
 
               {/* Orden de trabajo */}
               <div>
-                <label className="block text-sm font-semibold text-white mb-3">
+                <label className="block text-sm font-semibold text-white mb-2">
                   Orden de trabajo <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -1002,14 +1002,14 @@ export default function Analytics() {
                   placeholder="Ingrese la orden de trabajo"
                   value={workOrder}
                   onChange={(e) => setWorkOrder(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500"
+                  className="w-full px-4 py-2 bg-slate-800 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500"
                   data-testid="input-work-order"
                 />
               </div>
 
               {/* RUT cliente */}
               <div>
-                <label className="block text-sm font-semibold text-white mb-3">
+                <label className="block text-sm font-semibold text-white mb-2">
                   RUT cliente
                 </label>
                 <input
@@ -1017,14 +1017,14 @@ export default function Analytics() {
                   placeholder=""
                   value={rutCliente}
                   onChange={(e) => setRutCliente(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500"
+                  className="w-full px-4 py-2 bg-slate-800 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500"
                   data-testid="input-rut-cliente"
                 />
               </div>
 
               {/* Observaciones */}
               <div>
-                <label className="block text-sm font-semibold text-white mb-3">
+                <label className="block text-sm font-semibold text-white mb-2">
                   Observaciones
                 </label>
                 <textarea
@@ -1032,21 +1032,21 @@ export default function Analytics() {
                   value={observations}
                   onChange={(e) => setObservations(e.target.value.substring(0, 500))}
                   maxLength={500}
-                  rows={5}
-                  className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 resize-none"
+                  rows={4}
+                  className="w-full px-4 py-2 bg-slate-800 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 resize-none"
                   data-testid="input-observations"
                 />
-                <p className="text-xs text-slate-400 mt-2">
+                <p className="text-xs text-slate-400 mt-1">
                   Campo opcional, máximo 500 caracteres
                 </p>
               </div>
 
               {/* Cargar Archivo */}
               <div>
-                <label className="block text-sm font-semibold text-white mb-3">
+                <label className="block text-sm font-semibold text-white mb-2">
                   Cargar Archivo
                 </label>
-                <div className="flex gap-3 mb-2">
+                <div className="flex gap-2 mb-2">
                   <button
                     onClick={() => {
                       const input = document.createElement("input");
@@ -1060,12 +1060,12 @@ export default function Analytics() {
                       };
                       input.click();
                     }}
-                    className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white hover:bg-slate-700 transition-colors text-sm font-medium"
+                    className="px-4 py-2 bg-slate-800 border border-white/10 rounded-lg text-white hover:bg-slate-700 transition-colors text-sm font-medium"
                     data-testid="button-select-file"
                   >
                     Seleccionar archivo
                   </button>
-                  <div className="flex-1 px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-slate-400 text-sm flex items-center">
+                  <div className="flex-1 px-4 py-2 bg-slate-800 border border-white/10 rounded-lg text-slate-400 text-sm flex items-center">
                     {selectedFile ? selectedFile : "Ningún archi... seleccionado"}
                   </div>
                 </div>
@@ -1079,7 +1079,7 @@ export default function Analytics() {
               <button
                 onClick={handleDeclareSubmit}
                 disabled={!workOrder.trim()}
-                className="w-full py-3 bg-green-600 hover:bg-green-700 disabled:bg-green-600/50 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors mt-8"
+                className="w-full py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-600/50 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors mt-6"
                 data-testid="button-declare"
               >
                 Declarar instalada
