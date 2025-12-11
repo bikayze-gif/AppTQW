@@ -12,7 +12,7 @@ import { ChatReporte } from "@/components/chat-reporte";
 import { AuthProvider, ProtectedRoute, useAuth } from "@/lib/auth-context";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
-import Dashboard from "@/pages/dashboard";
+import Calidad from "@/pages/calidad";
 import PeriodInfo from "@/pages/period-info";
 import Analytics from "@/pages/analytics";
 import Activity from "@/pages/activity";
@@ -54,8 +54,8 @@ function Router() {
       <Route path="/">
         <ProtectedRoute><PeriodInfo /></ProtectedRoute>
       </Route>
-      <Route path="/dashboard">
-        <ProtectedRoute><Dashboard /></ProtectedRoute>
+      <Route path="/calidad">
+        <ProtectedRoute><Calidad /></ProtectedRoute>
       </Route>
       <Route path="/activity">
         <ProtectedRoute><Activity /></ProtectedRoute>

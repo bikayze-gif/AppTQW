@@ -15,7 +15,7 @@ export function BottomNav({ onAddClick }: BottomNavProps) {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const isPeriodInfo = currentPath === "/";
-  const isDashboard = currentPath === "/dashboard";
+  const isCalidad = currentPath === "/calidad"; // Changed from isDashboard
   const isActivity = currentPath === "/activity";
   const isAnalytics = currentPath === "/analytics";
   const isTickets = currentPath === "/tickets";
@@ -46,8 +46,8 @@ export function BottomNav({ onAddClick }: BottomNavProps) {
             <Activity size={22} />
           </button>
           <button
-            onClick={() => setLocation("/dashboard")}
-            className={`p-2 rounded-lg relative hover:bg-white/5 transition-colors ${isDashboard ? "text-[#06b6d4]" : "text-slate-400 hover:text-white"}`}
+            onClick={() => setLocation("/calidad")} // Changed route
+            className={`p-2 rounded-lg relative hover:bg-white/5 transition-colors ${isCalidad ? "text-[#06b6d4]" : "text-slate-400 hover:text-white"}`} // Changed condition
             data-testid="button-nav-file"
           >
             <Box size={22} />
