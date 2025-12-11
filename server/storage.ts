@@ -586,6 +586,123 @@ export class MySQLStorage implements IStorage {
       producto: string;
     }>;
   }
+
+  // ============================================
+  // CALIDAD REACTIVA OPERATIONS
+  // ============================================
+
+  async getCalidadReactivaSummary(rut: string, months: number = 12): Promise<Array<{
+    mes_contable: string;
+    anio: number;
+    mes: number;
+    total: number;
+    cumple: number;
+    no_cumple: number;
+    cumple_hfc: number;
+    no_cumple_hfc: number;
+    cumple_ftth: number;
+    no_cumple_ftth: number;
+    eficiencia_general: number;
+    eficiencia_hfc: number;
+    eficiencia_ftth: number;
+  }>> {
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      `SELECT
+        mes_contable,
+        YEAR(mes_contable) as anio,
+        MONTH(mes_contable) as mes,
+        COUNT(*) as total,
+        SUM(CASE WHEN CALIDAD_30 = '0' THEN 1 ELSE 0 END) as cumple,
+        SUM(CASE WHEN CALIDAD_30 = '1' THEN 1 ELSE 0 END) as no_cumple,
+        SUM(CASE WHEN CALIDAD_30 = '0' AND TIPO_RED_CALCULADO = 'HFC' THEN 1 ELSE 0 END) as cumple_hfc,
+        SUM(CASE WHEN CALIDAD_30 = '1' AND TIPO_RED_CALCULADO = 'HFC' THEN 1 ELSE 0 END) as no_cumple_hfc,
+        SUM(CASE WHEN CALIDAD_30 = '0' AND TIPO_RED_CALCULADO IN ('FTTH', 'DUAL') THEN 1 ELSE 0 END) as cumple_ftth,
+        SUM(CASE WHEN CALIDAD_30 = '1' AND TIPO_RED_CALCULADO IN ('FTTH', 'DUAL') THEN 1 ELSE 0 END) as no_cumple_ftth
+      FROM TB_CALIDAD_NARANJA_BASE
+      WHERE RUT_TECNICO_FS = ?
+      GROUP BY mes_contable
+      ORDER BY mes_contable DESC
+      LIMIT ?`,
+      [rut, months]
+    );
+
+    return rows.map((row: any) => {
+      const total = Number(row.total) || 0;
+      const cumple = Number(row.cumple) || 0;
+      const cumple_hfc = Number(row.cumple_hfc) || 0;
+      const no_cumple_hfc = Number(row.no_cumple_hfc) || 0;
+      const cumple_ftth = Number(row.cumple_ftth) || 0;
+      const no_cumple_ftth = Number(row.no_cumple_ftth) || 0;
+      const total_hfc = cumple_hfc + no_cumple_hfc;
+      const total_ftth = cumple_ftth + no_cumple_ftth;
+
+      return {
+        mes_contable: row.mes_contable,
+        anio: Number(row.anio),
+        mes: Number(row.mes),
+        total,
+        cumple,
+        no_cumple: Number(row.no_cumple) || 0,
+        cumple_hfc,
+        no_cumple_hfc,
+        cumple_ftth,
+        no_cumple_ftth,
+        eficiencia_general: total > 0 ? Math.round((cumple / total) * 10000) / 100 : 0,
+        eficiencia_hfc: total_hfc > 0 ? Math.round((cumple_hfc / total_hfc) * 10000) / 100 : 0,
+        eficiencia_ftth: total_ftth > 0 ? Math.round((cumple_ftth / total_ftth) * 10000) / 100 : 0,
+      };
+    }).reverse();
+  }
+
+  async getCalidadReactivaDetails(rut: string, mesContable: string): Promise<Array<{
+    LLAVE1: string;
+    num_pedido: string;
+    id_cliente: string;
+    nombre_cuenta: string;
+    ACTIVIDAD: string;
+    ACTIVIDAD_FINAL: string;
+    TIPO_ACTIVIDAD: string;
+    FECHA_EJECUCION: string;
+    TIPO_RED_CALCULADO: string;
+    CALIDAD_30: string;
+    Comuna: string;
+    ZONA: string;
+  }>> {
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      `SELECT
+        LLAVE1,
+        num_pedido,
+        id_cliente,
+        nombre_cuenta,
+        ACTIVIDAD,
+        ACTIVIDAD_FINAL,
+        TIPO_ACTIVIDAD,
+        FECHA_EJECUCION,
+        TIPO_RED_CALCULADO,
+        CALIDAD_30,
+        Comuna,
+        ZONA
+      FROM TB_CALIDAD_NARANJA_BASE
+      WHERE RUT_TECNICO_FS = ?
+        AND mes_contable = ?
+      ORDER BY FECHA_EJECUCION DESC`,
+      [rut, mesContable]
+    );
+    return rows as Array<{
+      LLAVE1: string;
+      num_pedido: string;
+      id_cliente: string;
+      nombre_cuenta: string;
+      ACTIVIDAD: string;
+      ACTIVIDAD_FINAL: string;
+      TIPO_ACTIVIDAD: string;
+      FECHA_EJECUCION: string;
+      TIPO_RED_CALCULADO: string;
+      CALIDAD_30: string;
+      Comuna: string;
+      ZONA: string;
+    }>;
+  }
 }
 
 export const storage = new MySQLStorage();

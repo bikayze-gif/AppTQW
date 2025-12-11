@@ -597,6 +597,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ============================================
+  // CALIDAD REACTIVA ENDPOINTS
+  // ============================================
+
+  // GET calidad reactiva summary (chart and table data)
+  app.get("/api/calidad-reactiva/summary", requireAuth, async (req, res) => {
+    try {
+      const rut = req.session.user?.rut;
+      if (!rut) {
+        return res.status(401).json({ error: "Usuario no autenticado" });
+      }
+
+      const months = parseInt(req.query.months as string) || 12;
+      const data = await storage.getCalidadReactivaSummary(rut, months);
+
+      res.json(data);
+    } catch (error) {
+      console.error("Error fetching calidad reactiva summary:", error);
+      res.status(500).json({ error: "Error al obtener datos de calidad reactiva" });
+    }
+  });
+
+  // GET calidad reactiva details for a specific month
+  app.get("/api/calidad-reactiva/details/:mesContable", requireAuth, async (req, res) => {
+    try {
+      const rut = req.session.user?.rut;
+      if (!rut) {
+        return res.status(401).json({ error: "Usuario no autenticado" });
+      }
+
+      const { mesContable } = req.params;
+      const data = await storage.getCalidadReactivaDetails(rut, mesContable);
+
+      const cumple = data.filter(d => d.CALIDAD_30 === '0').length;
+      const noCumple = data.filter(d => d.CALIDAD_30 === '1').length;
+      const hfc = data.filter(d => d.TIPO_RED_CALCULADO === 'HFC');
+      const ftth = data.filter(d => ['FTTH', 'DUAL'].includes(d.TIPO_RED_CALCULADO));
+
+      res.json({
+        success: true,
+        mesContable,
+        totalRegistros: data.length,
+        resumen: {
+          total: data.length,
+          cumple,
+          noCumple,
+          eficiencia: data.length > 0 ? Math.round((cumple / data.length) * 10000) / 100 : 0,
+          hfc: {
+            total: hfc.length,
+            cumple: hfc.filter(d => d.CALIDAD_30 === '0').length,
+            noCumple: hfc.filter(d => d.CALIDAD_30 === '1').length,
+          },
+          ftth: {
+            total: ftth.length,
+            cumple: ftth.filter(d => d.CALIDAD_30 === '0').length,
+            noCumple: ftth.filter(d => d.CALIDAD_30 === '1').length,
+          },
+        },
+        detalles: data,
+      });
+    } catch (error) {
+      console.error("Error fetching calidad reactiva details:", error);
+      res.status(500).json({ error: "Error al obtener detalles de calidad reactiva" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
