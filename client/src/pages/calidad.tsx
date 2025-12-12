@@ -1,9 +1,10 @@
 import { useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
-import { Search, X, ArrowUp, ArrowDown, ChevronLeft, CheckCircle, XCircle } from "lucide-react";
+import { Search, X, ArrowUp, ArrowDown, ChevronLeft, CheckCircle, XCircle, Sheet } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
+import * as XLSX from "xlsx";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -184,6 +185,7 @@ export default function Calidad() {
   const [selectedMes, setSelectedMes] = useState<string | null>(null);
   const [showDrawer, setShowDrawer] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedDownloadMonth, setSelectedDownloadMonth] = useState<string>("");
 
   const { data: summaryResponse, isLoading: isLoadingSummary } = useQuery({
     queryKey: ['/api/calidad-reactiva/summary', monthsFilter],
@@ -279,6 +281,37 @@ export default function Calidad() {
   const formatMes = (mesContable: string) => {
     const date = new Date(mesContable);
     return `${MONTH_NAMES[date.getMonth()]} ${date.getFullYear()}`;
+  };
+
+  const handleDownloadExcel = async () => {
+    if (!selectedDownloadMonth) {
+      alert("Por favor selecciona un mes");
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/calidad-reactiva/export-excel/${encodeURIComponent(selectedDownloadMonth)}`, {
+        credentials: 'include'
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch export data');
+
+      const data = await response.json();
+
+      if (data.length === 0) {
+        alert("No hay datos para exportar en este periodo");
+        return;
+      }
+
+      const worksheet = XLSX.utils.json_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Calidad Reactiva");
+      XLSX.writeFile(workbook, `Calidad_Reactiva_${selectedDownloadMonth}.xlsx`);
+
+    } catch (error) {
+      console.error("Error downloading Excel:", error);
+      alert("Error al descargar el archivo Excel");
+    }
   };
 
   return (
@@ -417,7 +450,7 @@ export default function Calidad() {
           </CardContent>
         </Card>
 
-        <div className="flex flex-row gap-2 items-center">
+        <div className="flex flex-col md:flex-row gap-2 items-stretch md:items-center">
           <div className="relative flex-1 min-w-0">
             <Search className="absolute left-3 top-3 text-slate-400" size={18} />
             <input
@@ -437,6 +470,31 @@ export default function Calidad() {
                 <X size={18} />
               </button>
             )}
+          </div>
+          
+          <div className="flex gap-2 items-center">
+            <select
+              value={selectedDownloadMonth}
+              onChange={(e) => setSelectedDownloadMonth(e.target.value)}
+              className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500"
+            >
+              <option value="">Seleccionar mes</option>
+              {filteredAndSortedData.map((row: any) => (
+                <option key={row.mes_contable} value={row.mes_contable}>
+                  {formatMes(row.mes_contable)}
+                </option>
+              ))}
+            </select>
+            
+            <button
+              onClick={handleDownloadExcel}
+              disabled={!selectedDownloadMonth}
+              className="flex items-center justify-center px-4 py-2 bg-green-500/20 border border-green-500/50 text-green-400 rounded-lg transition-colors hover:bg-green-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Descargar Excel"
+            >
+              <Sheet size={18} />
+              <span className="ml-2 text-sm">Descargar</span>
+            </button>
           </div>
         </div>
 

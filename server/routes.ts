@@ -688,6 +688,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // GET calidad reactiva export data for Excel
+  app.get("/api/calidad-reactiva/export-excel/:mesContable", requireAuth, async (req, res) => {
+    try {
+      const rut = req.session.user?.rut;
+      if (!rut) {
+        return res.status(401).json({ error: "Usuario no autenticado" });
+      }
+
+      const { mesContable } = req.params;
+      console.log(`[Calidad Export] Requesting export data for RUT: ${rut}, Mes: ${mesContable}`);
+      
+      const data = await storage.getCalidadReactivaExportData(rut, mesContable);
+      console.log(`[Calidad Export] Found ${data.length} records`);
+
+      res.json(data);
+    } catch (error) {
+      console.error("Error fetching calidad reactiva export data:", error);
+      res.status(500).json({ error: "Error al obtener datos para exportación" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

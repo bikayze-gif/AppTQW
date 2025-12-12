@@ -710,6 +710,45 @@ export class MySQLStorage implements IStorage {
     }>;
   }
 
+  async getCalidadReactivaExportData(rut: string, mesContable: string): Promise<Array<{
+    id_actividad: string;
+    id_actividad_2: string;
+    FECHA_EJECUCION: string;
+    fecha_ejecucion_2: string;
+    DESCRIPCION_CIERRE: string;
+    DESCRIPCION_CIERRE_2: string;
+    TIPO_RED_CALCULADO: string;
+    Comuna: string;
+  }>> {
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      `SELECT 
+        id_actividad,
+        id_actividad_2,
+        FECHA_EJECUCION,
+        fecha_ejecucion_2,
+        DESCRIPCION_CIERRE,
+        DESCRIPCION_CIERRE_2,
+        TIPO_RED_CALCULADO,
+        Comuna
+      FROM tb_calidad_naranja_base
+      WHERE RUT_TECNICO_FS = ?
+        AND DATE_FORMAT(mes_contable, '%Y-%m-01') = ?
+      ORDER BY FECHA_EJECUCION DESC`,
+      [rut, mesContable]
+    );
+
+    return rows as Array<{
+      id_actividad: string;
+      id_actividad_2: string;
+      FECHA_EJECUCION: string;
+      fecha_ejecucion_2: string;
+      DESCRIPCION_CIERRE: string;
+      DESCRIPCION_CIERRE_2: string;
+      TIPO_RED_CALCULADO: string;
+      Comuna: string;
+    }>;
+  }
+
   async getExportData(period: string): Promise<Array<{
     'Fecha fin#': string;
     orden: string;
