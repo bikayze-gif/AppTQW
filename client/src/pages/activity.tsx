@@ -4,6 +4,7 @@ import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tool
 import { Search, X, ArrowUp, ArrowDown, ChevronLeft, FileText, Sheet } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
+import * as XLSX from "xlsx";
 
 const CustomDot = (props: any) => {
   const { cx, cy, stroke, payload, value } = props;
@@ -247,9 +248,6 @@ export default function Activity() {
     if (!selectedMonth) return;
 
     try {
-      // In a real implementation with the package installed:
-      const XLSX = await import("xlsx");
-
       const period = `2025${selectedMonth}`;
 
       const response = await fetch(`/api/activity/export-excel?period=${period}`, {
