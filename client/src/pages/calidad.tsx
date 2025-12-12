@@ -282,8 +282,10 @@ export default function Calidad() {
   };
 
   const formatMes = (mesContable: string) => {
-    const date = new Date(mesContable);
-    return `${MONTH_NAMES[date.getMonth()]} ${date.getFullYear()}`;
+    // Parsear en UTC para evitar desfase de zona horaria
+    const [year, month] = mesContable.split('-');
+    const monthIndex = parseInt(month, 10) - 1;
+    return `${MONTH_NAMES[monthIndex]} ${year}`;
   };
 
   const handleDownloadExcel = async () => {

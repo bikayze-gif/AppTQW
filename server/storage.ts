@@ -641,6 +641,12 @@ export class MySQLStorage implements IStorage {
     );
 
     return rows.map((row: any) => {
+      // Convertir mes_contable a formato YYYY-MM-DD en UTC para evitar desfases de zona horaria
+      const date = new Date(row.mes_contable);
+      const year = date.getUTCFullYear();
+      const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+      const formattedDate = `${year}-${month}-01`;
+
       const total = Number(row.total) || 0;
       const cumple = Number(row.cumple) || 0;
       const cumple_hfc = Number(row.cumple_hfc) || 0;
@@ -651,9 +657,9 @@ export class MySQLStorage implements IStorage {
       const total_ftth = cumple_ftth + no_cumple_ftth;
 
       return {
-        mes_contable: String(row.mes_contable_fmt),
-        anio: Number(row.anio),
-        mes: Number(row.mes),
+        mes_contable: formattedDate,
+        anio: row.anio,
+        mes: row.mes,
         total,
         cumple,
         no_cumple: Number(row.no_cumple) || 0,
@@ -665,7 +671,7 @@ export class MySQLStorage implements IStorage {
         eficiencia_hfc: total_hfc > 0 ? Math.round((cumple_hfc / total_hfc) * 10000) / 100 : 0,
         eficiencia_ftth: total_ftth > 0 ? Math.round((cumple_ftth / total_ftth) * 10000) / 100 : 0,
       };
-    }).reverse();
+    });
   }
 
   async getCalidadReactivaDetails(rut: string, mesContable: string): Promise<Array<{
