@@ -46,7 +46,7 @@ export interface IStorage {
   getMaterialTipos(): Promise<string[]>;
   getMaterialFamilias(tipo: string): Promise<string[]>;
   getMaterialSubfamilias(tipo: string, familia: string): Promise<string[]>;
-  getMaterialItems(tipo: string, familia: string, subfamilia: string): Promise<Array<{id: string, description: string}>>;
+  getMaterialItems(tipo: string, familia: string, subfamilia: string): Promise<Array<{ id: string, description: string }>>;
 
   // Material solicitud operations
   getUserPerfil2(userId: number): Promise<string | null>;
@@ -71,6 +71,17 @@ export interface IStorage {
   createSession(rut: string, token: string): Promise<void>;
   logConnection(usuario: string, pagina: string, ip: string): Promise<number>;
   closeConnection(id: number): Promise<void>;
+  getExportData(period: string): Promise<Array<{
+    'Fecha fin#': string;
+    orden: string;
+    'Dir# cliente': string;
+    Trabajo: string;
+    RGU: number;
+    'Tipo Red': string;
+    producto: string;
+    'Tipo vivienda': string;
+    'Clase vivienda': string;
+  }>>;
 }
 
 export class MySQLStorage implements IStorage {
@@ -159,9 +170,9 @@ export class MySQLStorage implements IStorage {
       const user = results[0];
       const storedPassword = user.pass_new;
 
-      console.log("User found:", { 
-        email: user.email, 
-        hasPassword: !!storedPassword, 
+      console.log("User found:", {
+        email: user.email,
+        hasPassword: !!storedPassword,
         passwordLength: storedPassword?.length,
         passwordPrefix: storedPassword?.substring(0, 10) + '...',
         perfil: user.PERFIL,
@@ -363,7 +374,7 @@ export class MySQLStorage implements IStorage {
     }
   }
 
-  async getMaterialItems(tipo: string, familia: string, subfamilia: string): Promise<Array<{id: string, description: string}>> {
+  async getMaterialItems(tipo: string, familia: string, subfamilia: string): Promise<Array<{ id: string, description: string }>> {
     try {
       const [rows] = await pool.execute(
         `SELECT \`Item\`, \`Item Description\` FROM tp_logistica_mat_oracle 
@@ -696,6 +707,58 @@ export class MySQLStorage implements IStorage {
       descripcion_actividad: string;
       descripcion_actividad_2: string;
       CALIDAD_30: string;
+    }>;
+  }
+
+  async getExportData(period: string): Promise<Array<{
+    'Fecha fin#': string;
+    orden: string;
+    'Dir# cliente': string;
+    Trabajo: string;
+    RGU: number;
+    'Tipo Red': string;
+    producto: string;
+    'Tipo vivienda': string;
+    'Clase vivienda': string;
+  }>> {
+    // Convert period "202512" (or "12") to "2025-12-01" format locally
+    let formattedDate = period;
+    if (period.length === 2) {
+      formattedDate = `2025-${period}-01`;
+    } else if (period.length === 6) {
+      formattedDate = `${period.substring(0, 4)}-${period.substring(4, 6)}-01`;
+    } else if (period.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      // Already in YYYY-MM-DD
+    }
+
+    // Ensure we query by the start of the month as likely stored in DB or exact match depending on data type
+    // Based on user request, it's exact match on mes_contable
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      `SELECT 
+        \`Fecha fin#\`, 
+        orden, 
+        \`Dir# cliente\`, 
+        \`Trabajo\`, 
+        \`Q_SSPP\` as RGU, 
+        \`Tipo Red\`, 
+        producto, 
+        \`Tipo vivienda\`, 
+        \`Clase vivienda\`
+      FROM tb_paso_pyndc
+      WHERE DATE_FORMAT(mes_contable, '%Y-%m-01') = ?`,
+      [formattedDate]
+    );
+
+    return rows as Array<{
+      'Fecha fin#': string;
+      orden: string;
+      'Dir# cliente': string;
+      Trabajo: string;
+      RGU: number;
+      'Tipo Red': string;
+      producto: string;
+      'Tipo vivienda': string;
+      'Clase vivienda': string;
     }>;
   }
 }

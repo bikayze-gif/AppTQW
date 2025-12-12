@@ -18,7 +18,7 @@ const CustomDot = (props: any) => {
 };
 
 const getStatusColor = (status: string) => {
-  switch(status) {
+  switch (status) {
     case "Completado":
       return "bg-green-500/20 text-green-400 border border-green-500/30";
     case "En Progreso":
@@ -153,16 +153,14 @@ function OrderDetailsList({ selectedDate }: { selectedDate: string | null }) {
                 return (
                   <tr
                     key={idx}
-                    className={`hover:bg-white/5 transition-colors ${
-                      isHFC ? 'bg-[#06b6d4]/5' : 'bg-[#f59e0b]/5'
-                    }`}
+                    className={`hover:bg-white/5 transition-colors ${isHFC ? 'bg-[#06b6d4]/5' : 'bg-[#f59e0b]/5'
+                      }`}
                   >
                     <td className="px-2 py-2 text-center whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 rounded text-xs font-semibold ${
-                        isHFC 
-                          ? 'bg-[#06b6d4]/20 text-[#06b6d4] border border-[#06b6d4]/30' 
-                          : 'bg-[#f59e0b]/20 text-[#f59e0b] border border-[#f59e0b]/30'
-                      }`}>
+                      <span className={`inline-flex px-2 py-1 rounded text-xs font-semibold ${isHFC
+                        ? 'bg-[#06b6d4]/20 text-[#06b6d4] border border-[#06b6d4]/30'
+                        : 'bg-[#f59e0b]/20 text-[#f59e0b] border border-[#f59e0b]/30'
+                        }`}>
                         {order.TipoRed_rank || 'N/A'}
                       </span>
                     </td>
@@ -238,8 +236,44 @@ export default function Activity() {
     console.log(`Descargando reporte en PDF del mes ${selectedMonth}`);
   };
 
-  const handleDownloadExcel = () => {
-    console.log(`Descargando reporte en Excel del mes ${selectedMonth}`);
+  // Import xlsx dynamically or at the top level? 
+  // Since environment seems to support ES modules, we'll try dynamic import or assume global availability if script tag, 
+  // but better to add import at top if installed.
+  // Ideally, I should add `import * as XLSX from 'xlsx';` at the top of the file.
+  // For now, let's modify the function assuming imports will be fixed in next step or use require if appropriate (but this is vite).
+  // Wait, I should add the import line first, or I can update the whole file part.
+
+  const handleDownloadExcel = async () => {
+    if (!selectedMonth) return;
+
+    try {
+      // In a real implementation with the package installed:
+      const XLSX = await import("xlsx");
+
+      const period = `2025${selectedMonth}`;
+
+      const response = await fetch(`/api/activity/export-excel?period=${period}`, {
+        credentials: 'include'
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch export data');
+
+      const data = await response.json();
+
+      if (data.length === 0) {
+        alert("No hay datos para exportar en este periodo");
+        return;
+      }
+
+      const worksheet = XLSX.utils.json_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Actividades");
+      XLSX.writeFile(workbook, `Actividad_${period}.xlsx`);
+
+    } catch (error) {
+      console.error("Error downloading Excel:", error);
+      alert("Error al descargar el archivo Excel");
+    }
   };
 
   // Fetch chart data
@@ -247,7 +281,7 @@ export default function Activity() {
     queryKey: ['/api/activity/chart', dayFilter, selectedMonth],
     queryFn: async () => {
       // Using period 202512 for chart data
-      const period = "202512"; 
+      const period = "202512";
       const response = await fetch(`/api/activity/chart?days=${dayFilter}&period=${period}`, {
         credentials: 'include'
       });
@@ -272,7 +306,7 @@ export default function Activity() {
     queryKey: ['/api/activity/table', dayFilter, selectedMonth],
     queryFn: async () => {
       // Using period 202512 for table data
-      const period = "202512"; 
+      const period = "202512";
       const response = await fetch(`/api/activity/table?days=${dayFilter}&period=${period}`, {
         credentials: 'include'
       });
@@ -285,7 +319,7 @@ export default function Activity() {
   // Simulate fetching user data
   useEffect(() => {
     // In a real app, you'd fetch user data here
-    setUser({ rut: "123456789" }); 
+    setUser({ rut: "123456789" });
     setSelectedMonth("12"); // Default to December 2025
   }, []);
 
@@ -349,33 +383,30 @@ export default function Activity() {
               <div className="flex gap-2">
                 <button
                   onClick={() => setDayFilter(7)}
-                  className={`px-2 py-1 rounded-lg text-xs font-medium transition-colors ${
-                    dayFilter === 7
-                      ? "bg-[#06b6d4] text-black"
-                      : "bg-white/10 text-white hover:bg-white/20"
-                  }`}
+                  className={`px-2 py-1 rounded-lg text-xs font-medium transition-colors ${dayFilter === 7
+                    ? "bg-[#06b6d4] text-black"
+                    : "bg-white/10 text-white hover:bg-white/20"
+                    }`}
                   data-testid="filter-7days"
                 >
                   7 días
                 </button>
                 <button
                   onClick={() => setDayFilter(15)}
-                  className={`px-2 py-1 rounded-lg text-xs font-medium transition-colors ${
-                    dayFilter === 15
-                      ? "bg-[#06b6d4] text-black"
-                      : "bg-white/10 text-white hover:bg-white/20"
-                  }`}
+                  className={`px-2 py-1 rounded-lg text-xs font-medium transition-colors ${dayFilter === 15
+                    ? "bg-[#06b6d4] text-black"
+                    : "bg-white/10 text-white hover:bg-white/20"
+                    }`}
                   data-testid="filter-15days"
                 >
                   15 días
                 </button>
                 <button
                   onClick={() => setDayFilter(30)}
-                  className={`px-2 py-1 rounded-lg text-xs font-medium transition-colors ${
-                    dayFilter === 30
-                      ? "bg-[#06b6d4] text-black"
-                      : "bg-white/10 text-white hover:bg-white/20"
-                  }`}
+                  className={`px-2 py-1 rounded-lg text-xs font-medium transition-colors ${dayFilter === 30
+                    ? "bg-[#06b6d4] text-black"
+                    : "bg-white/10 text-white hover:bg-white/20"
+                    }`}
                   data-testid="filter-30days"
                 >
                   Mes completo
@@ -398,53 +429,53 @@ export default function Activity() {
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData} margin={{ top: 5, right: 0, left: 0, bottom: 25 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                  <XAxis 
-                    dataKey="day" 
-                    axisLine={false} 
-                    tickLine={false} 
+                  <XAxis
+                    dataKey="day"
+                    axisLine={false}
+                    tickLine={false}
                     tick={{ fill: '#94a3b8', fontSize: 9 }}
                     label={{ value: 'Días', position: 'insideBottomRight', offset: -5, fill: '#94a3b8', fontSize: 10 }}
                     dy={5}
                   />
                   {/* Eje Y izquierdo para Puntos HFC */}
-                  <YAxis 
+                  <YAxis
                     yAxisId="left"
                     type="number"
-                    axisLine={false} 
-                    tickLine={false} 
+                    axisLine={false}
+                    tickLine={false}
                     tick={{ fill: '#06b6d4', fontSize: 9 }}
                     domain={[0, 'auto']}
                     width={40}
                   />
                   {/* Eje Y derecho para RGU FTTH */}
-                  <YAxis 
+                  <YAxis
                     yAxisId="right"
                     orientation="right"
                     type="number"
-                    axisLine={false} 
-                    tickLine={false} 
+                    axisLine={false}
+                    tickLine={false}
                     tick={{ fill: '#f59e0b', fontSize: 9 }}
                     domain={[0, 'auto']}
                     width={40}
                   />
-                  <Tooltip 
+                  <Tooltip
                     contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(6, 182, 212, 0.3)', borderRadius: '8px', color: '#fff' }}
                     labelStyle={{ color: '#06b6d4' }}
                   />
-                  <Line 
+                  <Line
                     yAxisId="left"
-                    type="monotone" 
-                    dataKey="puntos_hfc" 
-                    stroke="#06b6d4" 
+                    type="monotone"
+                    dataKey="puntos_hfc"
+                    stroke="#06b6d4"
                     strokeWidth={2}
                     dot={false}
                     name="Puntos HFC"
                   />
-                  <Line 
+                  <Line
                     yAxisId="right"
-                    type="monotone" 
-                    dataKey="q_rgu_ftth" 
-                    stroke="#f59e0b" 
+                    type="monotone"
+                    dataKey="q_rgu_ftth"
+                    stroke="#f59e0b"
                     strokeWidth={2}
                     dot={false}
                     name="RGU FTTH"
@@ -479,16 +510,15 @@ export default function Activity() {
             )}
           </div>
 
-          {/* Month Select & Download Buttons - Temporarily Disabled with Blur */}
+          {/* Month Select & Download Buttons */}
           <div className="relative flex flex-row gap-2 items-center">
-            {/* Blurred Container */}
-            <div className="blur-[3px] pointer-events-none select-none flex flex-row gap-2 items-center">
+            {/* Controls Container */}
+            <div className="flex flex-row gap-2 items-center">
               {/* Month Select */}
               <select
                 className="px-2 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-xs focus:outline-none focus:border-[#06b6d4] transition-colors cursor-pointer whitespace-nowrap"
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
-                disabled
               >
                 <option value="" className="bg-slate-900">
                   Seleccionar mes
@@ -502,26 +532,21 @@ export default function Activity() {
 
               {/* Download Buttons */}
               <button
-                className="flex items-center justify-center p-1.5 bg-red-500/20 border border-red-500/50 text-red-400 rounded-lg transition-colors flex-shrink-0"
+                className="flex items-center justify-center p-1.5 bg-red-500/20 border border-red-500/50 text-red-400 rounded-lg transition-colors flex-shrink-0 hover:bg-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleDownloadPDF}
                 disabled={!selectedMonth}
+                title="Descargar PDF"
               >
                 <FileText size={14} />
               </button>
               <button
-                className="flex items-center justify-center p-1.5 bg-green-500/20 border border-green-500/50 text-green-400 rounded-lg transition-colors flex-shrink-0"
+                className="flex items-center justify-center p-1.5 bg-green-500/20 border border-green-500/50 text-green-400 rounded-lg transition-colors flex-shrink-0 hover:bg-green-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleDownloadExcel}
                 disabled={!selectedMonth}
+                title="Descargar Excel"
               >
                 <Sheet size={14} />
               </button>
-            </div>
-
-            {/* Overlay Badge */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-              <span className="text-xs bg-yellow-500/90 text-black px-2 py-1 rounded-md border border-yellow-600 font-bold shadow-lg">
-                Próximamente
-              </span>
             </div>
           </div>
         </div>
@@ -533,7 +558,7 @@ export default function Activity() {
               <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b border-white/5 bg-white/5">
-                    <th 
+                    <th
                       onClick={() => handleSort("fecha")}
                       className="px-2 md:px-4 py-2 text-left font-semibold text-slate-300 text-xs md:text-sm cursor-pointer hover:bg-white/10 transition-colors"
                     >
@@ -550,7 +575,7 @@ export default function Activity() {
                         )}
                       </div>
                     </th>
-                    <th 
+                    <th
                       onClick={() => handleSort("tipoRed")}
                       className="px-2 md:px-4 py-2 text-left font-semibold text-slate-300 text-xs md:text-sm cursor-pointer hover:bg-white/10 transition-colors"
                     >
@@ -567,7 +592,7 @@ export default function Activity() {
                         )}
                       </div>
                     </th>
-                    <th 
+                    <th
                       onClick={() => handleSort("puntos")}
                       className="px-2 md:px-4 py-2 text-left font-semibold text-slate-300 text-xs md:text-sm cursor-pointer hover:bg-white/10 transition-colors"
                     >
@@ -584,7 +609,7 @@ export default function Activity() {
                         )}
                       </div>
                     </th>
-                    <th 
+                    <th
                       onClick={() => handleSort("rgu")}
                       className="px-2 md:px-4 py-2 text-left font-semibold text-slate-300 text-xs md:text-sm cursor-pointer hover:bg-white/10 transition-colors"
                     >
@@ -604,9 +629,9 @@ export default function Activity() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {paginatedData.map((row, idx) => (
+                  {paginatedData.map((row: any, idx: number) => (
                     <tr
-                      key={row.id}
+                      key={row.id || idx}
                       onClick={async () => {
                         // Extract only the date portion (YYYY-MM-DD)
                         const dateOnly = row.fecha.split('T')[0];
@@ -649,11 +674,10 @@ export default function Activity() {
                     <button
                       key={page}
                       onClick={() => handlePageChange(page)}
-                      className={`px-1.5 py-0.5 rounded text-xs font-medium transition-colors ${
-                        currentPage === page
-                          ? "bg-[#06b6d4] text-black"
-                          : "bg-white/10 text-white hover:bg-white/20"
-                      }`}
+                      className={`px-1.5 py-0.5 rounded text-xs font-medium transition-colors ${currentPage === page
+                        ? "bg-[#06b6d4] text-black"
+                        : "bg-white/10 text-white hover:bg-white/20"
+                        }`}
                       data-testid={`pagination-page-${page}`}
                     >
                       {page}

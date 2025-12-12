@@ -4,7 +4,7 @@ import crypto from "crypto";
 import { storage } from "./storage";
 import { insertBillingSchema, loginSchema, materialSolicitudRequestSchema } from "@shared/schema";
 import { z } from "zod";
-import { pool } from "./db"; // Assuming pool is imported from './db'
+
 
 // Middleware para verificar autenticación
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
@@ -512,6 +512,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching order details:", error);
       res.status(500).json({ error: "Error al obtener detalles de órdenes" });
+    }
+  });
+
+  // GET activity export data for a specific period
+  app.get("/api/activity/export-excel", requireAuth, async (req, res) => {
+    try {
+      const period = req.query.period as string;
+      if (!period) {
+        return res.status(400).json({ error: "Period parameter is required" });
+      }
+
+      console.log(`[Export API] Requesting export data for period: ${period}`);
+      const data = await storage.getExportData(period);
+      console.log(`[Export API] Found ${data.length} records`);
+
+      res.json(data);
+    } catch (error) {
+      console.error("Error fetching export data:", error);
+      res.status(500).json({ error: "Error al obtener datos para exportación" });
     }
   });
 
