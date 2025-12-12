@@ -276,10 +276,9 @@ export default function Activity() {
 
   // Fetch chart data
   const { data: chartDataApi, isLoading: isLoadingChart } = useQuery({
-    queryKey: ['/api/activity/chart', dayFilter, selectedMonth],
+    queryKey: ['/api/activity/chart', dayFilter, selectedMonth, user?.rut],
     queryFn: async () => {
-      const period = `2025${selectedMonth}`;
-      const response = await fetch(`/api/activity/chart?days=${dayFilter}&period=${period}`, {
+      const response = await fetch(`/api/activity/chart?days=${dayFilter}`, {
         credentials: 'include'
       });
       if (!response.ok) throw new Error('Failed to fetch chart data');
@@ -300,10 +299,9 @@ export default function Activity() {
 
   // Fetch table data
   const { data: tableDataApi, isLoading: isLoadingTable } = useQuery({
-    queryKey: ['/api/activity/table', dayFilter, selectedMonth],
+    queryKey: ['/api/activity/table', dayFilter, selectedMonth, user?.rut],
     queryFn: async () => {
-      const period = `2025${selectedMonth}`;
-      const response = await fetch(`/api/activity/table?days=${dayFilter}&period=${period}`, {
+      const response = await fetch(`/api/activity/table?days=${dayFilter}`, {
         credentials: 'include'
       });
       if (!response.ok) throw new Error('Failed to fetch table data');

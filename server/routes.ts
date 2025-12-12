@@ -398,6 +398,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/activity/chart", requireAuth, async (req, res) => {
     try {
       const rut = req.session.user?.rut;
+      console.log(`[Activity Chart] User RUT from session: ${rut}, User email: ${req.session.user?.email}`);
       if (!rut) {
         return res.status(401).json({ error: "Usuario no autenticado" });
       }
@@ -447,6 +448,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/activity/table", requireAuth, async (req, res) => {
     try {
       const rut = req.session.user?.rut;
+      console.log(`[Activity Table] User RUT from session: ${rut}, User email: ${req.session.user?.email}`);
       if (!rut) {
         return res.status(401).json({ error: "Usuario no autenticado" });
       }
@@ -624,11 +626,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/calidad-reactiva/summary", requireAuth, async (req, res) => {
     try {
       const rut = req.session.user?.rut;
+      console.log(`[Calidad API] User from session - RUT: ${rut}, Email: ${req.session.user?.email}, ID: ${req.session.user?.id}`);
       if (!rut) {
         return res.status(401).json({ error: "Usuario no autenticado" });
       }
 
       const months = parseInt(req.query.months as string) || 12;
+      console.log(`[Calidad API] Querying data for RUT: ${rut}, months: ${months}`);
       const data = await storage.getCalidadReactivaSummary(rut, months);
 
       console.log(`[Calidad API] Summary requested for RUT: ${rut}, Records found: ${data.length}`);

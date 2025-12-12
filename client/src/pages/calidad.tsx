@@ -190,7 +190,7 @@ export default function Calidad() {
   const [selectedDownloadMonth, setSelectedDownloadMonth] = useState<string>("");
 
   const { data: summaryResponse, isLoading: isLoadingSummary } = useQuery({
-    queryKey: ['/api/calidad-reactiva/summary', monthsFilter],
+    queryKey: ['/api/calidad-reactiva/summary', monthsFilter, user?.rut],
     queryFn: async () => {
       const response = await fetch(`/api/calidad-reactiva/summary?months=${monthsFilter}`, {
         credentials: 'include'
