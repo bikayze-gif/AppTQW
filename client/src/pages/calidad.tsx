@@ -220,7 +220,8 @@ export default function Calidad() {
 
   const chartDataGeneral = useMemo(() => {
     if (!summaryData) return [];
-    return summaryData.map((item: any) => ({
+    // Invertir el orden para que se muestre cronológicamente (de más antiguo a más reciente)
+    return [...summaryData].reverse().map((item: any) => ({
       mes: `${MONTH_NAMES[item.mes - 1]} ${item.anio.toString().slice(2)}`,
       eficiencia: item.eficiencia_general,
     }));
@@ -228,7 +229,8 @@ export default function Calidad() {
 
   const chartDataTecnologia = useMemo(() => {
     if (!summaryData) return [];
-    return summaryData.map((item: any) => ({
+    // Invertir el orden para que se muestre cronológicamente (de más antiguo a más reciente)
+    return [...summaryData].reverse().map((item: any) => ({
       mes: `${MONTH_NAMES[item.mes - 1]} ${item.anio.toString().slice(2)}`,
       hfc: item.eficiencia_hfc,
       ftth: item.eficiencia_ftth,

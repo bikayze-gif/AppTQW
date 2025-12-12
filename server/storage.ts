@@ -641,11 +641,8 @@ export class MySQLStorage implements IStorage {
     );
 
     return rows.map((row: any) => {
-      // Convertir mes_contable a formato YYYY-MM-DD en UTC para evitar desfases de zona horaria
-      const date = new Date(row.mes_contable);
-      const year = date.getUTCFullYear();
-      const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-      const formattedDate = `${year}-${month}-01`;
+      // Usar directamente el formato mes_contable_fmt que ya viene en formato correcto
+      const formattedDate = row.mes_contable_fmt;
 
       const total = Number(row.total) || 0;
       const cumple = Number(row.cumple) || 0;
@@ -658,8 +655,8 @@ export class MySQLStorage implements IStorage {
 
       return {
         mes_contable: formattedDate,
-        anio: row.anio,
-        mes: row.mes,
+        anio: Number(row.anio),
+        mes: Number(row.mes),
         total,
         cumple,
         no_cumple: Number(row.no_cumple) || 0,
