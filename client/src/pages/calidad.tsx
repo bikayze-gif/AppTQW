@@ -478,9 +478,9 @@ export default function Calidad() {
               onChange={(e) => setSelectedDownloadMonth(e.target.value)}
               className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500"
             >
-              <option value="">Seleccionar mes</option>
+              <option value="" className="bg-slate-900 text-white">Seleccionar mes</option>
               {filteredAndSortedData.map((row: any) => (
-                <option key={row.mes_contable} value={row.mes_contable}>
+                <option key={row.mes_contable} value={row.mes_contable} className="bg-slate-900 text-white">
                   {formatMes(row.mes_contable)}
                 </option>
               ))}

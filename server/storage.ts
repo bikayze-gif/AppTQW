@@ -719,6 +719,7 @@ export class MySQLStorage implements IStorage {
     DESCRIPCION_CIERRE_2: string;
     TIPO_RED_CALCULADO: string;
     Comuna: string;
+    CalidadReactiva: string;
   }>> {
     const [rows] = await pool.execute<RowDataPacket[]>(
       `SELECT 
@@ -729,7 +730,12 @@ export class MySQLStorage implements IStorage {
         DESCRIPCION_CIERRE,
         DESCRIPCION_CIERRE_2,
         TIPO_RED_CALCULADO,
-        Comuna
+        Comuna,
+        CASE 
+          WHEN CALIDAD_30 = '0' THEN 'Cumple'
+          WHEN CALIDAD_30 = '1' THEN 'No cumple'
+          ELSE 'N/A'
+        END as CalidadReactiva
       FROM tb_calidad_naranja_base
       WHERE RUT_TECNICO_FS = ?
         AND DATE_FORMAT(mes_contable, '%Y-%m-01') = ?
@@ -746,6 +752,7 @@ export class MySQLStorage implements IStorage {
       DESCRIPCION_CIERRE_2: string;
       TIPO_RED_CALCULADO: string;
       Comuna: string;
+      CalidadReactiva: string;
     }>;
   }
 
