@@ -14,6 +14,36 @@ const MONTH_NAMES = [
   "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"
 ];
 
+// Función para parsear fechas en formato DD-MM-YYYY HH:MM
+function parseDateDDMMYYYY(dateString: string): string {
+  if (!dateString) return 'N/A';
+  
+  try {
+    // Formato esperado: DD-MM-YYYY HH:MM
+    const parts = dateString.trim().split(' ');
+    if (parts.length < 1) return 'N/A';
+    
+    const datePart = parts[0].split('-');
+    if (datePart.length !== 3) return 'N/A';
+    
+    const day = datePart[0].padStart(2, '0');
+    const month = datePart[1].padStart(2, '0');
+    const year = datePart[2];
+    
+    // Crear fecha en formato ISO para JavaScript
+    const isoDate = `${year}-${month}-${day}`;
+    const date = new Date(isoDate);
+    
+    if (isNaN(date.getTime())) return 'N/A';
+    
+    // Formatear a DD/MM/YYYY
+    return `${day}/${month}/${year}`;
+  } catch (error) {
+    console.error('Error parsing date:', dateString, error);
+    return 'N/A';
+  }
+}
+
 function CalidadDetailsList({ selectedMes, resumen, detalles }: {
   selectedMes: string | null;
   resumen: any;
@@ -139,7 +169,7 @@ function CalidadDetailsList({ selectedMes, resumen, detalles }: {
                       )}
                     </td>
                     <td className="px-3 py-3 text-slate-300 whitespace-nowrap">
-                      {orden.FECHA_EJECUCION ? new Date(orden.FECHA_EJECUCION).toLocaleDateString('es-CL') : 'N/A'}
+                      {parseDateDDMMYYYY(orden.FECHA_EJECUCION)}
                     </td>
                     <td className="px-3 py-3 text-center whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 rounded text-xs font-semibold ${isHFC
