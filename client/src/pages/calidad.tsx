@@ -5,6 +5,7 @@ import { Search, X, ArrowUp, ArrowDown, ChevronLeft, CheckCircle, XCircle, Sheet
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import * as XLSX from "xlsx";
+import { useAuth } from "@/lib/auth-context";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -178,6 +179,7 @@ function CalidadDetailsList({ selectedMes, resumen, detalles }: {
 }
 
 export default function Calidad() {
+  const { user } = useAuth();
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [searchText, setSearchText] = useState("");
@@ -196,6 +198,7 @@ export default function Calidad() {
       if (!response.ok) throw new Error('Failed to fetch calidad data');
       return response.json();
     },
+    enabled: !!user,
   });
 
   // Handle both old format (array) and new format ({ data, rut })

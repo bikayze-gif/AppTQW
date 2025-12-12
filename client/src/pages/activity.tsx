@@ -1,10 +1,11 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 import { Search, X, ArrowUp, ArrowDown, ChevronLeft, FileText, Sheet } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import * as XLSX from "xlsx";
+import { useAuth } from "@/lib/auth-context";
 
 const CustomDot = (props: any) => {
   const { cx, cy, stroke, payload, value } = props;
@@ -214,9 +215,8 @@ export default function Activity() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [showDrawer, setShowDrawer] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedMonth, setSelectedMonth] = useState("");
-  const [user, setUser] = useState<any>(null); // Assuming user state is needed for API calls
-  const [loading, setLoading] = useState(true); // Added loading state
+  const [selectedMonth, setSelectedMonth] = useState("12"); // Default to December 2025
+  const { user } = useAuth();
 
   const months = [
     { value: "01", label: "Enero 2025" },
@@ -278,15 +278,14 @@ export default function Activity() {
   const { data: chartDataApi, isLoading: isLoadingChart } = useQuery({
     queryKey: ['/api/activity/chart', dayFilter, selectedMonth],
     queryFn: async () => {
-      // Using period 202512 for chart data
-      const period = "202512";
+      const period = `2025${selectedMonth}`;
       const response = await fetch(`/api/activity/chart?days=${dayFilter}&period=${period}`, {
         credentials: 'include'
       });
       if (!response.ok) throw new Error('Failed to fetch chart data');
       return response.json();
     },
-    enabled: !!user?.rut && !!selectedMonth, // Enable only when user and selectedMonth are available
+    enabled: !!user, // Enable only when user is authenticated
   });
 
   // Transform API data for chart
@@ -303,23 +302,15 @@ export default function Activity() {
   const { data: tableDataApi, isLoading: isLoadingTable } = useQuery({
     queryKey: ['/api/activity/table', dayFilter, selectedMonth],
     queryFn: async () => {
-      // Using period 202512 for table data
-      const period = "202512";
+      const period = `2025${selectedMonth}`;
       const response = await fetch(`/api/activity/table?days=${dayFilter}&period=${period}`, {
         credentials: 'include'
       });
       if (!response.ok) throw new Error('Failed to fetch table data');
       return response.json();
     },
-    enabled: !!user?.rut && !!selectedMonth, // Enable only when user and selectedMonth are available
+    enabled: !!user, // Enable only when user is authenticated
   });
-
-  // Simulate fetching user data
-  useEffect(() => {
-    // In a real app, you'd fetch user data here
-    setUser({ rut: "123456789" });
-    setSelectedMonth("12"); // Default to December 2025
-  }, []);
 
   const filteredAndSortedData = useMemo(() => {
     let data = tableDataApi || [];
