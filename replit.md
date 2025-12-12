@@ -4,7 +4,7 @@
 
 This is a full-stack web application for managing and visualizing operational metrics for TQW technicians and supervisors. The system provides dashboards for tracking KPIs including production metrics (HFC/FTTH), commissions, quality ratios, and attendance data. It features role-based access control with separate interfaces for technicians and supervisors.
 
-The application is built with React/TypeScript on the frontend, Express.js on the backend, and connects to a MySQL database containing operational data. It includes authentication, session management, and real-time data visualization through charts and tables.
+The application is built with React/TypeScript on the frontend, Express.js on the backend, and connects to a MySQL database containing operational data. It includes authentication, session management using PostgreSQL, and real-time data visualization through charts and tables.
 
 ## User Preferences
 
@@ -27,7 +27,6 @@ Preferred communication style: Simple, everyday language.
 - Shadcn UI components (Radix UI primitives)
 - Tailwind CSS v4 for styling
 - Custom design system with dark mode as default
-- Framer Motion removed (noted in package.json)
 
 **Key UI Patterns**:
 - Bottom navigation for mobile-first design
@@ -37,7 +36,7 @@ Preferred communication style: Simple, everyday language.
 
 **Route Structure**:
 - Public: `/login`
-- Technician routes: `/`, `/dashboard`, `/activity`, `/analytics`
+- Technician routes: `/`, `/dashboard`, `/activity`, `/analytics`, `/calidad`
 - Supervisor routes: `/supervisor/*` (home, notes, messenger, scrumboard, monitoring, billing)
 
 ### Backend Architecture
@@ -45,10 +44,12 @@ Preferred communication style: Simple, everyday language.
 **Server Framework**: Express.js with TypeScript
 
 **Session Management**:
-- Express-session with MemoryStore (development) or connect-pg-simple (production capable)
+- Express-session with PostgreSQL backend (connect-pg-simple) for production persistence
+- Fallback to MemoryStore in development if PostgreSQL is unavailable
 - 6-hour session timeout with activity tracking
 - HTTP-only cookies with secure flags in production
 - CSRF protection via sameSite: "strict"
+- Sessions stored in PostgreSQL table: `session`
 
 **Security Features**:
 - Bcrypt password hashing (10 rounds)
@@ -61,7 +62,7 @@ Preferred communication style: Simple, everyday language.
 1. User submits credentials to `/api/auth/login`
 2. System validates against `tb_user_tqw` table
 3. Password verified using bcrypt against `tb_claves_usuarios` table
-4. Session created with user profile data
+4. Session created in PostgreSQL and user profile data stored
 5. Client redirected based on role (technician → `/`, supervisor → `/supervisor`)
 
 **API Architecture**:
@@ -72,20 +73,22 @@ Preferred communication style: Simple, everyday language.
 - Comprehensive error handling with specific error codes
 
 **Development vs Production**:
-- Development: Vite dev server with HMR
-- Production: Static file serving from dist/public
+- Development: Vite dev server with HMR, PostgreSQL sessions
+- Production: Static file serving from dist/public, PostgreSQL sessions
 - Environment-based configuration from `server/config.ts`
 
 ### Data Storage
 
-**Database**: MySQL 8.x
+**Primary Database**: MySQL 8.x (Operaciones data)
 
-**ORM**: Drizzle ORM with mysql2 driver
+**Session Database**: PostgreSQL (Replit built-in)
+
+**ORM**: Drizzle ORM with mysql2 driver for MySQL operations
 
 **Connection Configuration**:
-- Host: Configurable via environment variables
-- Connection pooling enabled
-- Credentials stored in `drizzle.config.ts` (currently hardcoded - should be moved to env vars)
+- MySQL: Host 170.239.85.233, database operaciones_tqw
+- PostgreSQL: Replit-managed instance with SSL enabled
+- Connection pooling enabled for both databases
 
 **Key Tables**:
 
@@ -105,44 +108,74 @@ Preferred communication style: Simple, everyday language.
    - Attendance factors (absences, vacations, sick leave)
    - Filtered by RUT and period (YYYYMM format)
 
-4. **tb_login_attempts** - Security tracking
+4. **TB_CALIDAD_NARANJA_BASE** - Quality (Calidad Reactiva) data
+   - Compliance indicators (CALIDAD_30: '0'=cumple, '1'=no cumple)
+   - Network type indicators (TIPO_RED_CALCULADO: HFC, FTTH, DUAL)
+   - Technician RUT (RUT_TECNICO_FS) for filtering
+   - Monthly compliance aggregation
+
+5. **tb_login_attempts** - Security tracking
    - Failed login attempts
    - IP addresses and user agents
    - Lockout mechanism data
 
-5. **tb_log_app** - Active sessions (legacy, possibly unused)
+6. **session** - Express session storage (PostgreSQL)
+   - Stores user session data
+   - Automatic expiration handling
 
 **Data Access Pattern**:
 - Single technician lookup by RUT + period
 - Period defaults to "202509" if not specified
 - All KPI queries scoped to specific user and time period
+- Session queries handled by connect-pg-simple middleware
+
+### Recent Changes (December 12, 2025)
+
+**Session Persistence Fix**:
+- Changed from MemoryStore to PostgreSQL-backed sessions
+- Created `session` table in PostgreSQL for persistent session storage
+- Updated `server/app.ts` to use connect-pg-simple with SSL support
+- Added pgConfig to `server/config.ts` for PostgreSQL connection settings
+- Sessions now survive server restarts and horizontal scaling
+
+**Calidad Reactiva Implementation**:
+- Added `/api/calidad-reactiva/summary` endpoint for monthly efficiency metrics
+- Added `/api/calidad-reactiva/details/:mes` endpoint for detailed compliance records
+- Added `/api/calidad-reactiva/export-excel/:mes` endpoint for Excel downloads
+- Created `calidad.tsx` page with efficiency charts and detailed compliance table
+- Implemented dual-axis chart showing HFC vs FTTH efficiency trends
+
+**Activity Page**:
+- Chart endpoint: `/api/activity/chart` - daily metrics visualization
+- Table endpoint: `/api/activity/table` - daily activity detail records
+- Details endpoint: `/api/activity/details/:date` - order-level data
+- Excel export endpoint: `/api/activity/export-excel` - bulk data downloads
 
 ### External Dependencies
 
 **Database Connection**:
-- MySQL Server at 170.239.85.233:3306
-- Database: operaciones_tqw
-- Credentials hardcoded in drizzle.config.ts (security risk - should use environment variables)
+- MySQL Server at 170.239.85.233:3306, database operaciones_tqw
+- PostgreSQL: Replit built-in, credentials via environment variables
 
 **Third-Party Services**:
 - None currently integrated
 - Placeholder for AI chat functionality (not implemented)
 
 **Key NPM Packages**:
-- Authentication: bcrypt, express-session
-- Database: drizzle-orm, mysql2
+- Authentication: bcrypt, express-session, connect-pg-simple
+- Database: drizzle-orm, mysql2, pg
 - Validation: zod, @hookform/resolvers
 - UI: @radix-ui/* (20+ component packages), recharts
 - Development: vite, tsx, esbuild
 
 **Security Considerations**:
-1. Database credentials exposed in repository files
-2. Session secret should be environment variable
-3. MySQL connection should use SSL in production
-4. Consider migrating from MemoryStore to Redis/PostgreSQL store for production scalability
+1. MySQL credentials hardcoded in drizzle.config.ts (should use environment variables)
+2. PostgreSQL connection uses SSL with environment-based credentials
+3. Session secret should be environment variable (currently has fallback)
+4. Consider migrating MySQL credentials to environment variables for VPS deployment
 
 **Configuration Management**:
 - Centralized in `server/config.ts`
 - Supports environment variables with fallback defaults
-- Separate configs for database, sessions, security, and business logic
+- Separate configs for MySQL, PostgreSQL, sessions, security, and business logic
 - VPS-ready with .env file support

@@ -3,9 +3,12 @@ import { type Server } from "node:http";
 import express, { type Express, type Request, Response, NextFunction } from "express";
 import session from "express-session";
 import MemoryStore from "memorystore";
+import pgSession from "connect-pg-simple";
+import pkg from "pg";
+const { Pool } = pkg;
 import { registerRoutes } from "./routes";
 import type { AuthenticatedUser } from "./storage";
-import { sessionConfig, appConfig, validateConfig, logConfig } from "./config";
+import { sessionConfig, appConfig, validateConfig, logConfig, pgConfig } from "./config";
 
 // Validar y mostrar configuración al iniciar
 validateConfig();
@@ -35,7 +38,35 @@ export function log(message: string, source = "express") {
 export const app = express();
 
 // Session configuration with security best practices
-const MemoryStoreSession = MemoryStore(session);
+let sessionStore: any;
+
+try {
+  // Intentar usar PostgreSQL para sesiones (producción)
+  const pgPool = new Pool({
+    host: pgConfig.host,
+    port: pgConfig.port,
+    user: pgConfig.user,
+    password: pgConfig.password,
+    database: pgConfig.database,
+    ssl: { rejectUnauthorized: false },
+  });
+
+  const PgSession = pgSession(session);
+  sessionStore = new PgSession({
+    pool: pgPool,
+    tableName: 'session',
+    schemaName: 'public',
+  });
+  
+  log("Session store: PostgreSQL");
+} catch (error) {
+  // Fallback a MemoryStore en desarrollo
+  log("Fallback to MemoryStore for sessions");
+  const MemoryStoreSession = MemoryStore(session);
+  sessionStore = new MemoryStoreSession({
+    checkPeriod: 86400000,
+  });
+}
 
 app.use(
   session({
@@ -49,9 +80,7 @@ app.use(
       sameSite: "strict",
       maxAge: sessionConfig.maxAge,
     },
-    store: new MemoryStoreSession({
-      checkPeriod: 86400000, // Prune expired entries every 24h
-    }),
+    store: sessionStore,
   })
 );
 
