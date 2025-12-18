@@ -851,17 +851,33 @@ export class MySQLStorage implements IStorage {
   }
 
   async updateUserPassword(email: string, hashedPassword: string): Promise<boolean> {
-    // Update password in tb_claves_usuarios where usuario = email
-    // This matches how validateCredentials reads the password (by email)
-    // Uses pass_new column which is the current password column
-    const [result] = await pool.execute(
-      `UPDATE tb_claves_usuarios 
-       SET pass_new = ?, fecha_registro = NOW() 
-       WHERE usuario = ?`,
-      [hashedPassword, email]
-    );
-    
-    return (result as any).affectedRows > 0;
+    try {
+      // Primero obtener la contraseña actual (anterior)
+      const [currentRows] = await pool.execute<RowDataPacket[]>(
+        `SELECT pass_new FROM tb_claves_usuarios 
+         WHERE usuario = ? 
+         ORDER BY fecha_registro DESC 
+         LIMIT 1`,
+        [email]
+      );
+
+      const currentPassword = currentRows.length > 0 ? currentRows[0].pass_new : null;
+
+      // Insertar nuevo registro con el historial completo
+      const [insertResult] = await pool.execute(
+        `INSERT INTO tb_claves_usuarios 
+         (usuario, pass_new, pass_anterior, fecha_registro, ult_modificacion) 
+         VALUES (?, ?, ?, NOW(), NOW())`,
+        [email, hashedPassword, currentPassword]
+      );
+
+      console.log(`[PASSWORD UPDATE] Contraseña actualizada para ${email}, registro insertado con ID: ${(insertResult as any).insertId}`);
+      
+      return (insertResult as any).affectedRows > 0;
+    } catch (error) {
+      console.error('[PASSWORD UPDATE] Error actualizando contraseña:', error);
+      throw error;
+    }
   }
 
   async logPasswordChange(userId: number, email: string, changeType: string, ip: string, userAgent: string): Promise<void> {
