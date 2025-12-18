@@ -143,7 +143,7 @@ export default function ForgotPassword() {
 
   return (
     <div className="min-h-screen bg-background text-white font-sans flex">
-      <div className="w-full md:w-1/2 flex flex-col justify-center px-8 md:px-12 lg:px-16 py-12">
+      <div className="w-full flex flex-col justify-center px-8 md:px-12 lg:px-16 py-12 max-w-md mx-auto">
         <button
           onClick={() => setLocation("/login")}
           className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-8 w-fit"
@@ -368,20 +368,6 @@ export default function ForgotPassword() {
             </button>
           </div>
         )}
-      </div>
-
-      <div className="hidden md:flex w-1/2 bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800 items-center justify-center p-12">
-        <div className="text-center max-w-md">
-          <div className="w-24 h-24 bg-gradient-to-br from-[#06b6d4]/20 to-[#0891b2]/20 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Lock className="text-[#06b6d4]" size={48} />
-          </div>
-          <h2 className="text-2xl font-bold text-white mb-3">
-            Recupera tu acceso
-          </h2>
-          <p className="text-slate-400 text-sm">
-            Sigue los pasos para recuperar tu contraseña de forma segura. El código de verificación expira en 15 minutos.
-          </p>
-        </div>
       </div>
     </div>
   );
