@@ -810,6 +810,74 @@ export class MySQLStorage implements IStorage {
       'Clase vivienda': string;
     }>;
   }
+  // ============================================
+  // PASSWORD RESET METHODS
+  // ============================================
+
+  async getUserEmailExists(email: string): Promise<boolean> {
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      `SELECT 1 FROM tb_user_tqw WHERE email = ? LIMIT 1`,
+      [email]
+    );
+    return rows.length > 0;
+  }
+
+  async createPasswordResetToken(email: string, code: string, expiresAt: Date, ip: string, userAgent: string): Promise<number> {
+    const [result] = await pool.execute<RowDataPacket[]>(
+      `INSERT INTO password_reset_tokens (email, reset_code, expires_at, ip_address, user_agent) 
+       VALUES (?, ?, ?, ?, ?)`,
+      [email, code, expiresAt, ip, userAgent]
+    );
+    return (result as any).insertId;
+  }
+
+  async validatePasswordResetCode(email: string, code: string): Promise<boolean> {
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      `SELECT id FROM password_reset_tokens 
+       WHERE email = ? AND reset_code = ? AND used = FALSE AND expires_at > NOW()
+       ORDER BY created_at DESC LIMIT 1`,
+      [email, code]
+    );
+    return rows.length > 0;
+  }
+
+  async markPasswordResetCodeUsed(email: string, code: string): Promise<void> {
+    await pool.execute(
+      `UPDATE password_reset_tokens 
+       SET used = TRUE, used_at = NOW() 
+       WHERE email = ? AND reset_code = ?`,
+      [email, code]
+    );
+  }
+
+  async updateUserPassword(email: string, hashedPassword: string): Promise<boolean> {
+    // Update password in tb_claves_usuarios where usuario = email
+    // This matches how validateCredentials reads the password (by email)
+    // Uses pass_new column which is the current password column
+    const [result] = await pool.execute(
+      `UPDATE tb_claves_usuarios 
+       SET pass_new = ?, fecha_registro = NOW() 
+       WHERE usuario = ?`,
+      [hashedPassword, email]
+    );
+    
+    return (result as any).affectedRows > 0;
+  }
+
+  async logPasswordChange(userId: number, email: string, changeType: string, ip: string, userAgent: string): Promise<void> {
+    await pool.execute(
+      `INSERT INTO password_change_log (user_id, email, change_type, ip_address, user_agent) 
+       VALUES (?, ?, ?, ?, ?)`,
+      [userId, email, changeType, ip, userAgent]
+    );
+  }
+
+  async invalidateAllPasswordResetTokens(email: string): Promise<void> {
+    await pool.execute(
+      `UPDATE password_reset_tokens SET used = TRUE, used_at = NOW() WHERE email = ? AND used = FALSE`,
+      [email]
+    );
+  }
 }
 
 export const storage = new MySQLStorage();

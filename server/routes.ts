@@ -1,6 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import crypto from "crypto";
+import bcrypt from "bcrypt";
 import { storage } from "./storage";
 import { insertBillingSchema, loginSchema, materialSolicitudRequestSchema } from "@shared/schema";
 import { z } from "zod";
@@ -142,6 +143,138 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       console.error("Login error:", error);
+      res.status(500).json({ error: "Error interno del servidor" });
+    }
+  });
+
+  // ============================================
+  // PASSWORD RESET ROUTES
+  // ============================================
+
+  // POST /api/auth/forgot-password - Request password reset code
+  app.post("/api/auth/forgot-password", async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email || typeof email !== 'string') {
+        return res.status(400).json({ error: "Email es requerido" });
+      }
+
+      const ip = req.ip || req.socket.remoteAddress || "unknown";
+      const userAgent = req.headers["user-agent"] || "unknown";
+
+      // Check if user exists
+      const userExists = await storage.getUserEmailExists(email);
+      
+      // Always return success to prevent email enumeration
+      if (!userExists) {
+        console.log(`[PASSWORD RESET] Email not found: ${email}`);
+        return res.json({ 
+          success: true, 
+          message: "Si el correo existe, recibirás un código de verificación" 
+        });
+      }
+
+      // Generate 6-digit code
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+      const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+      // Save token to database
+      await storage.createPasswordResetToken(email, code, expiresAt, ip, userAgent);
+
+      // Log the code to console (for testing - replace with email service later)
+      console.log(`\n========================================`);
+      console.log(`[PASSWORD RESET] Código para ${email}: ${code}`);
+      console.log(`[PASSWORD RESET] Expira en: 15 minutos`);
+      console.log(`========================================\n`);
+
+      res.json({ 
+        success: true, 
+        message: "Si el correo existe, recibirás un código de verificación",
+        // For testing only - remove in production
+        ...(process.env.NODE_ENV === 'development' && { testCode: code })
+      });
+    } catch (error) {
+      console.error("Forgot password error:", error);
+      res.status(500).json({ error: "Error interno del servidor" });
+    }
+  });
+
+  // POST /api/auth/verify-reset-code - Verify the reset code
+  app.post("/api/auth/verify-reset-code", async (req, res) => {
+    try {
+      const { email, code } = req.body;
+      
+      if (!email || !code) {
+        return res.status(400).json({ error: "Email y código son requeridos" });
+      }
+
+      const isValid = await storage.validatePasswordResetCode(email, code);
+      
+      if (!isValid) {
+        return res.status(400).json({ 
+          error: "Código inválido o expirado",
+          valid: false 
+        });
+      }
+
+      res.json({ 
+        success: true, 
+        valid: true,
+        message: "Código verificado correctamente" 
+      });
+    } catch (error) {
+      console.error("Verify reset code error:", error);
+      res.status(500).json({ error: "Error interno del servidor" });
+    }
+  });
+
+  // POST /api/auth/reset-password - Reset password with verified code
+  app.post("/api/auth/reset-password", async (req, res) => {
+    try {
+      const { email, code, newPassword } = req.body;
+      const ip = req.ip || req.socket.remoteAddress || "unknown";
+      const userAgent = req.headers["user-agent"] || "unknown";
+      
+      if (!email || !code || !newPassword) {
+        return res.status(400).json({ error: "Todos los campos son requeridos" });
+      }
+
+      if (newPassword.length < 6) {
+        return res.status(400).json({ error: "La contraseña debe tener al menos 6 caracteres" });
+      }
+
+      // Verify code is still valid
+      const isValid = await storage.validatePasswordResetCode(email, code);
+      
+      if (!isValid) {
+        return res.status(400).json({ error: "Código inválido o expirado" });
+      }
+
+      // Hash new password
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      // Update password
+      const updated = await storage.updateUserPassword(email, hashedPassword);
+      
+      if (!updated) {
+        return res.status(400).json({ error: "No se pudo actualizar la contraseña" });
+      }
+
+      // Mark code as used
+      await storage.markPasswordResetCodeUsed(email, code);
+
+      // Invalidate all other reset tokens for this email
+      await storage.invalidateAllPasswordResetTokens(email);
+
+      console.log(`[PASSWORD RESET] Contraseña actualizada exitosamente para: ${email}`);
+
+      res.json({ 
+        success: true, 
+        message: "Contraseña actualizada correctamente" 
+      });
+    } catch (error) {
+      console.error("Reset password error:", error);
       res.status(500).json({ error: "Error interno del servidor" });
     }
   });

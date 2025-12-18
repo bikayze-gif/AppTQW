@@ -12,6 +12,7 @@ import { ChatReporte } from "@/components/chat-reporte";
 import { AuthProvider, ProtectedRoute, useAuth } from "@/lib/auth-context";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
+import ForgotPassword from "@/pages/forgot-password";
 import Calidad from "@/pages/calidad";
 import PeriodInfo from "@/pages/period-info";
 import Analytics from "@/pages/analytics";
@@ -29,6 +30,7 @@ function Router() {
     <Switch>
       {/* Public routes */}
       <Route path="/login" component={Login} />
+      <Route path="/forgot-password" component={ForgotPassword} />
       
       {/* Protected supervisor routes */}
       <Route path="/supervisor">
