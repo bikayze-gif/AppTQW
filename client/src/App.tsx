@@ -31,7 +31,7 @@ function Router() {
       {/* Public routes */}
       <Route path="/login" component={Login} />
       <Route path="/forgot-password" component={ForgotPassword} />
-      
+
       {/* Protected supervisor routes */}
       <Route path="/supervisor">
         <ProtectedRoute><SupervisorNotes /></ProtectedRoute>
@@ -51,7 +51,7 @@ function Router() {
       <Route path="/supervisor/billing">
         <ProtectedRoute><SupervisorBilling /></ProtectedRoute>
       </Route>
-      
+
       {/* Protected technician routes */}
       <Route path="/">
         <ProtectedRoute><PeriodInfo /></ProtectedRoute>
@@ -68,7 +68,7 @@ function Router() {
       <Route path="/tickets">
         <ProtectedRoute><Tickets /></ProtectedRoute>
       </Route>
-      
+
       <Route component={NotFound} />
     </Switch>
   );
@@ -140,7 +140,7 @@ function AppLayout() {
         isOpen={isReportChatOpen}
         onClose={() => setIsReportChatOpen(false)}
       />
-      <BottomNav onAddClick={() => setIsAddMenuOpen(!isAddMenuOpen)} />
+      {currentPath !== "/login" && currentPath !== "/forgot-password" && <BottomNav onAddClick={() => setIsAddMenuOpen(!isAddMenuOpen)} />}
     </div>
   );
 }
