@@ -1,23 +1,14 @@
 import { useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
+import { Line, LineChart, XAxis, YAxis, CartesianGrid } from "recharts";
+import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Search, X, ArrowUp, ArrowDown, ChevronLeft, FileText, Sheet } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import * as XLSX from "xlsx";
 import { useAuth } from "@/lib/auth-context";
 
-const CustomDot = (props: any) => {
-  const { cx, cy, stroke, payload, value } = props;
-  if (value === undefined) return null;
 
-  return (
-    <g>
-      <circle cx={cx} cy={cy} r={6} fill="#1e293b" stroke={stroke} strokeWidth={2.5} />
-      <circle cx={cx} cy={cy} r={3} fill={stroke} stroke="none" />
-    </g>
-  );
-};
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -218,6 +209,17 @@ export default function Activity() {
   const [selectedMonth, setSelectedMonth] = useState("12"); // Default to December 2025
   const { user } = useAuth();
 
+  const chartConfig = {
+    puntos_hfc: {
+      label: "Puntos HFC",
+      color: "#06b6d4",
+    },
+    q_rgu_ftth: {
+      label: "RGU FTTH",
+      color: "#f59e0b",
+    },
+  } satisfies ChartConfig
+
   const months = [
     { value: "01", label: "Enero 2025" },
     { value: "02", label: "Febrero 2025" },
@@ -413,7 +415,7 @@ export default function Activity() {
                 </div>
               </div>
 
-              <ResponsiveContainer width="100%" height="100%">
+              <ChartContainer config={chartConfig} className="min-h-[200px] w-full h-full">
                 <LineChart data={chartData} margin={{ top: 5, right: 0, left: 0, bottom: 25 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
                   <XAxis
@@ -445,30 +447,28 @@ export default function Activity() {
                     domain={[0, 'auto']}
                     width={40}
                   />
-                  <Tooltip
-                    contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(6, 182, 212, 0.3)', borderRadius: '8px', color: '#fff' }}
-                    labelStyle={{ color: '#06b6d4' }}
+                  <ChartTooltip
+                    content={<ChartTooltipContent />}
+                    cursor={{ stroke: 'rgba(255,255,255,0.2)', strokeWidth: 1 }}
                   />
                   <Line
                     yAxisId="left"
                     type="monotone"
                     dataKey="puntos_hfc"
-                    stroke="#06b6d4"
+                    stroke="var(--color-puntos_hfc)"
                     strokeWidth={2}
                     dot={false}
-                    name="Puntos HFC"
                   />
                   <Line
                     yAxisId="right"
                     type="monotone"
                     dataKey="q_rgu_ftth"
-                    stroke="#f59e0b"
+                    stroke="var(--color-q_rgu_ftth)"
                     strokeWidth={2}
                     dot={false}
-                    name="RGU FTTH"
                   />
                 </LineChart>
-              </ResponsiveContainer>
+              </ChartContainer>
             </div>
           </CardContent>
         </Card>

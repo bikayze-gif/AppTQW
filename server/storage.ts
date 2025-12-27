@@ -33,6 +33,41 @@ export interface AuthenticatedUser {
   zona: string | null;
 }
 
+// Monitor Diario Dashboard Types
+export interface MonitorDiarioDashboardData {
+  activityTypeCounts: Array<{ name: string; value: number }>;
+  statusDistribution: Array<{ name: string; value: number; color: string }>;
+  closingCodeDistribution: Array<{ name: string; value: number; color: string }>;
+  supervisorStats: Array<{
+    name: string;
+    technicianCount: number;
+    px0Count: number;
+    completionRate: number;
+  }>;
+  globalCompletionRate: number;
+  // New fields for stacked bar charts
+  px0TechsByStatusBySupervisor: Record<string, Array<{
+    name: string; // technician name
+    Cancelado: number;
+    Iniciado: number;
+    'No Realizada': number;
+    Pendiente: number;
+    Completado: number;
+    'En ruta': number;
+    Suspendido: number;
+  }>>;
+  technicianFirstActivityTime: Record<string, Array<{
+    name: string; // technician name
+    firstActivityTime: string; // HH:MM
+    horaDecimal: number; // for sorting/charting if needed
+  }>>;
+  technicianRecordCount: Record<string, Array<{
+    name: string; // technician name
+    recordCount: number;
+  }>>;
+  lastIntegration: string | null;
+}
+
 export interface IStorage {
   // Billing operations
   getAllBilling(): Promise<Billing[]>;
@@ -41,6 +76,9 @@ export interface IStorage {
   updateBilling(id: number, billing: Partial<InsertBilling>): Promise<Billing | undefined>;
   deleteBilling(id: number): Promise<boolean>;
   getTqwComisionData(rut: string, periodo: string): Promise<schema.TqwComisionRenew | undefined>;
+  getKpiData(periodo: string): Promise<schema.TqwComisionRenew[]>;
+  getKpiPeriods(): Promise<string[]>;
+  getMonitorDiarioDashboard(): Promise<MonitorDiarioDashboardData>;
 
   // Materials operations
   getMaterialTipos(): Promise<string[]>;
@@ -98,7 +136,11 @@ export class MySQLStorage implements IStorage {
   }
 
   async createBilling(billing: InsertBilling): Promise<Billing> {
-    const result = await db.insert(schema.billing).values(billing);
+    const dataToInsert = {
+      ...billing,
+      valorizacion: billing.valorizacion ? billing.valorizacion.toString() : null,
+    };
+    const result = await db.insert(schema.billing).values(dataToInsert as any);
     const insertId = result[0].insertId;
     const created = await this.getBillingById(insertId);
     if (!created) throw new Error("Failed to create billing record");
@@ -106,9 +148,15 @@ export class MySQLStorage implements IStorage {
   }
 
   async updateBilling(id: number, billing: Partial<InsertBilling>): Promise<Billing | undefined> {
+    const dataToUpdate = {
+      ...billing,
+      valorizacion: billing.valorizacion !== undefined && billing.valorizacion !== null
+        ? billing.valorizacion.toString()
+        : billing.valorizacion,
+    };
     await db
       .update(schema.billing)
-      .set(billing)
+      .set(dataToUpdate as any)
       .where(eq(schema.billing.id, id));
     return this.getBillingById(id);
   }
@@ -127,6 +175,319 @@ export class MySQLStorage implements IStorage {
         eq(schema.tqwComisionRenew.periodo, periodo)
       ));
     return result;
+  }
+
+  async getKpiData(periodo: string): Promise<schema.TqwComisionRenew[]> {
+    try {
+      console.log(`[KPI] Fetching data for period: ${periodo}`);
+
+      const [rows] = await pool.execute<RowDataPacket[]>(
+        `SELECT 
+          *,
+          \`Comisión_HFC\` as Comision_HFC,
+          \`Comisión_FTTH\` as Comision_FTTH,
+          \`Comisión_HFC_Ponderada\` as Comision_HFC_Ponderada,
+          \`Comisión_FTTH_Ponderada\` as Comision_FTTH_Ponderada
+         FROM tb_tqw_comision_renew 
+         WHERE periodo = ? 
+         ORDER BY NombreTecnico ASC`,
+        [periodo]
+      );
+
+      console.log(`[KPI] Found ${rows.length} records for period ${periodo}`);
+
+      return rows as schema.TqwComisionRenew[];
+    } catch (error) {
+      console.error(`[KPI] Error fetching data for period ${periodo}:`, error);
+      throw error;
+    }
+  }
+
+  async getKpiPeriods(): Promise<string[]> {
+    try {
+      const [rows] = await pool.execute(
+        `SELECT DISTINCT periodo FROM tb_tqw_comision_renew 
+         WHERE periodo IS NOT NULL AND periodo != ''
+         ORDER BY periodo DESC`
+      );
+      return (rows as any[]).map(r => r.periodo);
+    } catch (error) {
+      console.error("Error fetching KPI periods:", error);
+      return [];
+    }
+  }
+
+  async getMonitorDiarioDashboard(): Promise<MonitorDiarioDashboardData> {
+    try {
+      // DEBUG LOGGING
+      try {
+        const [t] = await pool.execute('SELECT COUNT(*) as c FROM tb_toa_reporte_diario_mysql');
+        console.log('[Monitor Diario Debug] Total Rows in Table:', (t as any)[0].c);
+        const [a] = await pool.execute("SELECT COUNT(*) as c FROM tb_toa_reporte_diario_mysql WHERE Tipo_registro = 'Actividad'");
+        console.log('[Monitor Diario Debug] Activity Rows (Exact):', (a as any)[0].c);
+      } catch (err) {
+        console.error('[Monitor Diario Debug] Error running debug queries:', err);
+      }
+
+      // Query 1: Activity type counts for bar chart
+      const [activityRows] = await pool.execute<RowDataPacket[]>(
+        `SELECT \`Tipo de Actividad\` as name, COUNT(*) as value
+         FROM tb_toa_reporte_diario_mysql
+         WHERE \`Tipo de Actividad\` IS NOT NULL AND \`Tipo de Actividad\` != ''
+           AND Tipo_registro = 'Actividad'
+         GROUP BY \`Tipo de Actividad\`
+         ORDER BY value DESC`
+      );
+
+      // Query 2: Status distribution for pie chart
+      const [statusRows] = await pool.execute<RowDataPacket[]>(
+        `SELECT Estado as name, COUNT(*) as value
+         FROM tb_toa_reporte_diario_mysql
+         WHERE Estado IS NOT NULL AND Estado != ''
+           AND Tipo_registro = 'Actividad'
+         GROUP BY Estado
+         ORDER BY value DESC`
+      );
+
+      // Query 3: Closing code distribution for non-completed orders
+      const [closingCodeRows] = await pool.execute<RowDataPacket[]>(
+        `SELECT \`Código de Cierre\` as name, COUNT(*) as value
+         FROM tb_toa_reporte_diario_mysql
+         WHERE Estado != 'Completado' 
+           AND \`Código de Cierre\` IS NOT NULL 
+           AND \`Código de Cierre\` != ''
+           AND Tipo_registro = 'Actividad'
+         GROUP BY \`Código de Cierre\`
+         ORDER BY value DESC`
+      );
+
+      // Query 4: Supervisor statistics
+      const [supervisorRows] = await pool.execute<RowDataPacket[]>(
+        `SELECT 
+          COALESCE(supervisor, '(Blank)') as name,
+          COUNT(DISTINCT \`Técnico\`) as technicianCount,
+          COUNT(DISTINCT CASE WHEN Flag_Sin_Actividad_Completada = 1 THEN \`Técnico\` END) as px0Count,
+          ROUND(
+            SUM(CASE WHEN Estado = 'Completado' THEN 1 ELSE 0 END) * 100.0 /
+            NULLIF(SUM(CASE WHEN Estado IN ('Completado', 'No Realizada') THEN 1 ELSE 0 END), 0),
+            1
+          ) as completionRate
+         FROM tb_toa_reporte_diario_mysql
+         WHERE Tipo_registro = 'Actividad'
+         GROUP BY supervisor
+         ORDER BY name`
+      );
+
+      // Query 5: Global completion rate
+      const [globalRows] = await pool.execute<RowDataPacket[]>(
+        `SELECT 
+          ROUND(
+            SUM(CASE WHEN Estado = 'Completado' THEN 1 ELSE 0 END) * 100.0 /
+            NULLIF(SUM(CASE WHEN Estado IN ('Completado', 'No Realizada') THEN 1 ELSE 0 END), 0),
+            1
+          ) as completionRate
+         FROM tb_toa_reporte_diario_mysql
+         WHERE Tipo_registro = 'Actividad'`
+      );
+
+      // Query 6: PX0 Technicians by Status per Supervisor
+      const [px0Rows] = await pool.execute<RowDataPacket[]>(
+        `SELECT 
+          \`Técnico\` as technician,
+          Nombre_short,
+          IFNULL(supervisor, '(Blank)') as supervisor,
+          SUM(CASE WHEN Estado = 'Cancelado' THEN 1 ELSE 0 END) as Cancelado,
+          SUM(CASE WHEN Estado = 'Iniciado' THEN 1 ELSE 0 END) as Iniciado,
+          SUM(CASE WHEN Estado = 'No Realizada' THEN 1 ELSE 0 END) as NoRealizada,
+          SUM(CASE WHEN Estado = 'Pendiente' THEN 1 ELSE 0 END) as Pendiente,
+          SUM(CASE WHEN Estado = 'Completado' THEN 1 ELSE 0 END) as Completado,
+          SUM(CASE WHEN Estado = 'En ruta' THEN 1 ELSE 0 END) as EnRuta,
+          SUM(CASE WHEN Estado = 'Suspendido' THEN 1 ELSE 0 END) as Suspendido
+         FROM tb_toa_reporte_diario_mysql
+         WHERE Tipo_registro = 'Actividad' 
+           AND Flag_Sin_Actividad_Completada = 1
+         GROUP BY \`Técnico\`, Nombre_short, supervisor
+         ORDER BY technician`
+      );
+
+      // Query 7: First Activity Time per Technician per Supervisor
+      const [firstTimeRows] = await pool.execute<RowDataPacket[]>(
+        `SELECT 
+          \`Técnico\` as technician,
+          Nombre_short,
+          IFNULL(supervisor, '(Blank)') as supervisor,
+          MIN(Hora_Inicio_Primer_Actividad_Completada) as firstActivityTime
+         FROM tb_toa_reporte_diario_mysql
+         WHERE Tipo_registro = 'Actividad'
+           AND Hora_Inicio_Primer_Actividad_Completada IS NOT NULL
+         GROUP BY \`Técnico\`, Nombre_short, supervisor
+         ORDER BY technician`
+      );
+
+      // Query 9: Count of records per Technician per Supervisor
+      const [recordCountRows] = await pool.execute<RowDataPacket[]>(
+        `SELECT 
+          \`Técnico\` as technician,
+          Nombre_short,
+          IFNULL(supervisor, '(Blank)') as supervisor,
+          COUNT(*) as recordCount
+         FROM tb_toa_reporte_diario_mysql
+         WHERE Tipo_registro = 'Actividad'
+         GROUP BY \`Técnico\`, Nombre_short, supervisor
+         ORDER BY technician`
+      );
+
+      // Query 8: Last integration date
+      const [integrationRows] = await pool.execute<RowDataPacket[]>(
+        "SELECT MAX(fecha_integracion) as last_integration FROM tb_toa_reporte_diario_mysql"
+      );
+      const rawDate = (integrationRows as any)[0]?.last_integration;
+
+      console.log(`[Monitor Diario] PX0 Rows: ${px0Rows.length}`);
+      console.log(`[Monitor Diario] First Time Rows: ${firstTimeRows.length}`);
+      console.log(`[Monitor Diario] Record Count Rows: ${recordCountRows.length}`);
+      console.log(`[Monitor Diario] Last Integration: ${(integrationRows as any)[0]?.last_integration}`);
+
+      // Map status to colors
+      const statusColorMap: Record<string, string> = {
+        'Completado': '#22c55e',
+        'No Realizada': '#ef4444',
+        'Cancelado': '#000000',
+        'Suspendido': '#3b82f6',
+        'Iniciado': '#f97316',
+        'Pendiente': '#eab308',
+        'En ruta': '#94a3b8'
+      };
+
+      // Map closing codes to colors
+      const closingCodeColorMap: Record<string, string> = {
+        'Sin moradores': '#3b82f6',
+        'Cliente reagenda': '#3b0764',
+        'Orden mal generada': '#a855f7',
+        'Clte desiste': '#ec4899',
+        'Dirección incorrecta': '#db2777',
+        'NAP Problema': '#be185d'
+      };
+
+      const statusDistribution = statusRows.map((row: any) => ({
+        name: row.name,
+        value: Number(row.value),
+        color: statusColorMap[row.name] || '#94a3b8'
+      }));
+
+      const closingCodeDistribution = closingCodeRows.map((row: any) => ({
+        name: row.name,
+        value: Number(row.value),
+        color: closingCodeColorMap[row.name] || '#94a3b8'
+      }));
+
+      const supervisorStats = supervisorRows.map((row: any) => ({
+        name: row.name || '(Blank)',
+        technicianCount: Number(row.technicianCount) || 0,
+        px0Count: Number(row.px0Count) || 0,
+        completionRate: Number(row.completionRate) || 0
+      }));
+
+
+
+      // Process PX0 data
+      const px0TechsByStatusBySupervisor: Record<string, any[]> = {};
+      px0Rows.forEach((row: any) => {
+        const supName = row.supervisor;
+        if (!px0TechsByStatusBySupervisor[supName]) {
+          px0TechsByStatusBySupervisor[supName] = [];
+        }
+        px0TechsByStatusBySupervisor[supName].push({
+          name: row.Nombre_short || row.technician,
+          Cancelado: Number(row.Cancelado),
+          Iniciado: Number(row.Iniciado),
+          'No Realizada': Number(row.NoRealizada),
+          Pendiente: Number(row.Pendiente),
+          Completado: Number(row.Completado),
+          'En ruta': Number(row.EnRuta),
+          Suspendido: Number(row.Suspendido)
+        });
+      });
+
+      // Process First Activity Time data
+      const technicianFirstActivityTime: Record<string, any[]> = {};
+      firstTimeRows.forEach((row: any) => {
+        const supName = row.supervisor;
+        if (!technicianFirstActivityTime[supName]) {
+          technicianFirstActivityTime[supName] = [];
+        }
+
+        // El campo llega como decimal HH.MM (ej: 10.38 para 10:38)
+        let timeValue = 0;
+        let displayTime = "00:00";
+
+        if (row.firstActivityTime != null) {
+          // Robust parsing: handle strings with commas too
+          let rawString = row.firstActivityTime.toString();
+          rawString = rawString.replace(',', '.');
+
+          const rawValue = parseFloat(rawString);
+
+          if (!isNaN(rawValue)) {
+            const hours = Math.floor(rawValue);
+            const minutes = Math.round((rawValue - hours) * 100);
+
+            // Limit minutes to 59 to avoid overflow on invalid data
+            const cleanMinutes = Math.min(59, minutes);
+
+            // Convertir a valor decimal real para el gráfico (ej: 10:30 -> 10.5)
+            timeValue = hours + (cleanMinutes / 60);
+            displayTime = `${hours.toString().padStart(2, '0')}:${cleanMinutes.toString().padStart(2, '0')}`;
+          } else {
+            console.warn(`[Monitor Diario] Invalid time format for ${row.technician}: ${row.firstActivityTime}`);
+          }
+        }
+
+        // Debug logs for first few items
+        if (technicianFirstActivityTime[supName].length < 2) {
+          console.log(`[Monitor Diario Debug] Tech: ${row.Nombre_short}, Raw: ${row.firstActivityTime}, Value: ${timeValue}`);
+        }
+
+        technicianFirstActivityTime[supName].push({
+          name: row.Nombre_short || row.technician,
+          firstActivityTime: displayTime,
+          horaDecimal: timeValue
+        });
+      });
+
+      // Process Record Count data
+      const technicianRecordCount: Record<string, any[]> = {};
+      console.log(`[Monitor Diario] Processing ${recordCountRows.length} record count rows`);
+      recordCountRows.forEach((row: any) => {
+        const supName = row.supervisor;
+        if (!technicianRecordCount[supName]) {
+          technicianRecordCount[supName] = [];
+        }
+        technicianRecordCount[supName].push({
+          name: row.Nombre_short || row.technician,
+          recordCount: Number(row.recordCount)
+        });
+      });
+      console.log(`[Monitor Diario] technicianRecordCount keys:`, Object.keys(technicianRecordCount));
+
+      const result = {
+        activityTypeCounts: activityRows as Array<{ name: string; value: number }>,
+        statusDistribution,
+        closingCodeDistribution,
+        supervisorStats,
+        globalCompletionRate: Number((globalRows as any)[0]?.completionRate) || 0,
+        px0TechsByStatusBySupervisor,
+        technicianFirstActivityTime,
+        technicianRecordCount,
+        lastIntegration: rawDate ? new Date(rawDate).toLocaleString('es-CL') : null
+      };
+
+      console.log("[Monitor Diario] Dashboard data fetched successfully");
+      return result;
+    } catch (error) {
+      console.error("[Monitor Diario] Error fetching dashboard data:", error);
+      throw error;
+    }
   }
 
   // ============================================
@@ -163,24 +524,13 @@ export class MySQLStorage implements IStorage {
       const results = rows as any[];
 
       if (!results || results.length === 0) {
-        console.log("No user found for email:", email);
         return null;
       }
 
       const user = results[0];
       const storedPassword = user.pass_new;
 
-      console.log("User found:", {
-        email: user.email,
-        hasPassword: !!storedPassword,
-        passwordLength: storedPassword?.length,
-        passwordPrefix: storedPassword?.substring(0, 10) + '...',
-        perfil: user.PERFIL,
-        rut: user.rut
-      });
-
       if (!storedPassword) {
-        console.log("No password found for user:", email);
         return null;
       }
 
@@ -188,25 +538,19 @@ export class MySQLStorage implements IStorage {
       let passwordValid = false;
       const isBcrypt = storedPassword.startsWith('$2a$') || storedPassword.startsWith('$2b$') || storedPassword.startsWith('$2y$');
 
-      console.log("Password type:", isBcrypt ? "bcrypt" : "plaintext");
-
       if (isBcrypt) {
-        // Contraseña hasheada con bcrypt
         try {
           passwordValid = await bcrypt.compare(password, storedPassword);
-          console.log("Bcrypt comparison result:", passwordValid);
         } catch (bcryptError) {
           console.error("Error comparing bcrypt password:", bcryptError);
           passwordValid = false;
         }
       } else {
-        // Contraseña en texto plano (sistema legado)
-        passwordValid = storedPassword === password;
-        console.log("Plaintext comparison result:", passwordValid);
+        // Simple plaintext comparison with trim
+        passwordValid = storedPassword.trim() === password.trim();
       }
 
       if (!passwordValid) {
-        console.log("Invalid password for user:", email);
         return null;
       }
 
@@ -872,7 +1216,7 @@ export class MySQLStorage implements IStorage {
       );
 
       console.log(`[PASSWORD UPDATE] Contraseña actualizada para ${email}, registro insertado con ID: ${(insertResult as any).insertId}`);
-      
+
       return (insertResult as any).affectedRows > 0;
     } catch (error) {
       console.error('[PASSWORD UPDATE] Error actualizando contraseña:', error);

@@ -155,7 +155,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/forgot-password", async (req, res) => {
     try {
       const { email } = req.body;
-      
+
       if (!email || typeof email !== 'string') {
         return res.status(400).json({ error: "Email es requerido" });
       }
@@ -165,13 +165,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check if user exists
       const userExists = await storage.getUserEmailExists(email);
-      
+
       // Always return success to prevent email enumeration
       if (!userExists) {
         console.log(`[PASSWORD RESET] Email not found: ${email}`);
-        return res.json({ 
-          success: true, 
-          message: "Si el correo existe, recibirás un código de verificación" 
+        return res.json({
+          success: true,
+          message: "Si el correo existe, recibirás un código de verificación"
         });
       }
 
@@ -188,8 +188,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`[PASSWORD RESET] Expira en: 15 minutos`);
       console.log(`========================================\n`);
 
-      res.json({ 
-        success: true, 
+      res.json({
+        success: true,
         message: "Si el correo existe, recibirás un código de verificación",
         // For testing only - remove in production
         ...(process.env.NODE_ENV === 'development' && { testCode: code })
@@ -204,24 +204,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/verify-reset-code", async (req, res) => {
     try {
       const { email, code } = req.body;
-      
+
       if (!email || !code) {
         return res.status(400).json({ error: "Email y código son requeridos" });
       }
 
       const isValid = await storage.validatePasswordResetCode(email, code);
-      
+
       if (!isValid) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           error: "Código inválido o expirado",
-          valid: false 
+          valid: false
         });
       }
 
-      res.json({ 
-        success: true, 
+      res.json({
+        success: true,
         valid: true,
-        message: "Código verificado correctamente" 
+        message: "Código verificado correctamente"
       });
     } catch (error) {
       console.error("Verify reset code error:", error);
@@ -235,7 +235,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { email, code, newPassword } = req.body;
       const ip = req.ip || req.socket.remoteAddress || "unknown";
       const userAgent = req.headers["user-agent"] || "unknown";
-      
+
       if (!email || !code || !newPassword) {
         return res.status(400).json({ error: "Todos los campos son requeridos" });
       }
@@ -246,7 +246,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Verify code is still valid
       const isValid = await storage.validatePasswordResetCode(email, code);
-      
+
       if (!isValid) {
         return res.status(400).json({ error: "Código inválido o expirado" });
       }
@@ -256,7 +256,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Update password
       const updated = await storage.updateUserPassword(email, hashedPassword);
-      
+
       if (!updated) {
         return res.status(400).json({ error: "No se pudo actualizar la contraseña" });
       }
@@ -269,9 +269,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`[PASSWORD RESET] Contraseña actualizada exitosamente para: ${email}`);
 
-      res.json({ 
-        success: true, 
-        message: "Contraseña actualizada correctamente" 
+      res.json({
+        success: true,
+        message: "Contraseña actualizada correctamente"
       });
     } catch (error) {
       console.error("Reset password error:", error);
@@ -352,6 +352,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // TQW COMMISSIONROUTES
   // ============================================
 
+  console.log("[Routes] Registering KPI and Commission endpoints...");
+
+  // KPI Periods API route
+  app.get("/api/kpi-periods", async (req, res) => {
+    try {
+      const periods = await storage.getKpiPeriods();
+      res.json(periods);
+    } catch (error) {
+      console.error("[KPI Periods API] Error:", error);
+      res.status(500).json({ error: "Failed to fetch KPI periods" });
+    }
+  });
+
+  // KPI API route
+  app.get("/api/kpi", async (req, res) => {
+    try {
+      const { period } = req.query;
+      console.log(`[KPI API] Request received for period: ${period}`);
+
+      if (!period || typeof period !== "string") {
+        return res.status(400).json({ error: "Period parameter is required" });
+      }
+
+      const data = await storage.getKpiData(period);
+      console.log(`[KPI API] Sending ${data.length} records`);
+      res.json(data);
+    } catch (error) {
+      console.error("[KPI API] Error:", error);
+      res.status(500).json({ error: "Failed to fetch KPI data" });
+    }
+  });
+
   // TQW Commission API route
   app.get("/api/tqw-comision/:rut/:periodo", async (req, res) => {
     try {
@@ -364,6 +396,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching TQW commission data:", error);
       res.status(500).json({ error: "Failed to fetch TQW commission data" });
+    }
+  });
+
+  // Monitor Diario Dashboard API route - Trigger rebuild
+  app.get("/api/supervisor/monitor-diario", async (req, res) => {
+    try {
+      console.log("[Monitor Diario API] Request received");
+      const data = await storage.getMonitorDiarioDashboard();
+      console.log("[Monitor Diario API] Sending dashboard data");
+      res.json(data);
+    } catch (error) {
+      console.error("[Monitor Diario API] Error:", error);
+      res.status(500).json({ error: "Failed to fetch monitor diario dashboard data" });
     }
   });
 
@@ -794,8 +839,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const cumple = data.filter(d => d.CALIDAD_30 === '0').length;
       const noCumple = data.filter(d => d.CALIDAD_30 === '1').length;
-      const hfc = data.filter(d => d.TIPO_RED_CALCULADO === 'HFC');
-      const ftth = data.filter(d => ['FTTH', 'DUAL'].includes(d.TIPO_RED_CALCULADO));
+      const hfc = data.filter(d => d.TIPO_RED === 'HFC');
+      const ftth = data.filter(d => ['FTTH', 'DUAL'].includes(d.TIPO_RED));
 
       res.json({
         success: true,
@@ -835,7 +880,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { mesContable } = req.params;
       console.log(`[Calidad Export] Requesting export data for RUT: ${rut}, Mes: ${mesContable}`);
-      
+
       const data = await storage.getCalidadReactivaExportData(rut, mesContable);
       console.log(`[Calidad Export] Found ${data.length} records`);
 

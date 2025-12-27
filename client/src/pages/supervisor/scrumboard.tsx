@@ -89,23 +89,23 @@ export default function SupervisorScrumboard() {
     todo: {
       id: "todo",
       title: "Por Hacer",
-      color: "bg-blue-50",
+      color: "bg-blue-50 dark:bg-blue-900/20",
       tasks: mockTasks.todo,
-      icon: <AlertCircle className="w-5 h-5 text-blue-600" />,
+      icon: <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400" />,
     },
     inProgress: {
       id: "inProgress",
       title: "En Progreso",
-      color: "bg-amber-50",
+      color: "bg-amber-50 dark:bg-amber-900/20",
       tasks: mockTasks.inProgress,
-      icon: <Clock className="w-5 h-5 text-amber-600" />,
+      icon: <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400" />,
     },
     done: {
       id: "done",
       title: "Completado",
-      color: "bg-green-50",
+      color: "bg-green-50 dark:bg-green-900/20",
       tasks: mockTasks.done,
-      icon: <CheckCircle2 className="w-5 h-5 text-green-600" />,
+      icon: <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400" />,
     },
   });
 
@@ -114,13 +114,13 @@ export default function SupervisorScrumboard() {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case "high":
-        return "bg-red-100 text-red-700 border-red-200";
+        return "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-900/50";
       case "medium":
-        return "bg-amber-100 text-amber-700 border-amber-200";
+        return "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-900/50";
       case "low":
-        return "bg-green-100 text-green-700 border-green-200";
+        return "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-900/50";
       default:
-        return "bg-gray-100 text-gray-700";
+        return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
     }
   };
 

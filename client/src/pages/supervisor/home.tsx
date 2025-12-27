@@ -1,6 +1,6 @@
 import { SupervisorLayout } from "@/components/supervisor/supervisor-layout";
-import { 
-  MoreVertical, CheckCircle2, AlertCircle, Clock, 
+import {
+  MoreVertical, CheckCircle2, AlertCircle, Clock,
   FileText, TrendingUp, Calendar, Bell, Settings
 } from "lucide-react";
 
@@ -17,7 +17,7 @@ export default function SupervisorHome() {
             <span>/</span>
             <span className="text-slate-800 dark:text-slate-200 font-medium">Project</span>
           </div>
-          
+
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 rounded-full overflow-hidden bg-slate-200 border-4 border-white dark:border-slate-800 shadow-sm">
@@ -31,9 +31,9 @@ export default function SupervisorHome() {
                 </div>
               </div>
             </div>
-            
+
             <div className="flex gap-3">
-              <button className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+              <button className="px-4 py-2 bg-slate-800 hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
                 <FileText size={16} /> Messages
               </button>
               <button className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-lg shadow-blue-500/20">
@@ -61,7 +61,7 @@ export default function SupervisorHome() {
               <button className="text-slate-400 hover:text-slate-600"><MoreVertical size={16} /></button>
             </div>
             <div className="text-center">
-              <h3 className="text-5xl font-bold text-slate-800 dark:text-white mb-1">25</h3>
+              <h3 className="text-4xl font-bold text-slate-800 dark:text-white mb-1">25</h3>
               <p className="text-slate-500 font-medium">Due Tasks</p>
               <p className="text-slate-400 text-xs mt-4">Completed: 7</p>
             </div>
@@ -74,7 +74,7 @@ export default function SupervisorHome() {
               <button className="text-slate-400 hover:text-slate-600"><MoreVertical size={16} /></button>
             </div>
             <div className="text-center">
-              <h3 className="text-5xl font-bold text-slate-800 dark:text-white mb-1">4</h3>
+              <h3 className="text-4xl font-bold text-slate-800 dark:text-white mb-1">4</h3>
               <p className="text-slate-500 font-medium">Tasks</p>
               <p className="text-red-400 text-xs mt-4">Yesterday's overdue: 2</p>
             </div>
@@ -87,7 +87,7 @@ export default function SupervisorHome() {
               <button className="text-slate-400 hover:text-slate-600"><MoreVertical size={16} /></button>
             </div>
             <div className="text-center">
-              <h3 className="text-5xl font-bold text-slate-800 dark:text-white mb-1">32</h3>
+              <h3 className="text-4xl font-bold text-slate-800 dark:text-white mb-1">32</h3>
               <p className="text-slate-500 font-medium">Open</p>
               <p className="text-slate-400 text-xs mt-4">Closed today: 0</p>
             </div>
@@ -100,7 +100,7 @@ export default function SupervisorHome() {
               <button className="text-slate-400 hover:text-slate-600"><MoreVertical size={16} /></button>
             </div>
             <div className="text-center">
-              <h3 className="text-5xl font-bold text-slate-800 dark:text-white mb-1">42</h3>
+              <h3 className="text-4xl font-bold text-slate-800 dark:text-white mb-1">42</h3>
               <p className="text-slate-500 font-medium">Proposals</p>
               <p className="text-slate-400 text-xs mt-4">Implemented: 8</p>
             </div>
@@ -123,12 +123,12 @@ export default function SupervisorHome() {
               {/* Placeholder for Chart */}
               <div className="h-64 w-full bg-slate-50 dark:bg-slate-800/50 rounded-lg flex items-end justify-between px-4 pb-4 pt-8 gap-2">
                 {[40, 30, 60, 45, 70, 35, 50].map((h, i) => (
-                   <div key={i} className="w-full bg-blue-100 dark:bg-blue-900/20 rounded-t-sm relative group">
-                     <div 
-                       className="absolute bottom-0 left-0 right-0 bg-blue-500 rounded-t-sm transition-all duration-500 group-hover:bg-blue-600"
-                       style={{ height: `${h}%` }}
-                     ></div>
-                   </div>
+                  <div key={i} className="w-full bg-blue-100 dark:bg-blue-900/20 rounded-t-sm relative group">
+                    <div
+                      className="absolute bottom-0 left-0 right-0 bg-blue-500 rounded-t-sm transition-all duration-500 group-hover:bg-blue-600"
+                      style={{ height: `${h}%` }}
+                    ></div>
+                  </div>
                 ))}
               </div>
             </div>
@@ -136,15 +136,15 @@ export default function SupervisorHome() {
             <div className="space-y-6">
               <div>
                 <p className="text-sm text-slate-500 mb-2">Overview</p>
-                <div className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-xl flex flex-col items-center justify-center h-40">
-                  <span className="text-4xl font-bold text-blue-600">214</span>
-                  <span className="text-slate-500 text-sm">New Issues</span>
+                <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl flex flex-col items-center justify-center h-32">
+                  <span className="text-3xl font-bold text-blue-600">214</span>
+                  <span className="text-slate-500 text-xs">New Issues</span>
                 </div>
               </div>
               <div>
-                <div className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-xl flex flex-col items-center justify-center h-40">
-                  <span className="text-4xl font-bold text-green-600">75</span>
-                  <span className="text-slate-500 text-sm">Closed</span>
+                <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl flex flex-col items-center justify-center h-32">
+                  <span className="text-3xl font-bold text-green-600">75</span>
+                  <span className="text-slate-500 text-xs">Closed</span>
                 </div>
               </div>
             </div>

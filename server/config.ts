@@ -1,3 +1,4 @@
+import "dotenv/config";
 /**
  * Configuración centralizada del servidor
  * 
@@ -29,21 +30,6 @@ export const pgConfig = {
   database: process.env.PGDATABASE || "replit",
 };
 
-// Configuración de sesiones
-export const sessionConfig = {
-  secret: process.env.SESSION_SECRET || generateDefaultSecret(),
-  maxAge: 6 * 60 * 60 * 1000, // 6 horas en milisegundos
-  cookieName: "tqw_session",
-};
-
-// Configuración de seguridad
-export const securityConfig = {
-  maxLoginAttempts: 5,
-  lockoutDurationMinutes: 15,
-  sessionTimeoutHours: 6,
-  bcryptRounds: 10,
-};
-
 // Configuración de la aplicación
 export const appConfig = {
   port: parseInt(process.env.PORT || "5000"),
@@ -56,14 +42,31 @@ export const businessConfig = {
   defaultPeriodo: "202509",
 };
 
+// Configuración de seguridad
+export const securityConfig = {
+  maxLoginAttempts: 5,
+  lockoutDurationMinutes: 15,
+  sessionTimeoutHours: 6,
+  bcryptRounds: 10,
+};
+
 // Genera un secret por defecto si no está configurado
 // NOTA: En producción, SIEMPRE configura SESSION_SECRET
 function generateDefaultSecret(): string {
   if (appConfig.isProduction) {
     console.warn("⚠️  WARNING: SESSION_SECRET no está configurado. Esto es inseguro en producción.");
   }
-  return require("crypto").randomBytes(32).toString("hex");
+  // Use global crypto which is available in Node.js 19+
+  return globalThis.crypto.randomUUID();
 }
+
+// Configuración de sesiones
+export const sessionConfig = {
+  secret: process.env.SESSION_SECRET || generateDefaultSecret(),
+  maxAge: 6 * 60 * 60 * 1000, // 6 horas en milisegundos
+  cookieName: "tqw_session",
+};
+
 
 // Validación de configuración crítica
 export function validateConfig(): void {

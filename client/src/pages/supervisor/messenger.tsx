@@ -2,7 +2,7 @@ import { useState } from "react";
 import { SupervisorLayout } from "@/components/supervisor/supervisor-layout";
 import { Search, Send, Paperclip, Smile, MoreVertical, Phone, Video, ArrowLeft, User, Mail, MessageSquare, Radio, AlertCircle } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { 
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -173,7 +173,7 @@ export default function SupervisorMessenger() {
     <SupervisorLayout>
       <div className="flex h-[calc(100vh-120px)] gap-6">
         {/* Left Sidebar - Chats */}
-        <div className="w-80 bg-white dark:bg-[#1e293b] rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col overflow-hidden">
+        <div className="w-72 bg-white dark:bg-[#1e293b] rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col overflow-hidden">
           {/* Header */}
           <div className="p-6 border-b border-slate-100 dark:border-slate-800">
             <div className="flex items-center justify-between mb-4">
@@ -215,14 +215,13 @@ export default function SupervisorMessenger() {
                     key={chat.id}
                     onClick={() => setSelectedChat(chat.id)}
                     data-testid={`button-chat-${chat.id}`}
-                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-colors ${
-                      selectedChat === chat.id
-                        ? "bg-blue-50 dark:bg-blue-900/20"
-                        : "hover:bg-slate-50 dark:hover:bg-slate-800"
-                    }`}
+                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-colors ${selectedChat === chat.id
+                      ? "bg-blue-50 dark:bg-blue-900/20"
+                      : "hover:bg-slate-50 dark:hover:bg-slate-800"
+                      }`}
                   >
                     <div className="relative shrink-0">
-                      <Avatar className="h-12 w-12">
+                      <Avatar className="h-10 w-10">
                         <AvatarImage src={chat.avatar} />
                         <AvatarFallback>{chat.initials}</AvatarFallback>
                       </Avatar>
@@ -232,11 +231,10 @@ export default function SupervisorMessenger() {
                     </div>
                     <div className="flex-1 min-w-0 text-left">
                       <p
-                        className={`text-sm font-semibold truncate ${
-                          selectedChat === chat.id
-                            ? "text-blue-600 dark:text-blue-400"
-                            : "text-slate-800 dark:text-white"
-                        }`}
+                        className={`text-sm font-semibold truncate ${selectedChat === chat.id
+                          ? "text-blue-600 dark:text-blue-400"
+                          : "text-slate-800 dark:text-white"
+                          }`}
                         data-testid={`text-chat-name-${chat.id}`}
                       >
                         {chat.name}
@@ -330,25 +328,22 @@ export default function SupervisorMessenger() {
                 {messages.map((msg) => (
                   <div
                     key={msg.id}
-                    className={`flex ${
-                      msg.sender === "me" ? "justify-end" : "justify-start"
-                    }`}
+                    className={`flex ${msg.sender === "me" ? "justify-end" : "justify-start"
+                      }`}
                     data-testid={`message-${msg.id}`}
                   >
                     <div
-                      className={`max-w-xs px-4 py-2.5 rounded-2xl ${
-                        msg.sender === "me"
-                          ? "bg-blue-600 text-white rounded-br-none"
-                          : "bg-slate-800 dark:bg-slate-700 text-white rounded-bl-none"
-                      }`}
+                      className={`max-w-xs px-4 py-2.5 rounded-2xl ${msg.sender === "me"
+                        ? "bg-blue-600 text-white rounded-br-none"
+                        : "bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white rounded-bl-none"
+                        }`}
                     >
                       <p className="text-sm">{msg.content}</p>
                       <p
-                        className={`text-xs mt-1 ${
-                          msg.sender === "me"
-                            ? "text-blue-100"
-                            : "text-slate-400"
-                        }`}
+                        className={`text-xs mt-1 ${msg.sender === "me"
+                          ? "text-blue-100"
+                          : "text-slate-500 dark:text-slate-400"
+                          }`}
                       >
                         {msg.timestamp}
                       </p>
@@ -419,14 +414,13 @@ export default function SupervisorMessenger() {
               {/* Avatar Section */}
               <div className="p-6 flex flex-col items-center border-b border-slate-100 dark:border-slate-800">
                 <div className="relative">
-                  <Avatar className="h-32 w-32 mb-4">
+                  <Avatar className="h-24 w-24 mb-4">
                     <AvatarImage src="https://i.pravatar.cc/150?img=33" />
                     <AvatarFallback>BH</AvatarFallback>
                   </Avatar>
-                  <div className={`absolute bottom-4 right-0 w-5 h-5 rounded-full border-4 border-white dark:border-[#1e293b] ${
-                    profileStatus === "online" ? "bg-green-500" : 
+                  <div className={`absolute bottom-4 right-0 w-5 h-5 rounded-full border-4 border-white dark:border-[#1e293b] ${profileStatus === "online" ? "bg-green-500" :
                     profileStatus === "away" ? "bg-yellow-500" : "bg-red-500"
-                  }`}></div>
+                    }`}></div>
                 </div>
               </div>
 

@@ -145,7 +145,7 @@ export type Billing = typeof billing.$inferSelect;
 
 // Schema for tb_tqw_comision_renew (all fields are text type in MySQL)
 export const tqwComisionRenew = mysqlTable("tb_tqw_comision_renew", {
-  RutTecnicoOrig: varchar("RutTecnicoOrig", { length: 20 }).primaryKey(),
+  RutTecnicoOrig: varchar("RutTecnicoOrig", { length: 20 }).notNull(),
   periodo: varchar("periodo", { length: 10 }).notNull(),
   NombreTecnico: text("NombreTecnico"),
   Supervisor: text("Supervisor"),
@@ -183,7 +183,20 @@ export const tqwComisionRenew = mysqlTable("tb_tqw_comision_renew", {
   Q_LICENCIA_TURNO: text("Q_LICENCIA_TURNO"),
   FACTOR_AUSENCIA: text("FACTOR_AUSENCIA"),
   FACTOR_VACACIONES: text("FACTOR_VACACIONES"),
-});
+  // New fields
+  Original_RUT_TECNICO: text("Original_RUT_TECNICO"),
+  DIAS_BASE_DRIVE: text("DIAS_BASE_DRIVE"),
+  SUM_OPERATIVO: text("SUM_OPERATIVO"),
+  Q_Calidad30_FTTH: text("Q_Calidad30_FTTH"),
+  Q_Cantidad_FTTH: text("Q_Cantidad_FTTH"),
+  Q_Calidad30_HFC: text("Q_Calidad30_HFC"),
+  Q_Cantidad_HFC: text("Q_Cantidad_HFC"),
+  CalidadReactivaGrupoHFC: text("CalidadReactivaGrupoHFC"),
+  CalidadReactivaGrupoFTTH: text("CalidadReactivaGrupoFTTH"),
+  fecha_actualizacion: text("fecha_actualizacion"),
+}, (table) => ({
+  pk: { columns: [table.RutTecnicoOrig, table.periodo] }
+}));
 
 export type TqwComisionRenew = typeof tqwComisionRenew.$inferSelect;
 

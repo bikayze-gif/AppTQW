@@ -3,6 +3,7 @@ import { TrendingUp, TrendingDown, Settings, Download } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useTheme } from "next-themes";
 
 const chartData = [
   { time: "12:00", value: 6550 },
@@ -64,6 +65,9 @@ const cryptoData = [
 ];
 
 export default function SupervisorMonitoring() {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+
   return (
     <SupervisorLayout>
       <div className="max-w-7xl mx-auto">
@@ -91,11 +95,10 @@ export default function SupervisorMonitoring() {
                       <p className="text-xs text-slate-500 dark:text-slate-400">{crypto.name.split(" ")[0]}</p>
                       <p className="text-sm font-bold text-slate-900 dark:text-white">{crypto.price}</p>
                     </div>
-                    <div className={`text-xs font-semibold flex items-center gap-1 ${
-                      crypto.change > 0
-                        ? "text-green-600"
-                        : "text-red-600"
-                    }`}>
+                    <div className={`text-xs font-semibold flex items-center gap-1 ${crypto.change > 0
+                      ? "text-green-600"
+                      : "text-red-600"
+                      }`}>
                       {crypto.change > 0 ? (
                         <TrendingUp className="w-3 h-3" />
                       ) : (
@@ -126,12 +129,12 @@ export default function SupervisorMonitoring() {
               <div>
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Action *</label>
                 <Select defaultValue="buy">
-                  <SelectTrigger className="mt-1 bg-slate-50 dark:bg-slate-700">
+                  <SelectTrigger className="mt-1 bg-slate-50 dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="buy">Buy</SelectItem>
-                    <SelectItem value="sell">Sell</SelectItem>
+                  <SelectContent className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                    <SelectItem value="buy" className="text-slate-900 dark:text-white focus:bg-slate-100 dark:focus:bg-slate-700">Buy</SelectItem>
+                    <SelectItem value="sell" className="text-slate-900 dark:text-white focus:bg-slate-100 dark:focus:bg-slate-700">Sell</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -139,12 +142,12 @@ export default function SupervisorMonitoring() {
               <div>
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Wallet *</label>
                 <Select defaultValue="bitcoin">
-                  <SelectTrigger className="mt-1 bg-slate-50 dark:bg-slate-700">
+                  <SelectTrigger className="mt-1 bg-slate-50 dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="bitcoin">Bitcoin - 24.9731243 BTC</SelectItem>
-                    <SelectItem value="ethereum">Ethereum - 100 ETH</SelectItem>
+                  <SelectContent className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                    <SelectItem value="bitcoin" className="text-slate-900 dark:text-white focus:bg-slate-100 dark:focus:bg-slate-700">Bitcoin - 24.9731243 BTC</SelectItem>
+                    <SelectItem value="ethereum" className="text-slate-900 dark:text-white focus:bg-slate-100 dark:focus:bg-slate-700">Ethereum - 100 ETH</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -188,16 +191,20 @@ export default function SupervisorMonitoring() {
               <div className="h-80 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis dataKey="time" stroke="#94a3b8" />
-                    <YAxis stroke="#94a3b8" domain={[6550, 6660]} />
+                    <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#334155" : "#e2e8f0"} />
+                    <XAxis dataKey="time" stroke={isDark ? "#94a3b8" : "#94a3b8"} />
+                    <YAxis stroke={isDark ? "#94a3b8" : "#94a3b8"} domain={[6550, 6660]} />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: "#1e293b",
-                        border: "1px solid #475569",
+                        backgroundColor: isDark ? "#1e293b" : "#ffffff",
+                        border: isDark ? "1px solid #475569" : "1px solid #e2e8f0",
                         borderRadius: "8px",
+                        color: isDark ? "#fff" : "#0f172a"
                       }}
-                      labelStyle={{ color: "#fff" }}
+                      itemStyle={{
+                        color: isDark ? "#fff" : "#0f172a"
+                      }}
+                      labelStyle={{ color: isDark ? "#94a3b8" : "#64748b" }}
                     />
                     <Line
                       type="monotone"
@@ -239,16 +246,16 @@ export default function SupervisorMonitoring() {
             {/* Action Buttons */}
             <div className="fixed right-6 bottom-20 space-y-3">
               <Button
-                className="w-14 h-14 rounded-lg bg-red-500 hover:bg-red-600 text-white shadow-lg flex items-center justify-center"
+                className="w-12 h-12 rounded-lg bg-red-500 hover:bg-red-600 text-white shadow-lg flex items-center justify-center"
                 data-testid="btn-action-1"
               >
-                <Settings className="w-6 h-6" />
+                <Settings className="w-5 h-5" />
               </Button>
               <Button
-                className="w-14 h-14 rounded-lg bg-red-500 hover:bg-red-600 text-white shadow-lg flex items-center justify-center"
+                className="w-12 h-12 rounded-lg bg-red-500 hover:bg-red-600 text-white shadow-lg flex items-center justify-center"
                 data-testid="btn-action-2"
               >
-                <Download className="w-6 h-6" />
+                <Download className="w-5 h-5" />
               </Button>
             </div>
           </div>

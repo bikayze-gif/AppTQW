@@ -231,10 +231,10 @@ function NewBillingModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white text-slate-900">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-slate-200 dark:border-slate-700">
         <DialogHeader>
-          <DialogTitle className="text-slate-900">Nueva Factura</DialogTitle>
-          <DialogDescription className="text-slate-600">
+          <DialogTitle className="text-slate-900 dark:text-white">Nueva Factura</DialogTitle>
+          <DialogDescription className="text-slate-600 dark:text-slate-400">
             Ingresa los detalles de la nueva factura
           </DialogDescription>
         </DialogHeader>
@@ -242,63 +242,63 @@ function NewBillingModal({
         <div className="grid grid-cols-2 gap-4">
           {/* Período */}
           <div>
-            <Label htmlFor="new_periodo" className="text-slate-700">Período</Label>
+            <Label htmlFor="new_periodo" className="text-slate-700 dark:text-slate-300">Período</Label>
             <Input
               id="new_periodo"
               value={formData.periodo}
               onChange={(e) =>
                 setFormData({ ...formData, periodo: e.target.value })
               }
-              className="mt-1 bg-white border-slate-300 text-slate-900"
+              className="mt-1 bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white placeholder:text-slate-400"
               data-testid="input-new-periodo"
             />
           </div>
 
           {/* Línea */}
           <div>
-            <Label htmlFor="new_linea" className="text-slate-700">Línea</Label>
+            <Label htmlFor="new_linea" className="text-slate-700 dark:text-slate-300">Línea</Label>
             <Input
               id="new_linea"
               value={formData.linea}
               onChange={(e) =>
                 setFormData({ ...formData, linea: e.target.value })
               }
-              className="mt-1 bg-white border-slate-300 text-slate-900"
+              className="mt-1 bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white placeholder:text-slate-400"
               data-testid="input-new-linea"
             />
           </div>
 
           {/* Proyecto */}
           <div className="col-span-2">
-            <Label htmlFor="new_proyecto" className="text-slate-700">Proyecto</Label>
+            <Label htmlFor="new_proyecto" className="text-slate-700 dark:text-slate-300">Proyecto</Label>
             <Input
               id="new_proyecto"
               value={formData.proyecto}
               onChange={(e) =>
                 setFormData({ ...formData, proyecto: e.target.value })
               }
-              className="mt-1 bg-white border-slate-300 text-slate-900"
+              className="mt-1 bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white placeholder:text-slate-400"
               data-testid="input-new-proyecto"
             />
           </div>
 
           {/* Observación */}
           <div className="col-span-2">
-            <Label htmlFor="new_observacion" className="text-slate-700">Observación</Label>
+            <Label htmlFor="new_observacion" className="text-slate-700 dark:text-slate-300">Observación</Label>
             <Textarea
               id="new_observacion"
               value={formData.observacion || ""}
               onChange={(e) =>
                 setFormData({ ...formData, observacion: e.target.value || null })
               }
-              className="mt-1 bg-white border-slate-300 text-slate-900"
+              className="mt-1 bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white placeholder:text-slate-400"
               data-testid="textarea-new-observacion"
             />
           </div>
 
           {/* Cantidad */}
           <div>
-            <Label htmlFor="new_cantidad" className="text-slate-700">Cantidad</Label>
+            <Label htmlFor="new_cantidad" className="text-slate-700 dark:text-slate-300">Cantidad</Label>
             <Input
               id="new_cantidad"
               type="number"
@@ -306,14 +306,14 @@ function NewBillingModal({
               onChange={(e) =>
                 setFormData({ ...formData, cantidad: e.target.value ? parseInt(e.target.value) : null })
               }
-              className="mt-1 bg-white border-slate-300 text-slate-900"
+              className="mt-1 bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white placeholder:text-slate-400"
               data-testid="input-new-cantidad"
             />
           </div>
 
           {/* Valorización */}
           <div>
-            <Label htmlFor="new_valorizacion" className="text-slate-700">Valorización</Label>
+            <Label htmlFor="new_valorizacion" className="text-slate-700 dark:text-slate-300">Valorización</Label>
             <Input
               id="new_valorizacion"
               type="number"
@@ -322,14 +322,14 @@ function NewBillingModal({
               onChange={(e) =>
                 setFormData({ ...formData, valorizacion: e.target.value ? parseFloat(e.target.value) : null })
               }
-              className="mt-1 bg-white border-slate-300 text-slate-900"
+              className="mt-1 bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white placeholder:text-slate-400"
               data-testid="input-new-valorizacion"
             />
           </div>
 
           {/* Fecha Gestión */}
           <div>
-            <Label htmlFor="new_fecha_gestion" className="text-slate-700">Fecha de Gestión</Label>
+            <Label htmlFor="new_fecha_gestion" className="text-slate-700 dark:text-slate-300">Fecha de Gestión</Label>
             <Input
               id="new_fecha_gestion"
               type="date"
@@ -337,30 +337,30 @@ function NewBillingModal({
               onChange={(e) =>
                 setFormData({ ...formData, fecha_gestion: e.target.value || null })
               }
-              className="mt-1 bg-white border-slate-300 text-slate-900"
+              className="mt-1 bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white placeholder:text-slate-400"
               data-testid="input-new-fecha_gestion"
             />
           </div>
 
           {/* Responsable */}
           <div>
-            <Label htmlFor="new_responsable" className="text-slate-700">Responsable</Label>
+            <Label htmlFor="new_responsable" className="text-slate-700 dark:text-slate-300">Responsable</Label>
             <Input
               id="new_responsable"
               value={formData.responsable || ""}
               onChange={(e) =>
                 setFormData({ ...formData, responsable: e.target.value || null })
               }
-              className="mt-1 bg-white border-slate-300 text-slate-900"
+              className="mt-1 bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white placeholder:text-slate-400"
               data-testid="input-new-responsable"
             />
           </div>
 
           {/* Estado */}
           <div>
-            <Label htmlFor="new_estado" className="text-slate-700">Estado</Label>
+            <Label htmlFor="new_estado" className="text-slate-700 dark:text-slate-300">Estado</Label>
             <Select
-              value={formData.estado}
+              value={formData.estado || undefined}
               onValueChange={(value) =>
                 setFormData({
                   ...formData,
@@ -368,21 +368,21 @@ function NewBillingModal({
                 })
               }
             >
-              <SelectTrigger className="mt-1 bg-white border-slate-300 text-slate-900" data-testid="select-new-estado">
+              <SelectTrigger className="mt-1 bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white" data-testid="select-new-estado">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Completado">Completado</SelectItem>
-                <SelectItem value="En Proceso">En Proceso</SelectItem>
-                <SelectItem value="Pendiente">Pendiente</SelectItem>
-                <SelectItem value="Rechazado">Rechazado</SelectItem>
+              <SelectContent className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+                <SelectItem value="Completado" className="focus:bg-slate-100 dark:focus:bg-slate-700">Completado</SelectItem>
+                <SelectItem value="En Proceso" className="focus:bg-slate-100 dark:focus:bg-slate-700">En Proceso</SelectItem>
+                <SelectItem value="Pendiente" className="focus:bg-slate-100 dark:focus:bg-slate-700">Pendiente</SelectItem>
+                <SelectItem value="Rechazado" className="focus:bg-slate-100 dark:focus:bg-slate-700">Rechazado</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           {/* Observación Gestión */}
           <div className="col-span-2">
-            <Label htmlFor="new_observacion_gestion" className="text-slate-700">Observación de Gestión</Label>
+            <Label htmlFor="new_observacion_gestion" className="text-slate-700 dark:text-slate-300">Observación de Gestión</Label>
             <Textarea
               id="new_observacion_gestion"
               value={formData.observacion_gestion || ""}
@@ -392,19 +392,19 @@ function NewBillingModal({
                   observacion_gestion: e.target.value || null,
                 })
               }
-              className="mt-1 bg-white border-slate-300 text-slate-900"
+              className="mt-1 bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white placeholder:text-slate-400"
               data-testid="textarea-new-observacion_gestion"
             />
           </div>
 
           {/* Archivo Detalle - File Upload */}
           <div>
-            <Label htmlFor="new_archivo_detalle" className="text-slate-700">Archivo Detalle</Label>
+            <Label htmlFor="new_archivo_detalle" className="text-slate-700 dark:text-slate-300">Archivo Detalle</Label>
             <div className="mt-1 flex items-center gap-2">
               <label className="flex-1 relative cursor-pointer">
-                <div className="bg-white border-2 border-dashed border-slate-300 rounded-lg p-4 hover:border-blue-400 transition-colors text-center flex items-center justify-center gap-2">
-                  <Upload className="w-4 h-4 text-slate-500" />
-                  <span className="text-sm text-slate-600">
+                <div className="bg-white dark:bg-slate-700 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-4 hover:border-blue-400 dark:hover:border-blue-400 transition-colors text-center flex items-center justify-center gap-2">
+                  <Upload className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                  <span className="text-sm text-slate-600 dark:text-slate-300">
                     {formData.archivo_detalle || "Seleccionar archivo"}
                   </span>
                 </div>
@@ -426,12 +426,12 @@ function NewBillingModal({
 
           {/* Correo Enviado - File Upload */}
           <div>
-            <Label htmlFor="new_correo_enviado" className="text-slate-700">Correo Enviado</Label>
+            <Label htmlFor="new_correo_enviado" className="text-slate-700 dark:text-slate-300">Correo Enviado</Label>
             <div className="mt-1 flex items-center gap-2">
               <label className="flex-1 relative cursor-pointer">
-                <div className="bg-white border-2 border-dashed border-slate-300 rounded-lg p-4 hover:border-blue-400 transition-colors text-center flex items-center justify-center gap-2">
-                  <Upload className="w-4 h-4 text-slate-500" />
-                  <span className="text-sm text-slate-600">
+                <div className="bg-white dark:bg-slate-700 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-4 hover:border-blue-400 dark:hover:border-blue-400 transition-colors text-center flex items-center justify-center gap-2">
+                  <Upload className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                  <span className="text-sm text-slate-600 dark:text-slate-300">
                     {formData.correo_enviado || "Seleccionar archivo"}
                   </span>
                 </div>
@@ -453,12 +453,12 @@ function NewBillingModal({
 
           {/* Correo Recepcionado - File Upload */}
           <div>
-            <Label htmlFor="new_correo_recepcionado" className="text-slate-700">Correo Recepcionado</Label>
+            <Label htmlFor="new_correo_recepcionado" className="text-slate-700 dark:text-slate-300">Correo Recepcionado</Label>
             <div className="mt-1 flex items-center gap-2">
               <label className="flex-1 relative cursor-pointer">
-                <div className="bg-white border-2 border-dashed border-slate-300 rounded-lg p-4 hover:border-blue-400 transition-colors text-center flex items-center justify-center gap-2">
-                  <Upload className="w-4 h-4 text-slate-500" />
-                  <span className="text-sm text-slate-600">
+                <div className="bg-white dark:bg-slate-700 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-4 hover:border-blue-400 dark:hover:border-blue-400 transition-colors text-center flex items-center justify-center gap-2">
+                  <Upload className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                  <span className="text-sm text-slate-600 dark:text-slate-300">
                     {formData.correo_recepcionado || "Seleccionar archivo"}
                   </span>
                 </div>
@@ -485,6 +485,7 @@ function NewBillingModal({
             onClick={onClose}
             data-testid="btn-cancel-new"
             disabled={isLoading}
+            className="border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
           >
             Cancelar
           </Button>
@@ -523,8 +524,8 @@ function EditBillingModal({
       // Ensure fecha_gestion is in yyyy-MM-dd format
       const formattedRecord = {
         ...record,
-        fecha_gestion: record.fecha_gestion 
-          ? record.fecha_gestion.split('T')[0] 
+        fecha_gestion: record.fecha_gestion
+          ? record.fecha_gestion.split('T')[0]
           : null,
       };
       setFormData(formattedRecord);
@@ -545,8 +546,8 @@ function EditBillingModal({
       observacion: formData.observacion?.trim() || null,
       cantidad: formData.cantidad || null,
       valorizacion: formData.valorizacion || null,
-      fecha_gestion: formData.fecha_gestion 
-        ? formData.fecha_gestion.split('T')[0] 
+      fecha_gestion: formData.fecha_gestion
+        ? formData.fecha_gestion.split('T')[0]
         : null,
       responsable: formData.responsable?.trim() || null,
       observacion_gestion: formData.observacion_gestion?.trim() || null,
@@ -562,10 +563,10 @@ function EditBillingModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white text-slate-900">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-slate-200 dark:border-slate-700">
         <DialogHeader>
-          <DialogTitle className="text-slate-900">Editar Facturación - {formData.proyecto}</DialogTitle>
-          <DialogDescription className="text-slate-600">
+          <DialogTitle className="text-slate-900 dark:text-white">Editar Facturación - {formData.proyecto}</DialogTitle>
+          <DialogDescription className="text-slate-600 dark:text-slate-400">
             Modifica los detalles de la factura y guarda los cambios
           </DialogDescription>
         </DialogHeader>
@@ -573,63 +574,63 @@ function EditBillingModal({
         <div className="grid grid-cols-2 gap-4">
           {/* Período */}
           <div>
-            <Label htmlFor="periodo" className="text-slate-700">Período</Label>
+            <Label htmlFor="periodo" className="text-slate-700 dark:text-slate-300">Período</Label>
             <Input
               id="periodo"
               value={formData.periodo}
               onChange={(e) =>
                 setFormData({ ...formData, periodo: e.target.value })
               }
-              className="mt-1 bg-white border-slate-300 text-slate-900"
+              className="mt-1 bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white placeholder:text-slate-400"
               data-testid="input-periodo"
             />
           </div>
 
           {/* Línea */}
           <div>
-            <Label htmlFor="linea" className="text-slate-700">Línea</Label>
+            <Label htmlFor="linea" className="text-slate-700 dark:text-slate-300">Línea</Label>
             <Input
               id="linea"
               value={formData.linea}
               onChange={(e) =>
                 setFormData({ ...formData, linea: e.target.value })
               }
-              className="mt-1 bg-white border-slate-300 text-slate-900"
+              className="mt-1 bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white placeholder:text-slate-400"
               data-testid="input-linea"
             />
           </div>
 
           {/* Proyecto */}
           <div className="col-span-2">
-            <Label htmlFor="proyecto" className="text-slate-700">Proyecto</Label>
+            <Label htmlFor="proyecto" className="text-slate-700 dark:text-slate-300">Proyecto</Label>
             <Input
               id="proyecto"
               value={formData.proyecto}
               onChange={(e) =>
                 setFormData({ ...formData, proyecto: e.target.value })
               }
-              className="mt-1 bg-white border-slate-300 text-slate-900"
+              className="mt-1 bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white placeholder:text-slate-400"
               data-testid="input-proyecto"
             />
           </div>
 
           {/* Observación */}
           <div className="col-span-2">
-            <Label htmlFor="observacion" className="text-slate-700">Observación</Label>
+            <Label htmlFor="observacion" className="text-slate-700 dark:text-slate-300">Observación</Label>
             <Textarea
               id="observacion"
               value={formData.observacion || ""}
               onChange={(e) =>
                 setFormData({ ...formData, observacion: e.target.value || null })
               }
-              className="mt-1 bg-white border-slate-300 text-slate-900"
+              className="mt-1 bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white placeholder:text-slate-400"
               data-testid="textarea-observacion"
             />
           </div>
 
           {/* Cantidad */}
           <div>
-            <Label htmlFor="cantidad" className="text-slate-700">Cantidad</Label>
+            <Label htmlFor="cantidad" className="text-slate-700 dark:text-slate-300">Cantidad</Label>
             <Input
               id="cantidad"
               type="number"
@@ -637,14 +638,14 @@ function EditBillingModal({
               onChange={(e) =>
                 setFormData({ ...formData, cantidad: e.target.value ? parseInt(e.target.value) : null })
               }
-              className="mt-1 bg-white border-slate-300 text-slate-900"
+              className="mt-1 bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white placeholder:text-slate-400"
               data-testid="input-cantidad"
             />
           </div>
 
           {/* Valorización */}
           <div>
-            <Label htmlFor="valorizacion" className="text-slate-700">Valorización</Label>
+            <Label htmlFor="valorizacion" className="text-slate-700 dark:text-slate-300">Valorización</Label>
             <Input
               id="valorizacion"
               type="number"
@@ -653,14 +654,14 @@ function EditBillingModal({
               onChange={(e) =>
                 setFormData({ ...formData, valorizacion: e.target.value ? parseFloat(e.target.value) : null })
               }
-              className="mt-1 bg-white border-slate-300 text-slate-900"
+              className="mt-1 bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white placeholder:text-slate-400"
               data-testid="input-valorizacion"
             />
           </div>
 
           {/* Fecha Gestión */}
           <div>
-            <Label htmlFor="fecha_gestion" className="text-slate-700">Fecha de Gestión</Label>
+            <Label htmlFor="fecha_gestion" className="text-slate-700 dark:text-slate-300">Fecha de Gestión</Label>
             <Input
               id="fecha_gestion"
               type="date"
@@ -668,30 +669,30 @@ function EditBillingModal({
               onChange={(e) =>
                 setFormData({ ...formData, fecha_gestion: e.target.value || null })
               }
-              className="mt-1 bg-white border-slate-300 text-slate-900"
+              className="mt-1 bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white placeholder:text-slate-400"
               data-testid="input-fecha_gestion"
             />
           </div>
 
           {/* Responsable */}
           <div>
-            <Label htmlFor="responsable" className="text-slate-700">Responsable</Label>
+            <Label htmlFor="responsable" className="text-slate-700 dark:text-slate-300">Responsable</Label>
             <Input
               id="responsable"
               value={formData.responsable || ""}
               onChange={(e) =>
                 setFormData({ ...formData, responsable: e.target.value || null })
               }
-              className="mt-1 bg-white border-slate-300 text-slate-900"
+              className="mt-1 bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white placeholder:text-slate-400"
               data-testid="input-responsable"
             />
           </div>
 
           {/* Estado */}
           <div>
-            <Label htmlFor="estado" className="text-slate-700">Estado</Label>
+            <Label htmlFor="estado" className="text-slate-700 dark:text-slate-300">Estado</Label>
             <Select
-              value={formData.estado}
+              value={formData.estado || undefined}
               onValueChange={(value) =>
                 setFormData({
                   ...formData,
@@ -699,21 +700,21 @@ function EditBillingModal({
                 })
               }
             >
-              <SelectTrigger className="mt-1 bg-white border-slate-300 text-slate-900" data-testid="select-estado">
+              <SelectTrigger className="mt-1 bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white" data-testid="select-estado">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Completado">Completado</SelectItem>
-                <SelectItem value="En Proceso">En Proceso</SelectItem>
-                <SelectItem value="Pendiente">Pendiente</SelectItem>
-                <SelectItem value="Rechazado">Rechazado</SelectItem>
+              <SelectContent className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+                <SelectItem value="Completado" className="focus:bg-slate-100 dark:focus:bg-slate-700">Completado</SelectItem>
+                <SelectItem value="En Proceso" className="focus:bg-slate-100 dark:focus:bg-slate-700">En Proceso</SelectItem>
+                <SelectItem value="Pendiente" className="focus:bg-slate-100 dark:focus:bg-slate-700">Pendiente</SelectItem>
+                <SelectItem value="Rechazado" className="focus:bg-slate-100 dark:focus:bg-slate-700">Rechazado</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           {/* Observación Gestión */}
           <div className="col-span-2">
-            <Label htmlFor="observacion_gestion" className="text-slate-700">Observación de Gestión</Label>
+            <Label htmlFor="observacion_gestion" className="text-slate-700 dark:text-slate-300">Observación de Gestión</Label>
             <Textarea
               id="observacion_gestion"
               value={formData.observacion_gestion || ""}
@@ -723,19 +724,19 @@ function EditBillingModal({
                   observacion_gestion: e.target.value || null,
                 })
               }
-              className="mt-1 bg-white border-slate-300 text-slate-900"
+              className="mt-1 bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white placeholder:text-slate-400"
               data-testid="textarea-observacion_gestion"
             />
           </div>
 
           {/* Archivo Detalle - File Upload */}
           <div>
-            <Label htmlFor="archivo_detalle" className="text-slate-700">Archivo Detalle</Label>
+            <Label htmlFor="archivo_detalle" className="text-slate-700 dark:text-slate-300">Archivo Detalle</Label>
             <div className="mt-1 flex items-center gap-2">
               <label className="flex-1 relative cursor-pointer">
-                <div className="bg-white border-2 border-dashed border-slate-300 rounded-lg p-4 hover:border-blue-400 transition-colors text-center flex items-center justify-center gap-2">
-                  <Upload className="w-4 h-4 text-slate-500" />
-                  <span className="text-sm text-slate-600">
+                <div className="bg-white dark:bg-slate-700 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-4 hover:border-blue-400 dark:hover:border-blue-400 transition-colors text-center flex items-center justify-center gap-2">
+                  <Upload className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                  <span className="text-sm text-slate-600 dark:text-slate-300">
                     {formData.archivo_detalle || "Seleccionar archivo"}
                   </span>
                 </div>
@@ -757,12 +758,12 @@ function EditBillingModal({
 
           {/* Correo Enviado - File Upload */}
           <div>
-            <Label htmlFor="correo_enviado" className="text-slate-700">Correo Enviado</Label>
+            <Label htmlFor="correo_enviado" className="text-slate-700 dark:text-slate-300">Correo Enviado</Label>
             <div className="mt-1 flex items-center gap-2">
               <label className="flex-1 relative cursor-pointer">
-                <div className="bg-white border-2 border-dashed border-slate-300 rounded-lg p-4 hover:border-blue-400 transition-colors text-center flex items-center justify-center gap-2">
-                  <Upload className="w-4 h-4 text-slate-500" />
-                  <span className="text-sm text-slate-600">
+                <div className="bg-white dark:bg-slate-700 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-4 hover:border-blue-400 dark:hover:border-blue-400 transition-colors text-center flex items-center justify-center gap-2">
+                  <Upload className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                  <span className="text-sm text-slate-600 dark:text-slate-300">
                     {formData.correo_enviado || "Seleccionar archivo"}
                   </span>
                 </div>
@@ -784,12 +785,12 @@ function EditBillingModal({
 
           {/* Correo Recepcionado - File Upload */}
           <div>
-            <Label htmlFor="correo_recepcionado" className="text-slate-700">Correo Recepcionado</Label>
+            <Label htmlFor="correo_recepcionado" className="text-slate-700 dark:text-slate-300">Correo Recepcionado</Label>
             <div className="mt-1 flex items-center gap-2">
               <label className="flex-1 relative cursor-pointer">
-                <div className="bg-white border-2 border-dashed border-slate-300 rounded-lg p-4 hover:border-blue-400 transition-colors text-center flex items-center justify-center gap-2">
-                  <Upload className="w-4 h-4 text-slate-500" />
-                  <span className="text-sm text-slate-600">
+                <div className="bg-white dark:bg-slate-700 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-4 hover:border-blue-400 dark:hover:border-blue-400 transition-colors text-center flex items-center justify-center gap-2">
+                  <Upload className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                  <span className="text-sm text-slate-600 dark:text-slate-300">
                     {formData.correo_recepcionado || "Seleccionar archivo"}
                   </span>
                 </div>
@@ -1051,9 +1052,8 @@ export default function SupervisorBilling() {
     >
       {label}
       <ArrowUpDown
-        className={`w-4 h-4 ${
-          sortField === field ? "opacity-100 text-blue-600" : "opacity-50"
-        }`}
+        className={`w-4 h-4 ${sortField === field ? "opacity-100 text-blue-600" : "opacity-50"
+          }`}
       />
     </button>
   );
@@ -1111,9 +1111,9 @@ export default function SupervisorBilling() {
             </Select>
 
             {/* Clear Filters Button */}
-            <Button 
-              variant="outline" 
-              className="gap-2" 
+            <Button
+              variant="outline"
+              className="gap-2"
               onClick={() => {
                 setSearchTerm("");
                 setStatusFilter("all");
@@ -1194,9 +1194,9 @@ export default function SupervisorBilling() {
                       <TableCell className="text-right font-semibold text-slate-900 dark:text-white">
                         {record.valorizacion != null
                           ? `$${Number(record.valorizacion).toLocaleString("es-ES", {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}`
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}`
                           : "-"}
                       </TableCell>
                       <TableCell className="text-slate-600 dark:text-slate-400">
@@ -1248,7 +1248,7 @@ export default function SupervisorBilling() {
                               size="sm"
                               className="text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20"
                               onClick={() =>
-                                handleViewEmail("Correo Enviado", record.correo_enviado)
+                                handleViewEmail("Correo Enviado", record.correo_enviado || "")
                               }
                               data-testid={`btn-email-sent-${record.id}`}
                               title="Ver correo enviado"
@@ -1264,7 +1264,7 @@ export default function SupervisorBilling() {
                               size="sm"
                               className="text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:hover:bg-purple-900/20"
                               onClick={() =>
-                                handleViewEmail("Correo Recepcionado", record.correo_recepcionado)
+                                handleViewEmail("Correo Recepcionado", record.correo_recepcionado || "")
                               }
                               data-testid={`btn-email-received-${record.id}`}
                               title="Ver correo recepcionado"
@@ -1297,7 +1297,7 @@ export default function SupervisorBilling() {
                 <span className="font-semibold">{Math.min(currentPage * rowsPerPage, filteredAndSortedData.length)}</span> de{" "}
                 <span className="font-semibold">{filteredAndSortedData.length}</span> registros
               </p>
-              
+
               {totalPages > 1 && (
                 <Pagination className="text-[#000305]">
                   <PaginationContent className="mx-auto flex w-full justify-center text-[#000305]">
@@ -1307,7 +1307,7 @@ export default function SupervisorBilling() {
                         className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
                       />
                     </PaginationItem>
-                    
+
                     {/* Primera página */}
                     <PaginationItem>
                       <PaginationLink
@@ -1318,7 +1318,7 @@ export default function SupervisorBilling() {
                         1
                       </PaginationLink>
                     </PaginationItem>
-                    
+
                     {/* Elipsis izquierda */}
                     {currentPage > 3 && (
                       <PaginationItem>
@@ -1327,7 +1327,7 @@ export default function SupervisorBilling() {
                         </span>
                       </PaginationItem>
                     )}
-                    
+
                     {/* Páginas intermedias (antes y después de la actual) */}
                     {Array.from({ length: totalPages }, (_, i) => i + 1)
                       .filter(page => {
@@ -1346,7 +1346,7 @@ export default function SupervisorBilling() {
                           </PaginationLink>
                         </PaginationItem>
                       ))}
-                    
+
                     {/* Elipsis derecha */}
                     {currentPage < totalPages - 2 && (
                       <PaginationItem>
@@ -1355,7 +1355,7 @@ export default function SupervisorBilling() {
                         </span>
                       </PaginationItem>
                     )}
-                    
+
                     {/* Última página */}
                     {totalPages > 1 && (
                       <PaginationItem>
@@ -1368,7 +1368,7 @@ export default function SupervisorBilling() {
                         </PaginationLink>
                       </PaginationItem>
                     )}
-                    
+
                     <PaginationItem>
                       <PaginationNext
                         onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}

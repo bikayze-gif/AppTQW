@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/lib/auth-context";
-import { 
-  Calendar, MessageSquare, Users, ShoppingCart, Folder, 
-  HelpCircle, Mail, FileText, Trello, CheckSquare, 
+import {
+  Calendar, MessageSquare, Users, ShoppingCart, Folder,
+  HelpCircle, Mail, FileText, Trello, CheckSquare,
   User, Bell, Settings, Menu, ChevronRight, Search,
-  LogOut, NotebookPen, BarChart3, Receipt
+  LogOut, NotebookPen, BarChart3, Receipt, Sun, Moon
 } from "lucide-react";
-import { 
+import { useTheme } from "next-themes";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -24,6 +25,7 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
   const [location, setLocation] = useLocation();
   const { logout } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const { theme, setTheme } = useTheme();
 
   const handleLogout = async () => {
     await logout();
@@ -40,6 +42,8 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
       setLocation("/supervisor/monitoring");
     } else if (label === "Facturación") {
       setLocation("/supervisor/billing");
+    } else if (label === "KPI") {
+      setLocation("/supervisor/kpi");
     }
   };
 
@@ -55,6 +59,7 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
     { icon: Trello, label: "Scrumboard" },
     { icon: BarChart3, label: "Monitoring" },
     { icon: Receipt, label: "Facturación" },
+    { icon: BarChart3, label: "KPI" },
     { icon: CheckSquare, label: "Tasks", badge: "12 remaining tasks" },
     { icon: User, label: "Profile" },
     { icon: Bell, label: "Notifications" },
@@ -62,30 +67,27 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
   ];
 
   return (
-    <div className="flex h-screen bg-[#F1F5F9] dark:bg-[#0f172a] overflow-hidden">
+    <div className="flex bg-[#F1F5F9] dark:bg-[#0f172a] overflow-hidden" style={{
+      width: '111.111111vw',
+      height: '111.111111vh',
+      transform: 'scale(0.9)',
+      transformOrigin: 'top left',
+      position: 'fixed'
+    }}>
+
       {/* Sidebar */}
-      <aside 
-        className={`${
-          isSidebarOpen ? "w-60" : "w-0 md:w-20"
-        } bg-white dark:bg-[#1e293b] border-r border-slate-200 dark:border-slate-800 flex flex-col transition-all duration-300 z-20`}
+      <aside
+        className={`${isSidebarOpen ? "w-56" : "w-0 md:w-20"
+          } bg-white dark:bg-[#1e293b] border-r border-slate-200 dark:border-slate-800 flex flex-col transition-all duration-300 z-20`}
       >
         {/* Logo Area */}
-        <div className="h-16 flex items-center px-6 border-b border-slate-100 dark:border-slate-800">
+        <div className="h-14 flex items-center px-4 border-b border-slate-100 dark:border-slate-800">
           <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center mr-3 shrink-0">
             <div className="w-4 h-4 border-2 border-white rounded-sm transform rotate-45"></div>
           </div>
-          <span className={`font-bold text-xl text-slate-800 dark:text-white whitespace-nowrap ${!isSidebarOpen && "hidden md:hidden"}`}>
-            FUSE <span className="font-normal text-slate-500 text-sm ml-1">React</span>
+          <span className={`font-bold text-lg text-slate-800 dark:text-white whitespace-nowrap ${!isSidebarOpen && "hidden md:hidden"}`}>
+            TELQWAY <span className="font-normal text-slate-500 text-xs ml-1">operaciones</span>
           </span>
-        </div>
-
-        {/* User Profile Summary */}
-        <div className="p-6 flex flex-col items-center border-b border-slate-100 dark:border-slate-800">
-          <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-200 mb-3">
-            <img src="https://i.pravatar.cc/150?img=33" alt="User" className="w-full h-full object-cover" />
-          </div>
-          <h3 className={`font-semibold text-slate-800 dark:text-white ${!isSidebarOpen && "hidden"}`}>Nicolas Cornejo</h3>
-          <p className={`text-xs text-slate-500 ${!isSidebarOpen && "hidden"}`}>nicolas.cornejo@telqway.cl</p>
         </div>
 
         {/* Navigation */}
@@ -93,7 +95,7 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
           <nav className="px-3 space-y-1">
             {menuItems.map((item, index) => (
               <div key={index} className="group">
-                <button onClick={() => handleNavigation(item.label)} className="w-full flex items-center px-3 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                <button onClick={() => handleNavigation(item.label)} className="w-full flex items-center px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors group-hover:text-blue-600 dark:group-hover:text-blue-400">
                   <item.icon size={20} className="shrink-0" />
                   <div className={`ml-4 flex-1 flex flex-col items-start ${!isSidebarOpen && "hidden md:hidden"}`}>
                     <span className="font-medium text-sm">{item.label}</span>
@@ -112,10 +114,10 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
             ))}
           </nav>
         </div>
-        
+
         {/* Sidebar Footer - Logout */}
         <div className="p-4 border-t border-slate-100 dark:border-slate-800">
-          <button 
+          <button
             onClick={handleLogout}
             className="w-full flex items-center px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg transition-colors"
           >
@@ -128,21 +130,21 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
       {/* Main Content Wrapper */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Header */}
-        <header className="h-16 bg-white dark:bg-[#1e293b] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-3 sm:px-5 lg:px-7 z-10">
+        <header className="h-14 bg-white dark:bg-[#1e293b] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-3 sm:px-4 lg:px-6 z-10">
           <div className="flex items-center">
-            <button 
+            <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
               className="p-2 rounded-md text-slate-400 hover:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none"
             >
               <Menu size={20} />
             </button>
-            
+
             {/* Search */}
             <div className="ml-4 hidden md:flex items-center relative">
               <Search size={18} className="text-slate-400 absolute left-3" />
-              <input 
-                type="text" 
-                placeholder="Search..." 
+              <input
+                type="text"
+                placeholder="Search..."
                 className="pl-10 pr-4 py-1.5 bg-slate-100 dark:bg-slate-800 border-none rounded-full text-sm focus:ring-2 focus:ring-blue-500 w-64"
               />
             </div>
@@ -157,7 +159,15 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
               <Bell size={20} />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-[#1e293b]"></span>
             </button>
-            
+
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="p-2 text-slate-400 hover:text-slate-600 transition-colors"
+              title="Alternar modo oscuro"
+            >
+              {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-2 ml-2 focus:outline-none">
@@ -180,7 +190,7 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
         </header>
 
         {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto bg-[#F1F5F9] dark:bg-[#0f172a] p-4 sm:p-6 lg:p-8">
+        <main className="flex-1 overflow-y-auto bg-[#F1F5F9] dark:bg-[#0f172a] p-3 sm:p-4 lg:p-6">
           {children}
         </main>
       </div>

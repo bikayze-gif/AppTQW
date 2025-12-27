@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Switch, Route, useLocation, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { BottomNav } from "@/components/bottom-nav";
@@ -24,6 +25,7 @@ import SupervisorMessenger from "@/pages/supervisor/messenger";
 import SupervisorScrumboard from "@/pages/supervisor/scrumboard";
 import SupervisorMonitoring from "@/pages/supervisor/monitoring";
 import SupervisorBilling from "@/pages/supervisor/billing";
+import SupervisorKPI from "@/pages/supervisor/kpi";
 
 function Router() {
   return (
@@ -50,6 +52,9 @@ function Router() {
       </Route>
       <Route path="/supervisor/billing">
         <ProtectedRoute><SupervisorBilling /></ProtectedRoute>
+      </Route>
+      <Route path="/supervisor/kpi">
+        <ProtectedRoute><SupervisorKPI /></ProtectedRoute>
       </Route>
 
       {/* Protected technician routes */}
@@ -148,12 +153,14 @@ function AppLayout() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <AppLayout />
-        </TooltipProvider>
-      </AuthProvider>
+      <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <AppLayout />
+          </TooltipProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

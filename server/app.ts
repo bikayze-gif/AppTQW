@@ -41,7 +41,11 @@ export const app = express();
 let sessionStore: any;
 
 try {
-  // Intentar usar PostgreSQL para sesiones (producción)
+  // Intentar usar PostgreSQL para sesiones (solo en producción)
+  if (!appConfig.isProduction) {
+    throw new Error("Use MemoryStore in development");
+  }
+
   const pgPool = new Pool({
     host: pgConfig.host,
     port: pgConfig.port,
@@ -57,11 +61,11 @@ try {
     tableName: 'session',
     schemaName: 'public',
   });
-  
+
   log("Session store: PostgreSQL");
 } catch (error) {
   // Fallback a MemoryStore en desarrollo
-  log("Fallback to MemoryStore for sessions");
+  log("Fallback to MemoryStore for sessions (Development mode or PG error)");
   const MemoryStoreSession = MemoryStore(session);
   sessionStore = new MemoryStoreSession({
     checkPeriod: 86400000,
@@ -160,7 +164,6 @@ export default async function runApp(
   server.listen({
     port,
     host: "0.0.0.0",
-    reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
   });
