@@ -120,6 +120,8 @@ export interface IStorage {
     'Tipo vivienda': string;
     'Clase vivienda': string;
   }>>;
+  getCalidadTqwPeriods(): Promise<string[]>;
+  getCalidadTqwData(mesContable: string): Promise<any[]>;
 }
 
 export class MySQLStorage implements IStorage {
@@ -1237,6 +1239,36 @@ export class MySQLStorage implements IStorage {
       `UPDATE password_reset_tokens SET used = TRUE, used_at = NOW() WHERE email = ? AND used = FALSE`,
       [email]
     );
+  }
+
+  async getCalidadTqwPeriods(): Promise<string[]> {
+    try {
+      const [rows] = await pool.execute(
+        `SELECT DISTINCT DATE_FORMAT(mes_contable, '%Y-%m-%d') as periodo 
+         FROM tb_calidad_naranja_base 
+         WHERE mes_contable IS NOT NULL 
+         ORDER BY mes_contable DESC`
+      );
+      return (rows as any[]).map(r => r.periodo);
+    } catch (error) {
+      console.error("Error fetching Calidad TQW periods:", error);
+      return [];
+    }
+  }
+
+  async getCalidadTqwData(mesContable: string): Promise<any[]> {
+    try {
+      const [rows] = await pool.execute(
+        `SELECT * FROM tb_calidad_naranja_base 
+         WHERE DATE_FORMAT(mes_contable, '%Y-%m-%d') = ? 
+         ORDER BY FECHA_EJECUCION DESC`,
+        [mesContable]
+      );
+      return rows as any[];
+    } catch (error) {
+      console.error("Error fetching Calidad TQW data:", error);
+      return [];
+    }
   }
 }
 

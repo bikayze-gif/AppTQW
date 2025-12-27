@@ -44,26 +44,26 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
       setLocation("/supervisor/billing");
     } else if (label === "KPI") {
       setLocation("/supervisor/kpi");
+    } else if (label === "Calidad") {
+      setLocation("/supervisor/calidad");
     }
   };
 
   const menuItems = [
-    { icon: Calendar, label: "Calendar", badge: "3 upcoming events" },
-    { icon: MessageSquare, label: "Messenger" },
-    { icon: Users, label: "Contacts" },
-    { icon: ShoppingCart, label: "E-Commerce", hasSubmenu: true },
-    { icon: Folder, label: "File Manager" },
-    { icon: HelpCircle, label: "Help Center", hasSubmenu: true },
-    { icon: Mail, label: "Mail", badgeCount: 27 },
-    { icon: NotebookPen, label: "Notes" },
-    { icon: Trello, label: "Scrumboard" },
-    { icon: BarChart3, label: "Monitoring" },
-    { icon: Receipt, label: "Facturación" },
-    { icon: BarChart3, label: "KPI" },
-    { icon: CheckSquare, label: "Tasks", badge: "12 remaining tasks" },
-    { icon: User, label: "Profile" },
-    { icon: Bell, label: "Notifications" },
-    { icon: Settings, label: "Settings" },
+    { icon: Calendar, label: "Calendar", badge: "3 upcoming events", hasSubmenu: false },
+    { icon: MessageSquare, label: "Messenger", hasSubmenu: false },
+    { icon: Users, label: "Contacts", hasSubmenu: false },
+    { icon: Mail, label: "Mail", badgeCount: 27, hasSubmenu: false },
+    { icon: NotebookPen, label: "Notes", hasSubmenu: false },
+    { icon: Trello, label: "Scrumboard", hasSubmenu: false },
+    { icon: BarChart3, label: "Monitoring", hasSubmenu: false },
+    { icon: Receipt, label: "Facturación", hasSubmenu: false },
+    { icon: BarChart3, label: "KPI", hasSubmenu: false },
+    { icon: CheckSquare, label: "Calidad", hasSubmenu: false },
+    { icon: CheckSquare, label: "Tasks", badge: "12 remaining tasks", hasSubmenu: false },
+    { icon: User, label: "Profile", hasSubmenu: false },
+    { icon: Bell, label: "Notifications", hasSubmenu: false },
+    { icon: Settings, label: "Settings", hasSubmenu: false },
   ];
 
   return (

@@ -891,6 +891,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // GET /api/calidad-tqw/periods
+  app.get("/api/calidad-tqw/periods", requireAuth, async (req, res) => {
+    try {
+      const periods = await storage.getCalidadTqwPeriods();
+      res.json(periods);
+    } catch (error) {
+      console.error("[Calidad TQW Periods API] Error:", error);
+      res.status(500).json({ error: "Failed to fetch Calidad TQW periods" });
+    }
+  });
+
+  // GET /api/calidad-tqw/data
+  app.get("/api/calidad-tqw/data", requireAuth, async (req, res) => {
+    try {
+      const { mesContable } = req.query;
+      if (!mesContable || typeof mesContable !== "string") {
+        return res.status(400).json({ error: "mesContable parameter is required" });
+      }
+      const data = await storage.getCalidadTqwData(mesContable);
+      res.json(data);
+    } catch (error) {
+      console.error("[Calidad TQW Data API] Error:", error);
+      res.status(500).json({ error: "Failed to fetch Calidad TQW data" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

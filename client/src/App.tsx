@@ -26,6 +26,7 @@ import SupervisorScrumboard from "@/pages/supervisor/scrumboard";
 import SupervisorMonitoring from "@/pages/supervisor/monitoring";
 import SupervisorBilling from "@/pages/supervisor/billing";
 import SupervisorKPI from "@/pages/supervisor/kpi";
+import SupervisorCalidad from "@/pages/supervisor/calidad";
 
 function Router() {
   return (
@@ -55,6 +56,9 @@ function Router() {
       </Route>
       <Route path="/supervisor/kpi">
         <ProtectedRoute><SupervisorKPI /></ProtectedRoute>
+      </Route>
+      <Route path="/supervisor/calidad">
+        <ProtectedRoute><SupervisorCalidad /></ProtectedRoute>
       </Route>
 
       {/* Protected technician routes */}

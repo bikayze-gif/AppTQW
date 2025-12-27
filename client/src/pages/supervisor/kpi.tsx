@@ -384,7 +384,7 @@ export default function SupervisorKPI() {
                   desiredOrder.map((supervisor) => {
                     const data = dashboardData?.technicianFirstActivityTime?.[supervisor] || [];
                     return (
-                      <div key={supervisor} className="h-[400px]">
+                      <div key={supervisor} className="h-[480px]">
                         <StackedBarChart
                           title={supervisor}
                           data={data}
