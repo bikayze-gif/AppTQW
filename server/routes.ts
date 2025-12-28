@@ -902,11 +902,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // GET /api/calidad-tqw/data
-  app.get("/api/calidad-tqw/data", requireAuth, async (req, res) => {
+  // GET /api/calidad-tqw/data/:mesContable
+  app.get("/api/calidad-tqw/data/:mesContable", requireAuth, async (req, res) => {
     try {
-      const { mesContable } = req.query;
-      if (!mesContable || typeof mesContable !== "string") {
+      const { mesContable } = req.params;
+      if (!mesContable) {
         return res.status(400).json({ error: "mesContable parameter is required" });
       }
       const data = await storage.getCalidadTqwData(mesContable);
@@ -914,6 +914,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("[Calidad TQW Data API] Error:", error);
       res.status(500).json({ error: "Failed to fetch Calidad TQW data" });
+    }
+  });
+
+  // GET /api/benchmark/data
+  app.get("/api/benchmark/data", requireAuth, async (req, res) => {
+    try {
+      const data = await storage.getBenchmarkData();
+      res.json(data);
+    } catch (error) {
+      console.error("[Benchmark Data API] Error:", error);
+      res.status(500).json({ error: "Failed to fetch Benchmark data" });
     }
   });
 

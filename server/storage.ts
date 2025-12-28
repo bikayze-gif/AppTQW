@@ -1259,14 +1259,55 @@ export class MySQLStorage implements IStorage {
   async getCalidadTqwData(mesContable: string): Promise<any[]> {
     try {
       const [rows] = await pool.execute(
-        `SELECT * FROM tb_calidad_naranja_base 
-         WHERE DATE_FORMAT(mes_contable, '%Y-%m-%d') = ? 
-         ORDER BY FECHA_EJECUCION DESC`,
+        `SELECT
+          cb.id_actividad,
+          cb.descripcion_actividad,
+          cb.id_actividad_2,
+          cb.descripcion_actividad_2,
+          cb.FECHA_EJECUCION,
+          cb.fecha_ejecucion_2,
+          cb.ACTIVIDAD,
+          cb.Comuna,
+          cb.DESCRIPCION_CIERRE,
+          cb.DESCRIPCION_CIERRE_2,
+          cb.CALIDAD_30,
+          cb.TIPO_RED_CALCULADO,
+          cb.num_pedido,
+          cb.RUT_TECNICO_FS,
+          u.nombre as NOMBRE_TECNICO,
+          u.Nombre_short,
+          u.supervisor,
+          cb.ZONA,
+          cb.mes_contable
+        FROM tb_calidad_naranja_base cb
+        LEFT JOIN tb_user_tqw u ON TRIM(u.rut) = TRIM(cb.rut_tecnico_fs)
+        WHERE cb.mes_contable = ?
+        ORDER BY cb.FECHA_EJECUCION DESC`,
         [mesContable]
       );
+      console.log("[Calidad TQW] Query executed. Rows returned:", (rows as any[]).length);
       return rows as any[];
     } catch (error) {
       console.error("Error fetching Calidad TQW data:", error);
+      return [];
+    }
+  }
+
+  async getBenchmarkData(): Promise<any[]> {
+    try {
+      const [rows] = await pool.execute(
+        `SELECT 
+                  periodo as periodo,
+                  tp_desc_empresa as tp_desc_empresa,
+                  CAST(SUM(\`INCUMPLE_CALIDAD\`) AS SIGNED) as INCUMPLE_CALIDAD,
+                  CAST(SUM(\`Total_actividad\`) AS SIGNED) as Total_actividad
+                FROM tb_kpi_gerencia_calidad_tecnico
+                GROUP BY periodo, tp_desc_empresa
+                ORDER BY periodo DESC, tp_desc_empresa ASC`
+      );
+      return rows as any[];
+    } catch (error) {
+      console.error("Error fetching Benchmark data:", error);
       return [];
     }
   }

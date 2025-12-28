@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__mysql-database__connect_db",
+      "mcp__mysql-database__list_tables",
+      "mcp__mysql-database__describe_table",
+      "mcp__mysql-database__query"
+    ]
+  }
+}
