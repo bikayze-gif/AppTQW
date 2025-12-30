@@ -5,6 +5,7 @@ import bcrypt from "bcrypt";
 import { storage } from "./storage";
 import { insertBillingSchema, loginSchema, materialSolicitudRequestSchema } from "@shared/schema";
 import { z } from "zod";
+import { broadcast } from "./websocket";
 
 
 // Middleware para verificar autenticación
@@ -412,6 +413,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // POST /api/monitor/refresh - Trigger a real-time refresh for all clients
+  app.post("/api/monitor/refresh", async (req, res) => {
+    try {
+      console.log("[Monitor Refresh API] Received refresh signal");
+      broadcast({ type: "refresh", target: "monitor-diario" });
+      res.json({ success: true, message: "Broadcast sent" });
+    } catch (error) {
+      console.error("[Monitor Refresh API] Error:", error);
+      res.status(500).json({ error: "Failed to broadcast refresh" });
+    }
+  });
+
   // Billing API routes
 
   // GET all billing records
@@ -715,6 +728,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // POST create material solicitud
+  // GET material solicitudes
+  app.get("/api/materials/solicitudes", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "Usuario no autenticado" });
+      }
+      const solicitudes = await storage.getMaterialSolicitudes(userId);
+      res.json(solicitudes);
+    } catch (error) {
+      console.error("Error fetching material solicitudes:", error);
+      res.status(500).json({ error: "No se pudieron obtener las solicitudes" });
+    }
+  });
+
+  app.get("/api/materials/technicians", requireAuth, async (req, res) => {
+    try {
+      const techs = await storage.getTechnicians();
+      res.json(techs);
+    } catch (error) {
+      console.error("Error fetching technicians:", error);
+      res.status(500).json({ error: "No se pudieron obtener los técnicos" });
+    }
+  });
+
   app.post("/api/materials/solicitud", requireAuth, async (req, res) => {
     try {
       const validatedData = materialSolicitudRequestSchema.parse(req.body);
@@ -736,9 +774,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         supervisorPerfil2 = await storage.getUserPerfil2(id_supervisor);
       }
 
-      // Determinar flags basados en perfil2
-      const flag_regiones = userPerfil2 ? "flag_regiones" : "No";
-      const flag_gestion_supervisor = userPerfil2 ? 1 : 0;
+      // Determinar flags basados en perfil2 según lógica PHP
+      // Si existe perfil2 del usuario o del supervisor, se activa el flujo regional
+      const effectivePerfil2 = userPerfil2 || supervisorPerfil2;
+      const flag_regiones = effectivePerfil2 ? effectivePerfil2 : "No";
+      const flag_gestion_supervisor = effectivePerfil2 ? 1 : 0;
 
       // Generar ticket único de 8 caracteres
       const ticket = crypto.randomBytes(4).toString('hex');

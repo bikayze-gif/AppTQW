@@ -9,6 +9,7 @@ const { Pool } = pkg;
 import { registerRoutes } from "./routes";
 import type { AuthenticatedUser } from "./storage";
 import { sessionConfig, appConfig, validateConfig, logConfig, pgConfig } from "./config";
+import { setupWebSockets } from "./websocket";
 
 // Validar y mostrar configuración al iniciar
 validateConfig();
@@ -155,6 +156,17 @@ export default async function runApp(
   // importantly run the final setup after setting up all the other routes so
   // the catch-all route doesn't interfere with the other routes
   await setup(app, server);
+
+  // Initialize WebSockets with manual upgrade handling
+  const wss = setupWebSockets(server);
+
+  server.on("upgrade", (request, socket, head) => {
+    if (request.url?.startsWith("/ws")) {
+      wss.handleUpgrade(request, socket, head, (ws) => {
+        wss.emit("connection", ws, request);
+      });
+    }
+  });
 
   // ALWAYS serve the app on the port specified in the environment variable PORT
   // Other ports are firewalled. Default to 5000 if not specified.

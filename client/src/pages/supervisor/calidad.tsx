@@ -14,7 +14,13 @@ import {
     TrendingUp,
     Award,
     Zap,
-    LayoutDashboard
+    LayoutDashboard,
+    FileSpreadsheet,
+    Users,
+    Activity,
+    CheckCircle,
+    AlertTriangle,
+    Clock
 } from "lucide-react";
 import {
     Select,
@@ -34,7 +40,9 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import * as XLSX from "xlsx";
-import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ChartSkeleton } from "@/components/ui/chart-skeleton";
+import { LineChart, Line, BarChart, Bar, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell, PieChart, Pie } from "recharts";
 
 const MONTH_NAMES = [
     "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -60,7 +68,7 @@ function formatDate(dateStr: string) {
 }
 
 export default function SupervisorCalidad() {
-    const [activeTab, setActiveTab] = useState<"dashboard" | "benchmark" | "telqway">("benchmark");
+    const [activeTab, setActiveTab] = useState<"dashboard" | "benchmark" | "cubo_datos" | "telqway">("benchmark");
     const [selectedPeriod, setSelectedPeriod] = useState<string>("");
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -70,6 +78,11 @@ export default function SupervisorCalidad() {
     const [sortConfig, setSortConfig] = useState<{ key: string | null, direction: 'asc' | 'desc' }>({
         key: 'FECHA_EJECUCION',
         direction: 'desc'
+    });
+    const [benchmarkSearchTerm, setBenchmarkSearchTerm] = useState("");
+    const [benchmarkSortConfig, setBenchmarkSortConfig] = useState<{ key: string | null, direction: 'asc' | 'desc' }>({
+        key: null,
+        direction: 'asc'
     });
     const rowsPerPage = 15;
 
@@ -200,7 +213,10 @@ export default function SupervisorCalidad() {
             if (c) companiesSet.add(c);
         });
 
-        const periods = Array.from(periodsSet).sort().reverse().slice(0, 6); // Últimos 6 periodos
+        const periods = Array.from(periodsSet)
+            .filter(p => p.startsWith('2025'))
+            .sort()
+            .reverse(); // Solo periodos del año 2025 ordenados por fecha descendente
         const companies = Array.from(companiesSet).sort();
 
         // Crear matriz de datos: empresas x periodos
@@ -225,6 +241,231 @@ export default function SupervisorCalidad() {
         console.log("Processed benchmark table data:", { periods, companies });
         return { periods, companies, matrix };
     }, [benchmarkData]);
+
+    const handleBenchmarkSort = (key: string) => {
+        setBenchmarkSortConfig(prev => ({
+            key,
+            direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
+        }));
+    };
+
+    const sortedBenchmarkData = useMemo(() => {
+        let { periods, companies, matrix } = benchmarkTableData;
+        if (!companies || companies.length === 0) return { periods: [], companies: [], matrix: {} };
+
+        // Filter
+        let filteredCompanies = [...companies];
+        if (benchmarkSearchTerm) {
+            const lowerSearch = benchmarkSearchTerm.toLowerCase();
+            filteredCompanies = filteredCompanies.filter(c => c.toLowerCase().includes(lowerSearch));
+        }
+
+        // Sort
+        if (benchmarkSortConfig.key) {
+            filteredCompanies.sort((a, b) => {
+                let valA: string | number, valB: string | number;
+                if (benchmarkSortConfig.key === 'company') {
+                    valA = a;
+                    valB = b;
+                } else {
+                    valA = matrix[a]?.[benchmarkSortConfig.key!] ?? -1;
+                    valB = matrix[b]?.[benchmarkSortConfig.key!] ?? -1;
+                }
+
+                if (valA === valB) return 0;
+                if (typeof valA === 'number' && typeof valB === 'number') {
+                    return benchmarkSortConfig.direction === 'asc' ? valA - valB : valB - valA;
+                }
+                return benchmarkSortConfig.direction === 'asc'
+                    ? String(valA).localeCompare(String(valB))
+                    : String(valB).localeCompare(String(valA));
+            });
+        }
+
+        return { periods, companies: filteredCompanies, matrix };
+    }, [benchmarkTableData, benchmarkSearchTerm, benchmarkSortConfig]);
+
+    // Procesar datos para gráficos múltiples por empresa
+    const telqwayStats = useMemo(() => {
+        if (!qualityData || qualityData.length === 0) return null;
+
+        const total = qualityData.length;
+        const complies = qualityData.filter(d => String(d.CALIDAD_30) === '0').length;
+        const nonComplies = total - complies;
+        const complianceRate = total > 0 ? (complies / total) * 100 : 0;
+
+        // Segmentation by Supervisor
+        const supervisorMap: Record<string, { total: number, complies: number }> = {};
+        qualityData.forEach(d => {
+            const sup = d.supervisor || "Sin Supervisor";
+            if (!supervisorMap[sup]) supervisorMap[sup] = { total: 0, complies: 0 };
+            supervisorMap[sup].total++;
+            if (String(d.CALIDAD_30) === '0') supervisorMap[sup].complies++;
+        });
+
+        const supervisorStats = Object.entries(supervisorMap)
+            .map(([name, stats]) => ({
+                name,
+                total: stats.total,
+                complies: stats.complies,
+                ratio: (stats.complies / stats.total) * 100,
+                nonComplies: stats.total - stats.complies
+            }))
+            .sort((a, b) => b.total - a.total);
+
+        // Daily trend
+        const dailyMap: Record<string, { total: number, complies: number }> = {};
+        qualityData.forEach(d => {
+            if (d.FECHA_EJECUCION) {
+                const dateObj = new Date(d.FECHA_EJECUCION);
+                if (!isNaN(dateObj.getTime())) {
+                    const date = dateObj.toISOString().split('T')[0];
+                    if (!dailyMap[date]) dailyMap[date] = { total: 0, complies: 0 };
+                    dailyMap[date].total++;
+                    if (String(d.CALIDAD_30) === '0') dailyMap[date].complies++;
+                }
+            }
+        });
+
+        const dailyStats = Object.entries(dailyMap)
+            .map(([date, stats]) => {
+                const dObj = new Date(date + 'T12:00:00');
+                return {
+                    date,
+                    displayDate: `${dObj.getDate()} ${MONTH_NAMES[dObj.getMonth()]}`,
+                    ratio: (stats.complies / stats.total) * 100
+                };
+            })
+            .sort((a, b) => a.date.localeCompare(b.date));
+
+        // Network split
+        const networkMap: Record<string, { total: number, complies: number }> = {};
+        qualityData.forEach(d => {
+            const net = d.TIPO_RED_CALCULADO || "Otros";
+            if (!networkMap[net]) networkMap[net] = { total: 0, complies: 0 };
+            networkMap[net].total++;
+            if (String(d.CALIDAD_30) === '0') networkMap[net].complies++;
+        });
+
+        const networkStats = Object.entries(networkMap).map(([name, stats]) => ({
+            name,
+            value: stats.total,
+            ratio: (stats.complies / stats.total) * 100
+        }));
+
+        return {
+            total,
+            complies,
+            nonComplies,
+            complianceRate,
+            supervisorStats,
+            dailyStats,
+            networkStats
+        };
+    }, [qualityData]);
+
+    const facetedBenchmarkData = useMemo(() => {
+        const { periods, companies, matrix } = benchmarkTableData;
+        if (!companies.length || !periods.length) return [];
+
+        // Los periodos en el eje X deben ir de antiguo a reciente
+        const chronPeriods = [...periods].reverse();
+
+        return companies.map(company => {
+            const data = chronPeriods.map(p => ({
+                periodo: p,
+                // Formatear periodo para el eje X (ej: 202501 -> Ene)
+                label: /^\d{6}$/.test(p) ? ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"][parseInt(p.substring(4, 6)) - 1] : p,
+                ratio: matrix[company]?.[p] ?? 0
+            }));
+
+            // Calcular promedio para mostrar como referencia
+            const totalRatio = data.reduce((sum, d) => sum + d.ratio, 0);
+            const avgRatio = data.length > 0 ? totalRatio / data.length : 0;
+
+            return {
+                company,
+                avgRatio,
+                data
+            };
+        }).sort((a, b) => b.avgRatio - a.avgRatio); // Ordenar por mayor promedio de incumplimiento
+    }, [benchmarkTableData]);
+
+    const telqwayVsNacionalData = useMemo(() => {
+        if (!benchmarkData || !benchmarkData.length) return [];
+
+        const monthlyStats: { [period: string]: { telqwayInc: number, telqwayTot: number, nacInc: number, nacTot: number } } = {};
+
+        benchmarkData.forEach(item => {
+            const p = item.periodo || item.PERIODO;
+            const c = item.tp_desc_empresa || item.TP_DESC_EMPRESA;
+            const inc = Number(item.INCUMPLE_CALIDAD || 0);
+            const tot = Number(item.Total_actividad || 0);
+
+            if (!p) return;
+
+            if (!monthlyStats[p]) {
+                monthlyStats[p] = { telqwayInc: 0, telqwayTot: 0, nacInc: 0, nacTot: 0 };
+            }
+
+            // Identificar Telqway (asumimos que el nombre contiene "TELQWAY")
+            const isTelqway = c && c.toUpperCase().includes("TELQWAY");
+
+            if (isTelqway) {
+                monthlyStats[p].telqwayInc += inc;
+                monthlyStats[p].telqwayTot += tot;
+            }
+
+            monthlyStats[p].nacInc += inc;
+            monthlyStats[p].nacTot += tot;
+        });
+
+        // Ordenar periodos cronológicamente para el gráfico
+        const periods = Object.keys(monthlyStats).sort();
+        return periods.map(p => {
+            const stats = monthlyStats[p];
+            const monthValue = parseInt(p.substring(4, 6)) - 1;
+            const MONTHS = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+            const year = p.substring(0, 4);
+            const label = /^\d{6}$/.test(p) ? `${MONTHS[monthValue]} ${year}` : p;
+
+            return {
+                periodo: p,
+                label,
+                Telqway: stats.telqwayTot > 0 ? (stats.telqwayInc / stats.telqwayTot) * 100 : 0,
+                Nacional: stats.nacTot > 0 ? (stats.nacInc / stats.nacTot) * 100 : 0
+            };
+        });
+    }, [benchmarkData]);
+
+    const handleBenchmarkExport = () => {
+        const { periods, companies, matrix } = sortedBenchmarkData;
+        if (!companies || companies.length === 0) return;
+
+        const headers = ["Empresa", ...periods.map((p: string) => {
+            if (/^\d{6}$/.test(p)) {
+                const year = p.substring(0, 4);
+                const monthValue = parseInt(p.substring(4, 6)) - 1;
+                const MONTHS = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+                return (MONTHS[monthValue] || p) + " " + year;
+            }
+            return p;
+        })];
+
+        const rows = companies.map((company: string) => [
+            company,
+            ...periods.map((p: string) => {
+                const val = matrix[company]?.[p];
+                return val !== undefined ? `${val.toFixed(2)}%` : '-';
+            })
+        ]);
+
+        const wsData = [headers, ...rows];
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Benchmark");
+        XLSX.writeFile(wb, `Benchmark_Calidad_${new Date().toISOString().split('T')[0]}.xlsx`);
+    };
 
     // Debugging logs (Moved here to be after benchmarkTableData definition)
     useEffect(() => {
@@ -291,7 +532,7 @@ export default function SupervisorCalidad() {
         ];
 
         // Crear filas de datos
-        const rows = filteredData.map(row => [
+        const rows = filteredData.map((row: any) => [
             String(row.CALIDAD_30) === '0' ? 'CUMPLE' : 'NO CUMPLE',
             row.TIPO_RED_CALCULADO || '',
             row.Nombre_short || '',
@@ -345,143 +586,398 @@ export default function SupervisorCalidad() {
 
     return (
         <SupervisorLayout>
-            <div className="relative min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
+            <div className="max-w-[1600px] mx-auto p-4 md:p-6 space-y-6">
 
-                {/* Dark Mode Background Effects */}
-                <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none hidden dark:block">
-                    <div className="absolute -top-[40%] -right-[20%] w-[800px] h-[800px] bg-blue-500/20 rounded-full blur-3xl animate-pulse"></div>
-                    <div className="absolute -bottom-[40%] -left-[20%] w-[800px] h-[800px] bg-purple-500/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
-                </div>
-
-                <div className="max-w-[1600px] mx-auto p-4 md:p-6 space-y-6">
-
-                    {/* Header Section */}
-                    <div className="bg-white dark:backdrop-blur-xl dark:bg-slate-900/10 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm dark:shadow-2xl p-6 md:p-8">
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                            <div>
-                                <h1 className="text-3xl font-bold text-slate-900 dark:text-transparent dark:bg-gradient-to-r dark:from-blue-400 dark:via-purple-400 dark:to-pink-400 dark:bg-clip-text">
-                                    Gestión de Calidad
-                                </h1>
-                                <p className="text-slate-500 dark:text-slate-400 mt-1">
-                                    Monitor de cumplimiento y auditoría técnica
-                                </p>
-                            </div>
-
-                            <div className="flex flex-wrap items-center gap-3">
-                                <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-                                    <SelectTrigger className="w-[180px] bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-700 dark:text-white hover:bg-slate-50 dark:hover:bg-white/10 transition-colors shadow-sm">
-                                        <Calendar className="w-4 h-4 mr-2 text-slate-500 dark:text-slate-400" />
-                                        <SelectValue placeholder="Periodo" />
-                                    </SelectTrigger>
-                                    <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-                                        {periods?.map((p) => (
-                                            <SelectItem key={p} value={p}>
-                                                {formatPeriod(p)}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-
-                                <Button
-                                    onClick={handleExport}
-                                    className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/10 dark:shadow-emerald-500/20"
-                                >
-                                    <Download className="w-4 h-4 mr-2" />
-                                    Exportar
-                                </Button>
-                            </div>
+                {/* Header Section */}
+                <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 md:p-8">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div>
+                            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
+                                Gestión de Calidad
+                            </h1>
+                            <p className="text-slate-500 dark:text-slate-400 mt-1">
+                                Monitor de cumplimiento y auditoría técnica
+                            </p>
                         </div>
 
-                        {/* Tabs Navigation */}
-                        <div className="flex gap-1 mt-8 border-b border-slate-200 dark:border-white/10">
-                            <button
-                                onClick={() => setActiveTab("dashboard")}
-                                className={cn(
-                                    "px-6 py-3 rounded-t-lg font-medium text-sm transition-all relative overflow-hidden",
-                                    activeTab === "dashboard"
-                                        ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 border-b-2 border-blue-600 dark:border-blue-400"
-                                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5"
-                                )}
-                            >
-                                <LayoutDashboard className="w-4 h-4 inline-block mr-2" />
-                                Dashboard
-                            </button>
-                            <button
-                                onClick={() => setActiveTab("benchmark")}
-                                className={cn(
-                                    "px-6 py-3 rounded-t-lg font-medium text-sm transition-all relative overflow-hidden",
-                                    activeTab === "benchmark"
-                                        ? "text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10 border-b-2 border-purple-600 dark:border-purple-400"
-                                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5"
-                                )}
-                            >
-                                <Award className="w-4 h-4 inline-block mr-2" />
-                                Benchmark
-                            </button>
-                            <button
-                                onClick={() => setActiveTab("telqway")}
-                                className={cn(
-                                    "px-6 py-3 rounded-t-lg font-medium text-sm transition-all relative overflow-hidden",
-                                    activeTab === "telqway"
-                                        ? "text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-500/10 border-b-2 border-orange-600 dark:border-orange-400"
-                                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5"
-                                )}
-                            >
-                                <Zap className="w-4 h-4 inline-block mr-2" />
-                                Telqway
-                            </button>
+                        <div className="flex flex-wrap items-center gap-3">
+                            {/* Global filters moved inside Cubo Datos tab but could still be useful here or hidden */}
                         </div>
                     </div>
 
-                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        {/* Dashboard View (High Level Summary) */}
-                        {activeTab === "dashboard" && (
-                            <div className="space-y-6">
-                                <div className="bg-white dark:bg-slate-900/50 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 p-12 text-center">
-                                    <div className="w-16 h-16 bg-blue-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                                        <TrendingUp className="w-8 h-8 text-blue-500" />
+                    {/* Tabs Navigation */}
+                    <div className="flex gap-1 mt-8 border-b border-slate-200 dark:border-white/10">
+                        <button
+                            onClick={() => setActiveTab("dashboard")}
+                            className={cn(
+                                "px-6 py-3 rounded-t-lg font-medium text-sm transition-all relative overflow-hidden",
+                                activeTab === "dashboard"
+                                    ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-slate-800 border-b-2 border-blue-600 dark:border-blue-400"
+                                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800"
+                            )}
+                        >
+                            <LayoutDashboard className="w-4 h-4 inline-block mr-2" />
+                            Dashboard
+                        </button>
+                        <button
+                            onClick={() => setActiveTab("benchmark")}
+                            className={cn(
+                                "px-6 py-3 rounded-t-lg font-medium text-sm transition-all relative overflow-hidden",
+                                activeTab === "benchmark"
+                                    ? "text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-slate-800 border-b-2 border-purple-600 dark:border-purple-400"
+                                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800"
+                            )}
+                        >
+                            <Award className="w-4 h-4 inline-block mr-2" />
+                            Benchmark
+                        </button>
+                        <button
+                            onClick={() => setActiveTab("telqway")}
+                            className={cn(
+                                "px-6 py-3 rounded-t-lg font-medium text-sm transition-all relative overflow-hidden",
+                                activeTab === "telqway"
+                                    ? "text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-slate-800 border-b-2 border-orange-600 dark:border-orange-400"
+                                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800"
+                            )}
+                        >
+                            <LayoutDashboard className="w-4 h-4 inline-block mr-2" />
+                            Telqway
+                        </button>
+                        <button
+                            onClick={() => setActiveTab("cubo_datos")}
+                            className={cn(
+                                "px-6 py-3 rounded-t-lg font-medium text-sm transition-all relative overflow-hidden",
+                                activeTab === "cubo_datos"
+                                    ? "text-green-600 dark:text-green-400 bg-green-50 dark:bg-slate-800 border-b-2 border-green-600 dark:border-green-400"
+                                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800"
+                            )}
+                        >
+                            <Zap className="w-4 h-4 inline-block mr-2" />
+                            Cubo Datos
+                        </button>
+                    </div>
+                </div>
+
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    {/* Dashboard View (High Level Summary) */}
+                    {activeTab === "dashboard" && (
+                        <div className="space-y-6">
+                            <div className="bg-white dark:bg-slate-900/50 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 p-12 text-center">
+                                <div className="w-16 h-16 bg-blue-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <TrendingUp className="w-8 h-8 text-blue-500" />
+                                </div>
+                                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Resumen General</h3>
+                                <p className="text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+                                    Aquí se mostrará un resumen ejecutivo de los indicadores de calidad y rendimiento global.
+                                    La información detallada se encuentra en la pestaña Cubo Datos.
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Telqway View (Full Dashboard) */}
+                    {activeTab === "telqway" && (
+                        <div className="space-y-6">
+                            {/* KPI Cards */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center">
+                                            <Activity className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total OT</p>
+                                            <h4 className="text-2xl font-bold text-slate-900 dark:text-white">
+                                                {isLoading ? <Skeleton className="h-8 w-16" /> : telqwayStats?.total.toLocaleString()}
+                                            </h4>
+                                        </div>
                                     </div>
-                                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Resumen General</h3>
-                                    <p className="text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-                                        Aquí se mostrará un resumen ejecutivo de los indicadores de calidad y rendimiento global.
-                                        La información detallada se encuentra en la pestaña Telqway.
-                                    </p>
+                                </div>
+
+                                <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 bg-green-50 dark:bg-green-900/20 rounded-xl flex items-center justify-center">
+                                            <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Cumple Calidad</p>
+                                            <h4 className="text-2xl font-bold text-slate-900 dark:text-white">
+                                                {isLoading ? <Skeleton className="h-8 w-16" /> : telqwayStats?.complies.toLocaleString()}
+                                            </h4>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 bg-red-50 dark:bg-red-900/20 rounded-xl flex items-center justify-center">
+                                            <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">No Cumple</p>
+                                            <h4 className="text-2xl font-bold text-slate-900 dark:text-white">
+                                                {isLoading ? <Skeleton className="h-8 w-16" /> : telqwayStats?.nonComplies.toLocaleString()}
+                                            </h4>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 bg-orange-50 dark:bg-orange-900/20 rounded-xl flex items-center justify-center">
+                                            <TrendingUp className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">% Calidad Global</p>
+                                            <h4 className="text-2xl font-bold text-slate-900 dark:text-white">
+                                                {isLoading ? <Skeleton className="h-8 w-16" /> : `${telqwayStats?.complianceRate.toFixed(1)}%`}
+                                            </h4>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        )}
 
-                        {/* Benchmark Tab */}
-                        {activeTab === "benchmark" && (
-                            <div className="space-y-6">
-                                {/* Gráficos */}
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    {/* Gráfico 1: Incumplimiento */}
-                                    <div className="bg-white dark:backdrop-blur-xl dark:bg-slate-900/10 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm p-6">
-                                        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">% Incumplimiento</h3>
-                                        <ResponsiveContainer width="100%" height={200}>
-                                            <LineChart data={chartData1}>
-                                                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                                                <XAxis dataKey="month" stroke="#64748b" fontSize={12} />
-                                                <YAxis stroke="#64748b" fontSize={12} />
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                {/* Evolución Diaria */}
+                                <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">Evolución Diaria de Calidad</h3>
+                                    {isLoading ? (
+                                        <ChartSkeleton height={300} type="line" />
+                                    ) : (
+                                        <ResponsiveContainer width="100%" height={300}>
+                                            <LineChart data={telqwayStats?.dailyStats}>
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.5} />
+                                                <XAxis
+                                                    dataKey="displayDate"
+                                                    stroke="#94a3b8"
+                                                    fontSize={12}
+                                                    tickLine={false}
+                                                    axisLine={false}
+                                                />
+                                                <YAxis
+                                                    stroke="#94a3b8"
+                                                    fontSize={12}
+                                                    tickLine={false}
+                                                    axisLine={false}
+                                                    tickFormatter={(val) => `${val}%`}
+                                                    domain={[0, 100]}
+                                                />
                                                 <Tooltip
                                                     contentStyle={{
                                                         backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                                                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                                                        border: 'none',
                                                         borderRadius: '8px',
-                                                        color: '#fff'
+                                                        color: '#fff',
+                                                        fontSize: '12px'
                                                     }}
+                                                    formatter={(val: number) => [`${val.toFixed(1)}%`, 'Calidad (%)']}
                                                 />
-                                                <Legend />
-                                                <Line type="monotone" dataKey="Telqway" stroke="#f97316" strokeWidth={2} dot={{ r: 4 }} />
-                                                <Line type="monotone" dataKey="EmpresaA" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4 }} />
-                                                <Line type="monotone" dataKey="EmpresaB" stroke="#22c55e" strokeWidth={2} dot={{ r: 4 }} />
+                                                <Line
+                                                    type="monotone"
+                                                    dataKey="ratio"
+                                                    stroke="#3b82f6"
+                                                    strokeWidth={3}
+                                                    dot={{ r: 4, fill: '#3b82f6', strokeWidth: 0 }}
+                                                    activeDot={{ r: 6 }}
+                                                />
                                             </LineChart>
                                         </ResponsiveContainer>
-                                    </div>
+                                    )}
+                                </div>
 
-                                    {/* Gráfico 2: Cumplimiento */}
-                                    <div className="bg-white dark:backdrop-blur-xl dark:bg-slate-900/10 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm p-6">
-                                        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">% Cumplimiento</h3>
+                                {/* Calidad por Supervisor (Quick View) */}
+                                <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">Top Supervisores (Volumen)</h3>
+                                    {isLoading ? (
+                                        <div className="space-y-4">
+                                            {[...Array(5)].map((_, i) => (
+                                                <div key={i} className="flex items-center gap-3">
+                                                    <Skeleton className="h-8 w-8 rounded-full" />
+                                                    <div className="flex-1 space-y-2">
+                                                        <Skeleton className="h-3 w-full" />
+                                                        <Skeleton className="h-2 w-2/3" />
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            {telqwayStats?.supervisorStats.slice(0, 6).map((sup, idx) => (
+                                                <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/40 rounded-full flex items-center justify-center text-blue-700 dark:text-blue-300 font-bold text-xs">
+                                                            {idx + 1}
+                                                        </div>
+                                                        <div className="overflow-hidden">
+                                                            <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 truncate w-[120px]" title={sup.name}>
+                                                                {sup.name}
+                                                            </p>
+                                                            <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                                                                {sup.total} OTs • {sup.complies} Cumplen
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <div className={cn(
+                                                            "text-sm font-bold",
+                                                            sup.ratio >= 90 ? "text-green-600 dark:text-green-400" :
+                                                                sup.ratio >= 80 ? "text-blue-600 dark:text-blue-400" :
+                                                                    "text-red-600 dark:text-red-400"
+                                                        )}>
+                                                            {sup.ratio.toFixed(1)}%
+                                                        </div>
+                                                        <div className="w-20 h-1 bg-slate-200 dark:bg-slate-700 rounded-full mt-1 overflow-hidden">
+                                                            <div
+                                                                className={cn(
+                                                                    "h-full transition-all duration-1000",
+                                                                    sup.ratio >= 90 ? "bg-green-500" :
+                                                                        sup.ratio >= 80 ? "bg-blue-500" :
+                                                                            "bg-red-500"
+                                                                )}
+                                                                style={{ width: `${sup.ratio}%` }}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Full Supervisor Segmentation Bar Chart */}
+                            <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                                    <div>
+                                        <h3 className="text-lg font-bold text-slate-900 dark:text-white">Calidad Reactiva por Supervisor</h3>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400">Ranking detallado de cumplimiento por equipo</p>
+                                    </div>
+                                    <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 rounded-lg text-xs font-bold">
+                                        <Users className="w-3.5 h-3.5" />
+                                        Total {telqwayStats?.supervisorStats.length || 0} Supervisores
+                                    </div>
+                                </div>
+                                {isLoading ? (
+                                    <ChartSkeleton height={400} type="bar" />
+                                ) : (
+                                    <div className="overflow-y-auto max-h-[600px] pr-2 custom-scrollbar">
+                                        <ResponsiveContainer width="100%" height={Math.max(400, (telqwayStats?.supervisorStats.length || 0) * 45)}>
+                                            <BarChart
+                                                data={telqwayStats?.supervisorStats}
+                                                layout="vertical"
+                                                margin={{ left: 120, right: 30, top: 0, bottom: 0 }}
+                                            >
+                                                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e2e8f0" opacity={0.5} />
+                                                <XAxis
+                                                    type="number"
+                                                    domain={[0, 100]}
+                                                    stroke="#94a3b8"
+                                                    fontSize={12}
+                                                    tickFormatter={(v) => `${v}%`}
+                                                />
+                                                <YAxis
+                                                    dataKey="name"
+                                                    type="category"
+                                                    stroke="#94a3b8"
+                                                    fontSize={10}
+                                                    width={110}
+                                                    tickLine={false}
+                                                    axisLine={false}
+                                                />
+                                                <Tooltip
+                                                    contentStyle={{
+                                                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                                                        border: 'none',
+                                                        borderRadius: '8px',
+                                                        color: '#fff',
+                                                        fontSize: '12px'
+                                                    }}
+                                                    formatter={(val: number) => [`${val.toFixed(1)}%`, 'Calidad (%)']}
+                                                />
+                                                <Bar dataKey="ratio" radius={[0, 4, 4, 0]} barSize={25}>
+                                                    {telqwayStats?.supervisorStats.map((entry, index) => (
+                                                        <Cell
+                                                            key={`cell-${index}`}
+                                                            fill={entry.ratio >= 90 ? "#22c55e" : entry.ratio >= 80 ? "#3b82f6" : "#ef4444"}
+                                                        />
+                                                    ))}
+                                                </Bar>
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Benchmark Tab */}
+                    {activeTab === "benchmark" && (
+                        <div className="space-y-6">
+                            {/* Gráficos */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                {/* Gráfico 1: Telqway vs Nacional */}
+                                <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6">
+                                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Telqway vs Nacional (% Inc.)</h3>
+                                    {benchmarkLoading ? (
+                                        <ChartSkeleton height={240} type="line" />
+                                    ) : (
+                                        <ResponsiveContainer width="100%" height={240}>
+                                            <LineChart data={telqwayVsNacionalData}>
+                                                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} opacity={0.5} />
+                                                <XAxis
+                                                    dataKey="label"
+                                                    stroke="#94a3b8"
+                                                    fontSize={10}
+                                                    tickLine={false}
+                                                    axisLine={false}
+                                                />
+                                                <YAxis
+                                                    stroke="#94a3b8"
+                                                    fontSize={10}
+                                                    tickLine={false}
+                                                    axisLine={false}
+                                                    tickFormatter={(value) => `${value}%`}
+                                                />
+                                                <Tooltip
+                                                    contentStyle={{
+                                                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                                                        border: 'none',
+                                                        borderRadius: '8px',
+                                                        color: '#fff',
+                                                        fontSize: '12px'
+                                                    }}
+                                                    formatter={(value: number) => [`${value.toFixed(2)}%`, '']}
+                                                />
+                                                <Legend iconType="circle" wrapperStyle={{ paddingTop: '10px' }} />
+                                                <Line
+                                                    type="monotone"
+                                                    dataKey="Telqway"
+                                                    name="Telqway"
+                                                    stroke="#22c55e"
+                                                    strokeWidth={3}
+                                                    dot={{ r: 4, fill: '#22c55e', strokeWidth: 0 }}
+                                                    activeDot={{ r: 6 }}
+                                                />
+                                                <Line
+                                                    type="monotone"
+                                                    dataKey="Nacional"
+                                                    name="Promedio Nacional"
+                                                    stroke="#ef4444"
+                                                    strokeWidth={2}
+                                                    strokeDasharray="5 5"
+                                                    dot={{ r: 3, fill: '#ef4444', strokeWidth: 0 }}
+                                                />
+                                            </LineChart>
+                                        </ResponsiveContainer>
+                                    )}
+                                </div>
+
+                                {/* Gráfico 2: Cumplimiento */}
+                                <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6">
+                                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">% Cumplimiento</h3>
+                                    {benchmarkLoading ? (
+                                        <ChartSkeleton height={200} type="line" />
+                                    ) : (
                                         <ResponsiveContainer width="100%" height={200}>
                                             <LineChart data={chartData2}>
                                                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
@@ -501,11 +997,15 @@ export default function SupervisorCalidad() {
                                                 <Line type="monotone" dataKey="EmpresaB" stroke="#a855f7" strokeWidth={2} dot={{ r: 4 }} />
                                             </LineChart>
                                         </ResponsiveContainer>
-                                    </div>
+                                    )}
+                                </div>
 
-                                    {/* Gráfico 3: Volumen */}
-                                    <div className="bg-white dark:backdrop-blur-xl dark:bg-slate-900/10 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm p-6">
-                                        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Volumen de Actividades</h3>
+                                {/* Gráfico 3: Volumen */}
+                                <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6">
+                                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Volumen de Actividades</h3>
+                                    {benchmarkLoading ? (
+                                        <ChartSkeleton height={200} type="line" />
+                                    ) : (
                                         <ResponsiveContainer width="100%" height={200}>
                                             <LineChart data={chartData3}>
                                                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
@@ -525,387 +1025,544 @@ export default function SupervisorCalidad() {
                                                 <Line type="monotone" dataKey="EmpresaB" stroke="#22c55e" strokeWidth={2} dot={{ r: 4 }} />
                                             </LineChart>
                                         </ResponsiveContainer>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Faceted Charts Section */}
+                            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 overflow-hidden">
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                                    <div>
+                                        <h3 className="text-lg font-bold text-slate-900 dark:text-white">Tendencias Individuales por Empresa</h3>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                                            Evolución del % de Incumplimiento mensual (ordenado por promedio histórico)
+                                        </p>
                                     </div>
                                 </div>
 
-                                {/* Tabla de Benchmark */}
-                                <div className="bg-white dark:backdrop-blur-xl dark:bg-slate-900/10 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm overflow-hidden">
-                                    <div className="p-6 border-b border-slate-200 dark:border-white/10">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                    {benchmarkLoading ? (
+                                        [...Array(8)].map((_, i) => (
+                                            <div key={i} className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 border border-slate-100 dark:border-slate-800">
+                                                <div className="flex justify-between items-start mb-4">
+                                                    <Skeleton className="h-4 w-24" />
+                                                    <Skeleton className="h-4 w-12" />
+                                                </div>
+                                                <ChartSkeleton height={80} type="line" className="pt-2" />
+                                            </div>
+                                        ))
+                                    ) : (
+                                        facetedBenchmarkData.slice(0, 12).map((facet, idx) => (
+                                            <div key={idx} className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 border border-slate-100 dark:border-slate-800 hover:border-blue-200 dark:hover:border-blue-900/50 transition-all group">
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300 truncate max-w-[150px]" title={facet.company}>
+                                                        {facet.company}
+                                                    </h4>
+                                                    <div className={cn(
+                                                        "px-1.5 py-0.5 rounded text-[10px] font-bold",
+                                                        facet.avgRatio < 5 ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" :
+                                                            facet.avgRatio < 10 ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" :
+                                                                "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                                    )}>
+                                                        {facet.avgRatio.toFixed(1)}% Prom.
+                                                    </div>
+                                                </div>
+
+                                                <div className="h-[120px] w-full">
+                                                    <ResponsiveContainer width="100%" height="100%">
+                                                        <LineChart data={facet.data}>
+                                                            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} opacity={0.3} />
+                                                            <XAxis
+                                                                dataKey="label"
+                                                                hide={false}
+                                                                axisLine={false}
+                                                                tickLine={false}
+                                                                fontSize={10}
+                                                                tick={{ fill: '#94a3b8' }}
+                                                            />
+                                                            <YAxis hide={true} domain={[0, 'auto']} />
+                                                            <Tooltip
+                                                                contentStyle={{
+                                                                    backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                                                                    border: 'none',
+                                                                    borderRadius: '4px',
+                                                                    fontSize: '10px'
+                                                                }}
+                                                                labelStyle={{ color: '#94a3b8', marginBottom: '4px' }}
+                                                                itemStyle={{ color: '#fff', padding: '0' }}
+                                                                formatter={(value: number) => [`${value.toFixed(1)}%`, 'Incumplimiento']}
+                                                            />
+                                                            <Line
+                                                                type="monotone"
+                                                                dataKey="ratio"
+                                                                stroke={facet.avgRatio < 8 ? "#3b82f6" : "#f43f5e"}
+                                                                strokeWidth={2}
+                                                                dot={false}
+                                                                activeDot={{ r: 4, strokeWidth: 0 }}
+                                                            />
+                                                        </LineChart>
+                                                    </ResponsiveContainer>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                                {facetedBenchmarkData.length > 12 && (
+                                    <p className="text-center text-xs text-slate-400 mt-4 italic">
+                                        Mostrando las 12 empresas con mayor volumen/incumplimiento.
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Tabla de Benchmark */}
+                            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+                                <div className="p-6 border-b border-slate-200 dark:border-slate-700 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                    <div>
                                         <h3 className="text-lg font-bold text-slate-900 dark:text-white">Matriz de Incumplimiento por Empresa</h3>
                                         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                                             Porcentaje de incumplimiento de calidad (Incumple / Total × 100)
                                         </p>
                                     </div>
+                                    <div className="flex items-center gap-3">
+                                        <div className="relative w-64">
+                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                            <Input
+                                                placeholder="Filtrar empresa..."
+                                                value={benchmarkSearchTerm}
+                                                onChange={(e) => setBenchmarkSearchTerm(e.target.value)}
+                                                className="pl-9 h-9 text-sm"
+                                            />
+                                        </div>
+                                        <Button
+                                            onClick={handleBenchmarkExport}
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-9 gap-2 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200"
+                                        >
+                                            <FileSpreadsheet className="w-4 h-4" />
+                                            Excel
+                                        </Button>
+                                    </div>
+                                </div>
 
-                                    <div className="overflow-x-auto p-6">
-                                        {benchmarkLoading ? (
-                                            <div className="flex flex-col items-center justify-center gap-3 py-12">
-                                                <div className="w-8 h-8 border-4 border-blue-600/30 border-t-blue-600 rounded-full animate-spin"></div>
-                                                <span className="text-slate-500 text-sm">Cargando datos...</span>
+                                <div className="overflow-x-auto p-6">
+                                    {benchmarkLoading ? (
+                                        <div className="space-y-4">
+                                            <div className="flex border-b border-slate-200 dark:border-slate-700 pb-2">
+                                                {[...Array(5)].map((_, i) => (
+                                                    <Skeleton key={i} className="h-4 w-full mx-2" />
+                                                ))}
                                             </div>
-                                        ) : benchmarkTableData.periods.length === 0 ? (
-                                            <div className="text-center py-12">
-                                                <Award className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-                                                <p className="text-slate-500 dark:text-slate-400">No hay datos disponibles para benchmark</p>
-                                            </div>
-                                        ) : (
-                                            <Table>
-                                                <TableHeader>
-                                                    <TableRow className="bg-slate-50 dark:bg-white/5">
-                                                        <TableHead className="font-semibold text-slate-700 dark:text-slate-300">Empresa</TableHead>
-                                                        {benchmarkTableData.periods.map((period) => {
-                                                            // Intentar formatear si viene como YYYYMM
-                                                            let displayPeriod = period;
-                                                            if (/^\d{6}$/.test(period)) {
-                                                                const year = period.substring(0, 4);
-                                                                const month = parseInt(period.substring(4, 6)) - 1;
-                                                                const MONTHS = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-                                                                if (MONTHS[month]) displayPeriod = `${MONTHS[month]} ${year}`;
-                                                            }
-                                                            return (
-                                                                <TableHead key={period} className="text-center font-semibold text-slate-700 dark:text-slate-300">
-                                                                    {displayPeriod}
-                                                                </TableHead>
-                                                            );
-                                                        })}
-                                                    </TableRow>
-                                                </TableHeader>
-                                                <TableBody>
-                                                    {benchmarkTableData.companies.map((company) => (
-                                                        <TableRow key={company} className="hover:bg-slate-50 dark:hover:bg-white/5">
-                                                            <TableCell className="font-medium text-slate-700 dark:text-slate-200">
-                                                                {company}
-                                                            </TableCell>
-                                                            {benchmarkTableData.periods.map((period) => {
-                                                                const value = benchmarkTableData.matrix[company]?.[period];
-                                                                const displayValue = value !== undefined ? value.toFixed(1) : '-';
-                                                                return (
-                                                                    <TableCell key={period} className="text-center">
-                                                                        <span className={cn(
-                                                                            "px-2 py-1 rounded text-xs font-medium",
-                                                                            value === undefined
-                                                                                ? "text-slate-400"
-                                                                                : value < 5
-                                                                                    ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                                                                                    : value < 10
-                                                                                        ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
-                                                                                        : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                                                                        )}>
-                                                                            {displayValue}%
-                                                                        </span>
-                                                                    </TableCell>
-                                                                );
-                                                            })}
-                                                        </TableRow>
+                                            {[...Array(6)].map((_, i) => (
+                                                <div key={i} className="flex gap-4">
+                                                    {[...Array(5)].map((_, j) => (
+                                                        <Skeleton key={j} className="h-10 w-full" />
                                                     ))}
-                                                </TableBody>
-                                            </Table>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Telqway Tab (Detailed Data) */}
-                        {activeTab === "telqway" && (
-                            <div className="space-y-6">
-                                {/* KPI Overview */}
-                                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                    {[
-                                        { title: "Evaluaciones", value: stats.total, icon: Calendar, color: "blue" },
-                                        { title: "Cumplimiento", value: stats.cumple, icon: CheckCircle2, color: "green" },
-                                        { title: "Incumplimiento", value: stats.noCumple, icon: AlertCircle, color: "red" },
-                                        { title: "Eficiencia", value: `${stats.rate.toFixed(1)}%`, icon: TrendingUp, color: "purple" },
-                                    ].map((stat, i) => (
-                                        <div key={i} className="bg-white dark:backdrop-blur-xl dark:bg-slate-900/20 rounded-xl p-5 border border-slate-200 dark:border-white/10 shadow-sm relative overflow-hidden group">
-                                            <div className={cn("absolute right-0 top-0 w-24 h-24  opacity-5 rotate-12 -mr-6 -mt-6 transition-transform group-hover:scale-110", `bg-${stat.color}-500`)}></div>
-                                            <div className="flex justify-between items-start relative z-10">
-                                                <div>
-                                                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{stat.title}</p>
-                                                    <h3 className={cn("text-2xl font-bold mt-1",
-                                                        `text-${stat.color}-600 dark:text-${stat.color}-400`
-                                                    )}>
-                                                        {stat.value}
-                                                    </h3>
                                                 </div>
-                                                <div className={cn("p-2 rounded-lg",
-                                                    `bg-${stat.color}-50 dark:bg-${stat.color}-500/10 text-${stat.color}-600 dark:text-${stat.color}-400`
-                                                )}>
-                                                    <stat.icon className="w-5 h-5" />
-                                                </div>
-                                            </div>
+                                            ))}
                                         </div>
-                                    ))}
-                                </div>
-
-                                {/* Main Data Table */}
-                                <div className="bg-white dark:backdrop-blur-xl dark:bg-slate-900/10 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm overflow-hidden">
-
-                                    {/* Filters Toolbar */}
-                                    <div className="p-4 border-b border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/5">
-                                        <div className="flex flex-col md:flex-row md:items-start gap-4">
-                                            <div className="flex flex-wrap items-center gap-2 flex-1">
-                                                <div className="relative flex-1 max-w-md">
-                                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                                    <Input
-                                                        placeholder="Buscar por pedido, técnico, comuna..."
-                                                        value={searchTerm}
-                                                        onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                                                        className="pl-10 bg-white dark:bg-white/5 border-slate-200 dark:border-white/10"
-                                                    />
-                                                </div>
-                                                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                                                    <SelectTrigger className="w-[140px] bg-white dark:bg-white/5 border-slate-200 dark:border-white/10">
-                                                        <SelectValue placeholder="Estado" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value="all">Estado: Todos</SelectItem>
-                                                        <SelectItem value="0">Cumple</SelectItem>
-                                                        <SelectItem value="1">No Cumple</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                                <Select value={redFilter} onValueChange={setRedFilter}>
-                                                    <SelectTrigger className="w-[140px] bg-white dark:bg-white/5 border-slate-200 dark:border-white/10">
-                                                        <SelectValue placeholder="Red" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value="all">Red: Todas</SelectItem>
-                                                        <SelectItem value="FTTH">FTTH</SelectItem>
-                                                        <SelectItem value="HFC">HFC</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                                <Select value={supervisorFilter} onValueChange={setSupervisorFilter}>
-                                                    <SelectTrigger className="w-[140px] bg-white dark:bg-white/5 border-slate-200 dark:border-white/10">
-                                                        <SelectValue placeholder="Supervisor" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value="all">Sup: Todos</SelectItem>
-                                                        {uniqueSupervisors.map((sup) => (
-                                                            <SelectItem key={sup} value={sup}>{sup}</SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                                {(searchTerm || statusFilter !== "all" || redFilter !== "all" || supervisorFilter !== "all") && (
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        onClick={() => { setSearchTerm(""); setStatusFilter("all"); setRedFilter("all"); setSupervisorFilter("all"); }}
-                                                        className="text-slate-400 hover:text-red-500 hover:bg-red-50"
-                                                    >
-                                                        <X className="w-4 h-4" />
-                                                    </Button>
-                                                )}
-                                            </div>
+                                    ) : sortedBenchmarkData.periods.length === 0 ? (
+                                        <div className="text-center py-12">
+                                            <Award className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+                                            <p className="text-slate-500 dark:text-slate-400">No hay datos disponibles para benchmark</p>
                                         </div>
-                                    </div>
-
-                                    <div className="overflow-x-auto">
+                                    ) : (
                                         <Table>
                                             <TableHeader>
-                                                <TableRow className="bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10">
-                                                    <TableHead className="w-[100px] cursor-pointer" onClick={() => handleSort('CALIDAD_30')}>
-                                                        <div className="flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
-                                                            Calidad30 <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                                                <TableRow className="bg-slate-50 dark:bg-white/5">
+                                                    <TableHead
+                                                        className="font-semibold text-slate-700 dark:text-slate-300 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                                                        onClick={() => handleBenchmarkSort('company')}
+                                                    >
+                                                        <div className="flex items-center gap-1">
+                                                            Empresa
+                                                            <ArrowUpDown className={cn("w-3 h-3 text-slate-400", benchmarkSortConfig.key === 'company' && "text-blue-500")} />
                                                         </div>
                                                     </TableHead>
-                                                    <TableHead className="cursor-pointer" onClick={() => handleSort('TIPO_RED_CALCULADO')}>
-                                                        <div className="flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
-                                                            Red <ArrowUpDown className="w-3 h-3 text-slate-400" />
-                                                        </div>
-                                                    </TableHead>
-                                                    <TableHead className="cursor-pointer" onClick={() => handleSort('Nombre_short')}>
-                                                        <div className="flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
-                                                            Nombre Short <ArrowUpDown className="w-3 h-3 text-slate-400" />
-                                                        </div>
-                                                    </TableHead>
-                                                    <TableHead className="cursor-pointer" onClick={() => handleSort('supervisor')}>
-                                                        <div className="flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
-                                                            Supervisor <ArrowUpDown className="w-3 h-3 text-slate-400" />
-                                                        </div>
-                                                    </TableHead>
-                                                    <TableHead className="cursor-pointer" onClick={() => handleSort('ACTIVIDAD')}>
-                                                        <div className="flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
-                                                            Actividad <ArrowUpDown className="w-3 h-3 text-slate-400" />
-                                                        </div>
-                                                    </TableHead>
-                                                    <TableHead className="cursor-pointer" onClick={() => handleSort('Comuna')}>
-                                                        <div className="flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
-                                                            Comuna <ArrowUpDown className="w-3 h-3 text-slate-400" />
-                                                        </div>
-                                                    </TableHead>
-                                                    <TableHead className="cursor-pointer" onClick={() => handleSort('id_actividad')}>
-                                                        <div className="flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
-                                                            ID Actividad <ArrowUpDown className="w-3 h-3 text-slate-400" />
-                                                        </div>
-                                                    </TableHead>
-                                                    <TableHead className="cursor-pointer" onClick={() => handleSort('FECHA_EJECUCION')}>
-                                                        <div className="flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
-                                                            Fecha Ejec. <ArrowUpDown className="w-3 h-3 text-slate-400" />
-                                                        </div>
-                                                    </TableHead>
-                                                    <TableHead className="cursor-pointer" onClick={() => handleSort('descripcion_actividad')}>
-                                                        <div className="flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
-                                                            Desc. Actividad <ArrowUpDown className="w-3 h-3 text-slate-400" />
-                                                        </div>
-                                                    </TableHead>
-                                                    <TableHead className="cursor-pointer" onClick={() => handleSort('DESCRIPCION_CIERRE')}>
-                                                        <div className="flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
-                                                            Desc. Cierre <ArrowUpDown className="w-3 h-3 text-slate-400" />
-                                                        </div>
-                                                    </TableHead>
-                                                    <TableHead className="cursor-pointer" onClick={() => handleSort('id_actividad_2')}>
-                                                        <div className="flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
-                                                            ID Act. 2 <ArrowUpDown className="w-3 h-3 text-slate-400" />
-                                                        </div>
-                                                    </TableHead>
-                                                    <TableHead className="cursor-pointer" onClick={() => handleSort('descripcion_actividad_2')}>
-                                                        <div className="flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
-                                                            Desc. Act. 2 <ArrowUpDown className="w-3 h-3 text-slate-400" />
-                                                        </div>
-                                                    </TableHead>
-                                                    <TableHead className="cursor-pointer" onClick={() => handleSort('fecha_ejecucion_2')}>
-                                                        <div className="flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
-                                                            Fecha Ejec. 2 <ArrowUpDown className="w-3 h-3 text-slate-400" />
-                                                        </div>
-                                                    </TableHead>
-                                                    <TableHead className="cursor-pointer" onClick={() => handleSort('DESCRIPCION_CIERRE_2')}>
-                                                        <div className="flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
-                                                            Desc. Cierre 2 <ArrowUpDown className="w-3 h-3 text-slate-400" />
-                                                        </div>
-                                                    </TableHead>
+                                                    {sortedBenchmarkData.periods.map((period) => {
+                                                        // Intentar formatear si viene como YYYYMM
+                                                        let displayPeriod = period;
+                                                        if (/^\d{6}$/.test(period)) {
+                                                            const year = period.substring(0, 4);
+                                                            const month = parseInt(period.substring(4, 6)) - 1;
+                                                            const MONTHS = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+                                                            if (MONTHS[month]) displayPeriod = `${MONTHS[month]} ${year}`;
+                                                        }
+                                                        return (
+                                                            <TableHead
+                                                                key={period}
+                                                                className="text-center font-semibold text-slate-700 dark:text-slate-300 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                                                                onClick={() => handleBenchmarkSort(period)}
+                                                            >
+                                                                <div className="flex items-center justify-center gap-1">
+                                                                    {displayPeriod}
+                                                                    <ArrowUpDown className={cn("w-3 h-3 text-slate-400", benchmarkSortConfig.key === period && "text-blue-500")} />
+                                                                </div>
+                                                            </TableHead>
+                                                        );
+                                                    })}
                                                 </TableRow>
                                             </TableHeader>
                                             <TableBody>
-                                                {isLoading ? (
-                                                    <TableRow>
-                                                        <TableCell colSpan={15} className="h-48 text-center">
-                                                            <div className="flex flex-col items-center justify-center gap-3">
-                                                                <div className="w-8 h-8 border-4 border-blue-600/30 border-t-blue-600 rounded-full animate-spin"></div>
-                                                                <span className="text-slate-500 text-sm">Cargando registros...</span>
-                                                            </div>
+                                                {sortedBenchmarkData.companies.map((company) => (
+                                                    <TableRow key={company} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                                                        <TableCell className="font-medium text-slate-700 dark:text-white">
+                                                            {company}
                                                         </TableCell>
+                                                        {sortedBenchmarkData.periods.map((period) => {
+                                                            const value = sortedBenchmarkData.matrix[company]?.[period];
+                                                            const displayValue = value !== undefined ? value.toFixed(1) : '-';
+                                                            return (
+                                                                <TableCell key={period} className="text-center">
+                                                                    <span className={cn(
+                                                                        "px-2 py-1 rounded text-xs font-medium",
+                                                                        value === undefined
+                                                                            ? "text-slate-400"
+                                                                            : value < 5
+                                                                                ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                                                                                : value < 10
+                                                                                    ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+                                                                                    : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                                                    )}>
+                                                                        {displayValue}%
+                                                                    </span>
+                                                                </TableCell>
+                                                            );
+                                                        })}
                                                     </TableRow>
-                                                ) : paginatedData.length === 0 ? (
-                                                    <TableRow>
-                                                        <TableCell colSpan={15} className="h-48 text-center text-slate-500">
-                                                            No se encontraron registros para los filtros seleccionados
-                                                        </TableCell>
-                                                    </TableRow>
-                                                ) : (
-                                                    paginatedData.map((row, idx) => (
-                                                        <TableRow
-                                                            key={idx}
-                                                            className="group hover:bg-slate-50 dark:hover:bg-white/5 border-slate-100 dark:border-white/5 transition-colors"
-                                                        >
-                                                            <TableCell>
-                                                                {String(row.CALIDAD_30) === '0' ? (
-                                                                    <Badge className="bg-green-100 text-green-700 border-green-200 dark:bg-green-500/20 dark:text-green-300 dark:border-green-500/30 shadow-none hover:bg-green-100">
-                                                                        CUMPLE
-                                                                    </Badge>
-                                                                ) : (
-                                                                    <Badge className="bg-red-100 text-red-700 border-red-200 dark:bg-red-500/20 dark:text-red-300 dark:border-red-500/30 shadow-none hover:bg-red-100">
-                                                                        NO CUMPLE
-                                                                    </Badge>
-                                                                )}
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                <Badge variant="outline" className={cn("text-xs font-semibold shadow-none",
-                                                                    row.TIPO_RED_CALCULADO === 'FTTH'
-                                                                        ? "text-orange-600 bg-orange-50 border-orange-200 dark:text-orange-300 dark:bg-orange-500/10 dark:border-orange-500/30"
-                                                                        : "text-blue-600 bg-blue-50 border-blue-200 dark:text-blue-300 dark:bg-blue-500/10 dark:border-blue-500/30"
-                                                                )}>
-                                                                    {row.TIPO_RED_CALCULADO}
-                                                                </Badge>
-                                                            </TableCell>
-                                                            <TableCell className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                                                                {row.Nombre_short || '-'}
-                                                            </TableCell>
-                                                            <TableCell className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                                                                {row.supervisor || '-'}
-                                                            </TableCell>
-                                                            <TableCell className="max-w-[120px]">
-                                                                <div className="truncate text-sm text-slate-600 dark:text-slate-300" title={row.ACTIVIDAD}>
-                                                                    {row.ACTIVIDAD}
-                                                                </div>
-                                                            </TableCell>
-                                                            <TableCell className="text-sm text-slate-600 dark:text-slate-300">
-                                                                {row.Comuna}
-                                                            </TableCell>
-                                                            <TableCell className="text-xs text-slate-600 dark:text-slate-400 font-mono">
-                                                                {row.id_actividad || '-'}
-                                                            </TableCell>
-                                                            <TableCell className="text-slate-500 dark:text-slate-400 text-sm whitespace-nowrap">
-                                                                {formatDate(row.FECHA_EJECUCION)}
-                                                            </TableCell>
-                                                            <TableCell className="max-w-[200px]">
-                                                                <div className="truncate text-xs text-slate-600 dark:text-slate-300" title={row.descripcion_actividad}>
-                                                                    {row.descripcion_actividad || '-'}
-                                                                </div>
-                                                            </TableCell>
-                                                            <TableCell className="max-w-[200px]">
-                                                                <div className="truncate text-xs text-slate-500 dark:text-slate-400 italic" title={row.DESCRIPCION_CIERRE}>
-                                                                    {row.DESCRIPCION_CIERRE}
-                                                                </div>
-                                                            </TableCell>
-                                                            <TableCell className="text-xs text-slate-600 dark:text-slate-400 font-mono">
-                                                                {row.id_actividad_2 || '-'}
-                                                            </TableCell>
-                                                            <TableCell className="max-w-[200px]">
-                                                                <div className="truncate text-xs text-slate-600 dark:text-slate-300" title={row.descripcion_actividad_2}>
-                                                                    {row.descripcion_actividad_2 || '-'}
-                                                                </div>
-                                                            </TableCell>
-                                                            <TableCell className="text-slate-500 dark:text-slate-400 text-sm whitespace-nowrap">
-                                                                {formatDate(row.fecha_ejecucion_2)}
-                                                            </TableCell>
-                                                            <TableCell className="max-w-[200px]">
-                                                                <div className="truncate text-xs text-slate-500 dark:text-slate-400 italic" title={row.DESCRIPCION_CIERRE_2}>
-                                                                    {row.DESCRIPCION_CIERRE_2 || '-'}
-                                                                </div>
-                                                            </TableCell>
-                                                        </TableRow>
-                                                    ))
-                                                )}
+                                                ))}
                                             </TableBody>
                                         </Table>
-                                    </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
-                                    {/* Pagination */}
-                                    <div className="p-4 border-t border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
-                                        <p className="text-sm text-slate-500 dark:text-slate-400">
-                                            Mostrando <span className="font-semibold text-slate-900 dark:text-slate-200">{(currentPage - 1) * rowsPerPage + 1}-{Math.min(currentPage * rowsPerPage, filteredData.length)}</span> de <span className="font-semibold text-slate-900 dark:text-slate-200">{filteredData.length}</span>
-                                        </p>
-
-                                        <div className="flex items-center gap-2">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                disabled={currentPage === 1}
-                                                onClick={() => setCurrentPage(p => p - 1)}
-                                                className="bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300"
-                                            >
-                                                Anterior
-                                            </Button>
-                                            <div className="flex items-center px-2">
-                                                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                                    Página {currentPage} de {Math.max(1, totalPages)}
-                                                </span>
+                    {/* Cubo Datos Tab (Detailed Data) */}
+                    {activeTab === "cubo_datos" && (
+                        <div className="space-y-6">
+                            {/* KPI Overview */}
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                {[
+                                    { title: "Evaluaciones", value: stats.total, icon: Calendar, color: "blue" },
+                                    { title: "Cumplimiento", value: stats.cumple, icon: CheckCircle2, color: "green" },
+                                    { title: "Incumplimiento", value: stats.noCumple, icon: AlertCircle, color: "red" },
+                                    { title: "Eficiencia", value: `${stats.rate.toFixed(1)}%`, icon: TrendingUp, color: "purple" },
+                                ].map((stat, i) => (
+                                    <div key={i} className="bg-white dark:bg-slate-800 rounded-xl p-5 border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden group">
+                                        <div className={cn("absolute right-0 top-0 w-24 h-24  opacity-5 rotate-12 -mr-6 -mt-6 transition-transform group-hover:scale-110", `bg-${stat.color}-500`)}></div>
+                                        <div className="flex justify-between items-start relative z-10">
+                                            <div>
+                                                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{stat.title}</p>
+                                                <h3 className={cn("text-2xl font-bold mt-1",
+                                                    `text-${stat.color}-600 dark:text-${stat.color}-400`
+                                                )}>
+                                                    {stat.value}
+                                                </h3>
                                             </div>
+                                            <div className={cn("p-2 rounded-lg",
+                                                `bg-${stat.color}-50 dark:bg-${stat.color}-500/10 text-${stat.color}-600 dark:text-${stat.color}-400`
+                                            )}>
+                                                <stat.icon className="w-5 h-5" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Main Data Table */}
+                            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+
+                                {/* Filters Toolbar */}
+                                <div className="p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50">
+                                    <div className="flex flex-col md:flex-row md:items-center gap-4 mb-4">
+                                        <div className="flex flex-wrap items-center gap-3">
+                                            <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+                                                <SelectTrigger className="w-[180px] bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-white shadow-sm">
+                                                    <Calendar className="w-4 h-4 mr-2 text-slate-500 dark:text-slate-400" />
+                                                    <SelectValue placeholder="Periodo" />
+                                                </SelectTrigger>
+                                                <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+                                                    {periods?.map((p) => (
+                                                        <SelectItem key={p} value={p}>
+                                                            {formatPeriod(p)}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+
                                             <Button
-                                                variant="outline"
-                                                size="sm"
-                                                disabled={currentPage === totalPages || totalPages === 0}
-                                                onClick={() => setCurrentPage(p => p + 1)}
-                                                className="bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300"
+                                                onClick={handleExport}
+                                                className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/10 dark:shadow-emerald-500/20"
                                             >
-                                                Siguiente
+                                                <Download className="w-4 h-4 mr-2" />
+                                                Exportar
                                             </Button>
                                         </div>
                                     </div>
+                                    <div className="flex flex-col md:flex-row md:items-start gap-4">
+                                        <div className="flex flex-wrap items-center gap-2 flex-1">
+                                            <div className="relative flex-1 max-w-md">
+                                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                                <Input
+                                                    placeholder="Buscar por pedido, técnico, comuna..."
+                                                    value={searchTerm}
+                                                    onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                                                    className="pl-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700"
+                                                />
+                                            </div>
+                                            <Select value={statusFilter} onValueChange={setStatusFilter}>
+                                                <SelectTrigger className="w-[140px] bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
+                                                    <SelectValue placeholder="Estado" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="all">Estado: Todos</SelectItem>
+                                                    <SelectItem value="0">Cumple</SelectItem>
+                                                    <SelectItem value="1">No Cumple</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <Select value={redFilter} onValueChange={setRedFilter}>
+                                                <SelectTrigger className="w-[140px] bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
+                                                    <SelectValue placeholder="Red" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="all">Red: Todas</SelectItem>
+                                                    <SelectItem value="FTTH">FTTH</SelectItem>
+                                                    <SelectItem value="HFC">HFC</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <Select value={supervisorFilter} onValueChange={setSupervisorFilter}>
+                                                <SelectTrigger className="w-[140px] bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
+                                                    <SelectValue placeholder="Supervisor" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="all">Sup: Todos</SelectItem>
+                                                    {uniqueSupervisors.map((sup) => (
+                                                        <SelectItem key={sup} value={sup}>{sup}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            {(searchTerm || statusFilter !== "all" || redFilter !== "all" || supervisorFilter !== "all") && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => { setSearchTerm(""); setStatusFilter("all"); setRedFilter("all"); setSupervisorFilter("all"); }}
+                                                    className="text-slate-400 hover:text-red-500 hover:bg-red-50"
+                                                >
+                                                    <X className="w-4 h-4" />
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="overflow-x-auto">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow className="bg-slate-50 dark:bg-slate-700 border-slate-200 dark:border-slate-700">
+                                                <TableHead className="w-[100px] cursor-pointer" onClick={() => handleSort('CALIDAD_30')}>
+                                                    <div className="flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
+                                                        Calidad30 <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                                                    </div>
+                                                </TableHead>
+                                                <TableHead className="cursor-pointer" onClick={() => handleSort('TIPO_RED_CALCULADO')}>
+                                                    <div className="flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
+                                                        Red <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                                                    </div>
+                                                </TableHead>
+                                                <TableHead className="cursor-pointer" onClick={() => handleSort('Nombre_short')}>
+                                                    <div className="flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
+                                                        Nombre Short <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                                                    </div>
+                                                </TableHead>
+                                                <TableHead className="cursor-pointer" onClick={() => handleSort('supervisor')}>
+                                                    <div className="flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
+                                                        Supervisor <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                                                    </div>
+                                                </TableHead>
+                                                <TableHead className="cursor-pointer" onClick={() => handleSort('ACTIVIDAD')}>
+                                                    <div className="flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
+                                                        Actividad <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                                                    </div>
+                                                </TableHead>
+                                                <TableHead className="cursor-pointer" onClick={() => handleSort('Comuna')}>
+                                                    <div className="flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
+                                                        Comuna <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                                                    </div>
+                                                </TableHead>
+                                                <TableHead className="cursor-pointer" onClick={() => handleSort('id_actividad')}>
+                                                    <div className="flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
+                                                        ID Actividad <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                                                    </div>
+                                                </TableHead>
+                                                <TableHead className="cursor-pointer" onClick={() => handleSort('FECHA_EJECUCION')}>
+                                                    <div className="flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
+                                                        Fecha Ejec. <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                                                    </div>
+                                                </TableHead>
+                                                <TableHead className="cursor-pointer" onClick={() => handleSort('descripcion_actividad')}>
+                                                    <div className="flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
+                                                        Desc. Actividad <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                                                    </div>
+                                                </TableHead>
+                                                <TableHead className="cursor-pointer" onClick={() => handleSort('DESCRIPCION_CIERRE')}>
+                                                    <div className="flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
+                                                        Desc. Cierre <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                                                    </div>
+                                                </TableHead>
+                                                <TableHead className="cursor-pointer" onClick={() => handleSort('id_actividad_2')}>
+                                                    <div className="flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
+                                                        ID Act. 2 <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                                                    </div>
+                                                </TableHead>
+                                                <TableHead className="cursor-pointer" onClick={() => handleSort('descripcion_actividad_2')}>
+                                                    <div className="flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
+                                                        Desc. Act. 2 <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                                                    </div>
+                                                </TableHead>
+                                                <TableHead className="cursor-pointer" onClick={() => handleSort('fecha_ejecucion_2')}>
+                                                    <div className="flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
+                                                        Fecha Ejec. 2 <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                                                    </div>
+                                                </TableHead>
+                                                <TableHead className="cursor-pointer" onClick={() => handleSort('DESCRIPCION_CIERRE_2')}>
+                                                    <div className="flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
+                                                        Desc. Cierre 2 <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                                                    </div>
+                                                </TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {isLoading ? (
+                                                <TableRow>
+                                                    <TableCell colSpan={15} className="h-48 text-center">
+                                                        <div className="flex flex-col items-center justify-center gap-3">
+                                                            <div className="w-8 h-8 border-4 border-blue-600/30 border-t-blue-600 rounded-full animate-spin"></div>
+                                                            <span className="text-slate-500 text-sm">Cargando registros...</span>
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ) : paginatedData.length === 0 ? (
+                                                <TableRow>
+                                                    <TableCell colSpan={15} className="h-48 text-center text-slate-500">
+                                                        No se encontraron registros para los filtros seleccionados
+                                                    </TableCell>
+                                                </TableRow>
+                                            ) : (
+                                                paginatedData.map((row, idx) => (
+                                                    <TableRow
+                                                        key={idx}
+                                                        className="group hover:bg-slate-50 dark:hover:bg-slate-700/50 border-slate-100 dark:border-slate-700 transition-colors"
+                                                    >
+                                                        <TableCell>
+                                                            {String(row.CALIDAD_30) === '0' ? (
+                                                                <Badge className="bg-green-100 text-green-700 border-green-200 dark:bg-green-500/20 dark:text-green-300 dark:border-green-500/30 shadow-none hover:bg-green-100">
+                                                                    CUMPLE
+                                                                </Badge>
+                                                            ) : (
+                                                                <Badge className="bg-red-100 text-red-700 border-red-200 dark:bg-red-500/20 dark:text-red-300 dark:border-red-500/30 shadow-none hover:bg-red-100">
+                                                                    NO CUMPLE
+                                                                </Badge>
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <Badge variant="outline" className={cn("text-xs font-semibold shadow-none",
+                                                                row.TIPO_RED_CALCULADO === 'FTTH'
+                                                                    ? "text-orange-600 bg-orange-50 border-orange-200 dark:text-orange-300 dark:bg-orange-500/10 dark:border-orange-500/30"
+                                                                    : "text-blue-600 bg-blue-50 border-blue-200 dark:text-blue-300 dark:bg-blue-500/10 dark:border-blue-500/30"
+                                                            )}>
+                                                                {row.TIPO_RED_CALCULADO}
+                                                            </Badge>
+                                                        </TableCell>
+                                                        <TableCell className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                                                            {row.Nombre_short || '-'}
+                                                        </TableCell>
+                                                        <TableCell className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                                                            {row.supervisor || '-'}
+                                                        </TableCell>
+                                                        <TableCell className="max-w-[120px]">
+                                                            <div className="truncate text-sm text-slate-600 dark:text-slate-300" title={row.ACTIVIDAD}>
+                                                                {row.ACTIVIDAD}
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="text-sm text-slate-600 dark:text-slate-300">
+                                                            {row.Comuna}
+                                                        </TableCell>
+                                                        <TableCell className="text-xs text-slate-600 dark:text-slate-400 font-mono">
+                                                            {row.id_actividad || '-'}
+                                                        </TableCell>
+                                                        <TableCell className="text-slate-500 dark:text-slate-400 text-sm whitespace-nowrap">
+                                                            {formatDate(row.FECHA_EJECUCION)}
+                                                        </TableCell>
+                                                        <TableCell className="max-w-[200px]">
+                                                            <div className="truncate text-xs text-slate-600 dark:text-slate-300" title={row.descripcion_actividad}>
+                                                                {row.descripcion_actividad || '-'}
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="max-w-[200px]">
+                                                            <div className="truncate text-xs text-slate-500 dark:text-slate-400 italic" title={row.DESCRIPCION_CIERRE}>
+                                                                {row.DESCRIPCION_CIERRE}
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="text-xs text-slate-600 dark:text-slate-400 font-mono">
+                                                            {row.id_actividad_2 || '-'}
+                                                        </TableCell>
+                                                        <TableCell className="max-w-[200px]">
+                                                            <div className="truncate text-xs text-slate-600 dark:text-slate-300" title={row.descripcion_actividad_2}>
+                                                                {row.descripcion_actividad_2 || '-'}
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="text-slate-500 dark:text-slate-400 text-sm whitespace-nowrap">
+                                                            {formatDate(row.fecha_ejecucion_2)}
+                                                        </TableCell>
+                                                        <TableCell className="max-w-[200px]">
+                                                            <div className="truncate text-xs text-slate-500 dark:text-slate-400 italic" title={row.DESCRIPCION_CIERRE_2}>
+                                                                {row.DESCRIPCION_CIERRE_2 || '-'}
+                                                            </div>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+
+                                {/* Pagination */}
+                                <div className="p-4 border-t border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-4">
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                                        Mostrando <span className="font-semibold text-slate-900 dark:text-slate-200">{(currentPage - 1) * rowsPerPage + 1}-{Math.min(currentPage * rowsPerPage, filteredData.length)}</span> de <span className="font-semibold text-slate-900 dark:text-slate-200">{filteredData.length}</span>
+                                    </p>
+
+                                    <div className="flex items-center gap-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            disabled={currentPage === 1}
+                                            onClick={() => setCurrentPage(p => p - 1)}
+                                            className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300"
+                                        >
+                                            Anterior
+                                        </Button>
+                                        <div className="flex items-center px-2">
+                                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                                Página {currentPage} de {Math.max(1, totalPages)}
+                                            </span>
+                                        </div>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            disabled={currentPage === totalPages || totalPages === 0}
+                                            onClick={() => setCurrentPage(p => p + 1)}
+                                            className="bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300"
+                                        >
+                                            Siguiente
+                                        </Button>
+                                    </div>
                                 </div>
                             </div>
-                        )}
-                    </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </SupervisorLayout>

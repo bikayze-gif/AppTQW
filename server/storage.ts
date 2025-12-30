@@ -87,6 +87,7 @@ export interface IStorage {
   getMaterialItems(tipo: string, familia: string, subfamilia: string): Promise<Array<{ id: string, description: string }>>;
 
   // Material solicitud operations
+  getMaterialSolicitudes(userId: number): Promise<any[]>;
   getUserPerfil2(userId: number): Promise<string | null>;
   getItemCodeByDescription(description: string): Promise<string | null>;
   createMaterialSolicitud(data: {
@@ -99,6 +100,7 @@ export interface IStorage {
     flag_gestion_supervisor: number;
     campo_item: string;
   }): Promise<number>;
+  getTechnicians(): Promise<Array<{ id: number, name: string, rut: string }>>;
 
   // Authentication operations
   getUserByEmail(email: string): Promise<User | undefined>;
@@ -803,6 +805,71 @@ export class MySQLStorage implements IStorage {
     } catch (error) {
       console.error("Error creating material solicitud:", error);
       throw error;
+    }
+  }
+
+  async getTechnicians(): Promise<Array<{ id: number, name: string, rut: string }>> {
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      `SELECT ID as id, nombre_short as name, Rut as rut 
+       FROM tb_user_tqw 
+       WHERE Vigente = 'Si' 
+       ORDER BY nombre_short ASC`
+    );
+    return rows.map(r => ({
+      id: Number(r.id),
+      name: r.name || 'Sin nombre',
+      rut: r.rut || ''
+    }));
+  }
+
+  async getMaterialSolicitudes(userId: number): Promise<any[]> {
+    try {
+      let query = `
+        SELECT 
+          s.id,
+          COALESCE(m.\`Item Description\`, s.material) as materialName,
+          s.cantidad as quantity,
+          s.fecha as date,
+          s.TICKET as ticketToken,
+          s.campo_item as itemCode,
+          s.flag_regiones as flagRegiones,
+          u1.nombre_short as originTechnician,
+          CASE 
+            WHEN u1.perfil2 IS NOT NULL AND u1.perfil2 != '' THEN '-' 
+            ELSE u1.SUPERVISOR 
+          END as supervisorName,
+          CASE 
+            WHEN s.id_tecnico_traspaso = 0 OR s.id_tecnico_traspaso IS NULL THEN 'Bodega'
+            ELSE u2.nombre_short 
+          END as destinationTechnician,
+          CASE 
+            WHEN s.flag_gestion_supervisor = 0 OR s.flag_gestion_supervisor IS NULL THEN 'PENDIENTE'
+            WHEN s.flag_gestion_supervisor = 1 THEN 'APROBADO'
+            WHEN s.flag_gestion_supervisor = 2 THEN 'RECHAZADO'
+            ELSE 'PENDIENTE'
+          END as status
+        FROM TB_LOGIS_TECNICO_SOLICITUD s
+        LEFT JOIN tb_user_tqw u1 ON s.tecnico = u1.ID AND s.tecnico != '0' AND s.tecnico != ''
+        LEFT JOIN tb_user_tqw u2 ON s.id_tecnico_traspaso = u2.ID AND s.id_tecnico_traspaso != 0
+        LEFT JOIN tp_logistica_mat_oracle m ON s.campo_item = m.Item
+        ORDER BY s.fecha DESC
+        LIMIT 1000
+      `;
+
+      const [rows] = await pool.execute(query);
+      console.log(`[Material Solicitudes] Query executed. Rows found: ${(rows as any[]).length}`);
+
+      const results = (rows as any[]).map(row => ({
+        ...row,
+        id: Number(row.id),
+        date: row.date ? (row.date instanceof Date ? row.date.toISOString() : new Date(row.date).toISOString()) : new Date().toISOString(),
+        originTechnician: row.originTechnician || `Técnico ${row.tecnico || 'N/A'}`
+      }));
+
+      return results;
+    } catch (error) {
+      console.error("Error fetching material solicitudes:", error);
+      return [];
     }
   }
 

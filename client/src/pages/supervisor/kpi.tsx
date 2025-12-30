@@ -1,9 +1,9 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { SupervisorLayout } from "@/components/supervisor/supervisor-layout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Download, Search, X, ArrowUpDown, Users } from "lucide-react";
+import { Download, Search, X, ArrowUpDown, Users, LayoutDashboard, TrendingUp, Award, Zap, AlertCircle, Calendar, CheckCircle2 } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -43,6 +43,71 @@ export default function SupervisorKPI() {
   const [sortConfig, setSortConfig] = useState<{ key: keyof TqwComisionRenew | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
   const [activeTab, setActiveTab] = useState<'monitor' | 'mes' | 'benchmark' | 'comisiones'>('monitor');
   const rowsPerPage = 15;
+  const queryClient = useQueryClient();
+
+  // Real-time WebSocket connection
+  useEffect(() => {
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
+
+    let ws: WebSocket | null = null;
+    let reconnectTimeout: any;
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 5;
+    let isMounted = true;
+
+    const connect = () => {
+      if (!isMounted || reconnectAttempts >= maxReconnectAttempts) {
+        console.log("[WS] Max reconnect attempts reached, stopping reconnection");
+        return;
+      }
+
+      try {
+        ws = new WebSocket(wsUrl);
+
+        ws.onopen = () => {
+          console.log("[WS] Connected successfully");
+          reconnectAttempts = 0; // Reset on successful connection
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.type === "refresh" && data.target === "monitor-diario") {
+              console.log("[WS] Refresh signal received, invalidating dashboard query...");
+              queryClient.invalidateQueries({ queryKey: ["monitor-diario-dashboard"] });
+            }
+          } catch (e) {
+            console.error("Error parsing WS message:", e);
+          }
+        };
+
+        ws.onclose = () => {
+          if (isMounted && reconnectAttempts < maxReconnectAttempts) {
+            reconnectAttempts++;
+            const delay = Math.min(5000 * Math.pow(2, reconnectAttempts - 1), 30000); // Exponential backoff, max 30s
+            console.log(`[WS] Connection closed, reconnecting in ${delay / 1000}s (attempt ${reconnectAttempts}/${maxReconnectAttempts})...`);
+            reconnectTimeout = setTimeout(connect, delay);
+          }
+        };
+
+        ws.onerror = () => {
+          // Don't log error, onclose will handle reconnection
+          if (ws) ws.close();
+        };
+      } catch (e) {
+        console.error("[WS] Failed to create WebSocket:", e);
+      }
+    };
+
+    connect();
+
+    return () => {
+      isMounted = false;
+      if (ws) ws.close();
+      clearTimeout(reconnectTimeout);
+    };
+  }, [queryClient]);
 
   // Helpers
   const desiredOrder = ['ARIAS', 'ARJONA', 'CORROTEA', 'GOMEZ'];
@@ -68,14 +133,18 @@ export default function SupervisorKPI() {
   const { data: dashboardData, isLoading: isDashboardLoading, error: dashboardError } = useQuery({
     queryKey: ["monitor-diario-dashboard"],
     queryFn: async () => {
-      const response = await fetch("/api/supervisor/monitor-diario", {
+      const response = await fetch(`/api/supervisor/monitor-diario?t=${Date.now()}`, {
         credentials: "include",
       });
       if (!response.ok) throw new Error("Failed to fetch dashboard data");
       return response.json();
     },
-    refetchInterval: 5 * 60 * 1000,
+    // refetchInterval: 30 * 1000, // DESHABILITADO - Solo actualiza via WebSocket
     enabled: activeTab === 'monitor',
+    retry: 3, // Reintentar 3 veces antes de fallar
+    retryDelay: 1000, // Esperar 1 segundo entre reintentos
+    staleTime: Infinity, // Los datos nunca se consideran obsoletos automáticamente
+    refetchOnWindowFocus: false, // No refrescar al enfocar ventana para evitar errores
   });
 
   // Fetch KPI data
@@ -140,90 +209,88 @@ export default function SupervisorKPI() {
 
   return (
     <SupervisorLayout>
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-[1600px] mx-auto p-4 md:p-6 space-y-6">
         {/* Header Section */}
-        <div className="flex flex-col items-center text-center space-y-6 mb-10">
-          <div className="space-y-2">
-            <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-5xl">
-              Producción
-            </h1>
-            <p className="text-lg text-slate-500 dark:text-slate-400 max-w-2xl mx-auto">
-              Dashboard de rendimiento y comisiones de técnicos
-            </p>
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 md:p-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div>
+              <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
+                Gestión de Producción
+              </h1>
+              <p className="text-slate-500 dark:text-slate-400 mt-1">
+                Dashboard de rendimiento y comisiones de técnicos
+              </p>
+            </div>
           </div>
-        </div>
 
-        <div className="flex justify-center mb-8">
-          <div className="inline-flex p-1.5 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-lg transition-all duration-200">
-            <Button
-              variant={activeTab === 'monitor' ? 'default' : 'ghost'}
+          {/* Tabs Navigation */}
+          <div className="flex gap-1 mt-8 border-b border-slate-200 dark:border-white/10">
+            <button
               onClick={() => setActiveTab('monitor')}
               className={cn(
-                "px-6 py-2 text-sm font-semibold rounded-lg transition-all",
-                activeTab === 'monitor' ? "shadow-sm" : "text-slate-500 hover:text-slate-700 dark:text-slate-400"
+                "px-6 py-3 rounded-t-lg font-medium text-sm transition-all relative overflow-hidden",
+                activeTab === 'monitor'
+                  ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-slate-800 border-b-2 border-blue-600 dark:border-blue-400"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800"
               )}
             >
+              <LayoutDashboard className="w-4 h-4 inline-block mr-2" />
               Monitor Diario
-            </Button>
-            <Button
-              variant={activeTab === 'mes' ? 'default' : 'ghost'}
+            </button>
+            <button
               onClick={() => setActiveTab('mes')}
               className={cn(
-                "px-6 py-2 text-sm font-semibold rounded-lg transition-all",
-                activeTab === 'mes' ? "shadow-sm" : "text-slate-500 hover:text-slate-700 dark:text-slate-400"
+                "px-6 py-3 rounded-t-lg font-medium text-sm transition-all relative overflow-hidden",
+                activeTab === 'mes'
+                  ? "text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-slate-800 border-b-2 border-purple-600 dark:border-purple-400"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800"
               )}
             >
+              <TrendingUp className="w-4 h-4 inline-block mr-2" />
               Mes Actual
-            </Button>
-            <Button
-              variant={activeTab === 'benchmark' ? 'default' : 'ghost'}
+            </button>
+            <button
               onClick={() => setActiveTab('benchmark')}
               className={cn(
-                "px-6 py-2 text-sm font-semibold rounded-lg transition-all",
-                activeTab === 'benchmark' ? "shadow-sm" : "text-slate-500 hover:text-slate-700 dark:text-slate-400"
+                "px-6 py-3 rounded-t-lg font-medium text-sm transition-all relative overflow-hidden",
+                activeTab === 'benchmark'
+                  ? "text-green-600 dark:text-green-400 bg-green-50 dark:bg-slate-800 border-b-2 border-green-600 dark:border-green-400"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800"
               )}
             >
+              <Award className="w-4 h-4 inline-block mr-2" />
               Benchmark
-            </Button>
-            <Button
-              variant={activeTab === 'comisiones' ? 'default' : 'ghost'}
+            </button>
+            <button
               onClick={() => setActiveTab('comisiones')}
               className={cn(
-                "px-6 py-2 text-sm font-semibold rounded-lg transition-all",
-                activeTab === 'comisiones' ? "shadow-sm" : "text-slate-500 hover:text-slate-700 dark:text-slate-400"
+                "px-6 py-3 rounded-t-lg font-medium text-sm transition-all relative overflow-hidden",
+                activeTab === 'comisiones'
+                  ? "text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-slate-800 border-b-2 border-orange-600 dark:border-orange-400"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800"
               )}
             >
+              <Zap className="w-4 h-4 inline-block mr-2" />
               Comisiones
-            </Button>
+            </button>
           </div>
         </div>
 
         {activeTab === 'monitor' && (
-          <div className="space-y-8 animate-in fade-in duration-500">
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Fila 1: Gauge y Tarjetas de Info */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Columna Izquierda: Global Completion Gauge */}
-              <div className="flex flex-col border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden bg-white dark:bg-slate-800 shadow-sm p-2 justify-center items-center h-[240px]">
-                <GaugeChart
-                  value={dashboardData?.globalCompletionRate || 0}
-                  label="% de ordenes finalizadas GLOBAL"
-                  size={240}
-                  color="#22c55e"
-                  showPercentage={true}
-                />
-              </div>
-
-              {/* Columna Derecha: Stacked Info Cards */}
-              <div className="grid grid-rows-2 gap-3 h-[240px]">
+              {/* Columna Izquierda: Stacked Info Cards */}
+              <div className="grid grid-cols-2 grid-rows-2 gap-3 h-[240px]">
                 {/* Fecha de Integración */}
                 <div className="flex flex-col border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden bg-white dark:bg-slate-800 shadow-sm p-2 justify-center items-center text-center">
                   <div className="p-1.5 bg-blue-50 dark:bg-blue-900/20 rounded-full mb-1">
-                    <Download className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                   </div>
                   <h3 className="text-[9px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-0.5">
                     Fecha de Integración
                   </h3>
-                  <div className="text-lg font-bold text-slate-900 dark:text-white leading-tight">
+                  <div className="text-sm font-bold text-slate-900 dark:text-white leading-tight">
                     {dashboardData?.lastIntegration || "Sin datos"}
                   </div>
                 </div>
@@ -236,10 +303,47 @@ export default function SupervisorKPI() {
                   <h3 className="text-[9px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-0.5">
                     Capacidad Técnica Total
                   </h3>
-                  <div className="text-2xl font-black text-slate-900 dark:text-white leading-tight">
+                  <div className="text-xl font-black text-slate-900 dark:text-white leading-tight">
                     {dashboardData?.supervisorStats?.reduce((acc: number, curr: any) => acc + (curr.technicianCount || 0), 0) || 0}
                   </div>
                 </div>
+
+                {/* Total PX0 Technicians */}
+                <div className="flex flex-col border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden bg-white dark:bg-slate-800 shadow-sm p-2 justify-center items-center text-center">
+                  <div className="p-1.5 bg-red-50 dark:bg-red-900/20 rounded-full mb-1">
+                    <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                  </div>
+                  <h3 className="text-[9px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-0.5">
+                    Técnicos PX0
+                  </h3>
+                  <div className="text-xl font-black text-slate-900 dark:text-white leading-tight">
+                    {dashboardData?.supervisorStats?.reduce((acc: number, curr: any) => acc + (curr.px0Count || 0), 0) || 0}
+                  </div>
+                </div>
+
+                {/* Total Orders Gestionadas */}
+                <div className="flex flex-col border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden bg-white dark:bg-slate-800 shadow-sm p-2 justify-center items-center text-center">
+                  <div className="p-1.5 bg-green-50 dark:bg-green-900/20 rounded-full mb-1">
+                    <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+                  </div>
+                  <h3 className="text-[9px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-0.5">
+                    Total Órdenes
+                  </h3>
+                  <div className="text-xl font-black text-slate-900 dark:text-white leading-tight">
+                    {dashboardData?.statusDistribution?.reduce((acc: number, curr: any) => acc + (curr.value || 0), 0) || 0}
+                  </div>
+                </div>
+              </div>
+
+              {/* Columna Derecha: Global Completion Gauge */}
+              <div className="flex flex-col border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden bg-white dark:bg-slate-800 shadow-sm p-2 justify-center items-center h-[240px]">
+                <GaugeChart
+                  value={dashboardData?.globalCompletionRate || 0}
+                  label="% de ordenes finalizadas GLOBAL"
+                  size={240}
+                  color="#22c55e"
+                  showPercentage={true}
+                />
               </div>
             </div>
 
@@ -342,7 +446,7 @@ export default function SupervisorKPI() {
                   desiredOrder.map((supervisor) => {
                     const data = dashboardData?.px0TechsByStatusBySupervisor?.[supervisor] || [];
                     return (
-                      <div key={supervisor} className="h-[400px]">
+                      <div key={supervisor} className="h-[624px]">
                         <StackedBarChart
                           title={supervisor}
                           data={data}
@@ -359,7 +463,7 @@ export default function SupervisorKPI() {
                             { key: "En ruta", name: "En ruta", color: "#94a3b8" },
                             { key: "Suspendido", name: "Suspendido", color: "#3b82f6" }
                           ]}
-                          height={360}
+                          height={562}
                         />
                       </div>
                     );
@@ -464,7 +568,7 @@ export default function SupervisorKPI() {
         )}
 
         {activeTab === 'comisiones' && (
-          <>
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Filters */}
             <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4 mb-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -709,18 +813,18 @@ export default function SupervisorKPI() {
                 )}
               </div>
             </div>
-          </>
+          </div>
         )}
 
         {activeTab === 'benchmark' && (
-          <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-8 text-center">
+          <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-8 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
             <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">Benchmark</h2>
             <p className="text-slate-500 dark:text-slate-400">Contenido del Benchmark en desarrollo.</p>
           </div>
         )}
 
         {activeTab === 'mes' && (
-          <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-8 text-center">
+          <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-8 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
             <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">Mes Actual</h2>
             <p className="text-slate-500 dark:text-slate-400">Contenido del Mes Actual en desarrollo.</p>
           </div>

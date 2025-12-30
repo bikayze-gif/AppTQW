@@ -5,7 +5,8 @@ import {
   Calendar, MessageSquare, Users, ShoppingCart, Folder,
   HelpCircle, Mail, FileText, Trello, CheckSquare,
   User, Bell, Settings, Menu, ChevronRight, Search,
-  LogOut, NotebookPen, BarChart3, Receipt, Sun, Moon
+  LogOut, NotebookPen, BarChart3, Receipt, Sun, Moon,
+  AlertCircle, CheckCircle2, Package
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import {
@@ -16,6 +17,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 
 interface SupervisorLayoutProps {
   children: React.ReactNode;
@@ -46,24 +57,27 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
       setLocation("/supervisor/kpi");
     } else if (label === "Calidad") {
       setLocation("/supervisor/calidad");
+    } else if (label === "Logística") {
+      setLocation("/supervisor/logistica");
     }
   };
 
   const menuItems = [
     { icon: Calendar, label: "Calendar", badge: "3 upcoming events", hasSubmenu: false },
     { icon: MessageSquare, label: "Messenger", hasSubmenu: false },
-    { icon: Users, label: "Contacts", hasSubmenu: false },
-    { icon: Mail, label: "Mail", badgeCount: 27, hasSubmenu: false },
+    // { icon: Users, label: "Contacts", hasSubmenu: false },
+    // { icon: Mail, label: "Mail", badgeCount: 27, hasSubmenu: false },
     { icon: NotebookPen, label: "Notes", hasSubmenu: false },
     { icon: Trello, label: "Scrumboard", hasSubmenu: false },
-    { icon: BarChart3, label: "Monitoring", hasSubmenu: false },
+    // { icon: BarChart3, label: "Monitoring", hasSubmenu: false },
     { icon: Receipt, label: "Facturación", hasSubmenu: false },
+    { icon: Package, label: "Logística", hasSubmenu: false },
     { icon: BarChart3, label: "KPI", hasSubmenu: false },
     { icon: CheckSquare, label: "Calidad", hasSubmenu: false },
-    { icon: CheckSquare, label: "Tasks", badge: "12 remaining tasks", hasSubmenu: false },
-    { icon: User, label: "Profile", hasSubmenu: false },
+    // { icon: CheckSquare, label: "Tasks", badge: "12 remaining tasks", hasSubmenu: false },
+    // { icon: User, label: "Profile", hasSubmenu: false },
     { icon: Bell, label: "Notifications", hasSubmenu: false },
-    { icon: Settings, label: "Settings", hasSubmenu: false },
+    // { icon: Settings, label: "Settings", hasSubmenu: false },
   ];
 
   return (
@@ -101,9 +115,9 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
                     <span className="font-medium text-sm">{item.label}</span>
                     {item.badge && <span className="text-[10px] text-slate-400">{item.badge}</span>}
                   </div>
-                  {item.badgeCount && (
+                  {(item as any).badgeCount && (
                     <span className={`ml-auto bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded-full ${!isSidebarOpen && "hidden md:hidden"}`}>
-                      {item.badgeCount}
+                      {(item as any).badgeCount}
                     </span>
                   )}
                   {item.hasSubmenu && (
@@ -155,10 +169,79 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
               <Mail size={20} />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-green-500 rounded-full border-2 border-white dark:border-[#1e293b]"></span>
             </button>
-            <button className="p-2 text-slate-400 hover:text-slate-600 relative">
-              <Bell size={20} />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-[#1e293b]"></span>
-            </button>
+            <Sheet>
+              <SheetTrigger asChild>
+                <button className="p-2 text-slate-400 hover:text-slate-600 relative">
+                  <Bell size={20} />
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-[#1e293b]"></span>
+                </button>
+              </SheetTrigger>
+              <SheetContent className="w-full sm:max-w-md">
+                <SheetHeader className="mb-4">
+                  <SheetTitle className="flex items-center justify-between">
+                    Notificaciones
+                    <Badge variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400">
+                      3 Nuevas
+                    </Badge>
+                  </SheetTitle>
+                  <SheetDescription>
+                    Mantente al día con las últimas actividades del equipo.
+                  </SheetDescription>
+                </SheetHeader>
+                <ScrollArea className="h-[calc(100vh-8rem)]">
+                  <div className="space-y-4 pr-4">
+                    {[
+                      {
+                        title: "Nuevo Reporte de Calidad",
+                        description: "Se ha generado el reporte mensual de calidad para la zona Sur.",
+                        time: "Hace 5 minutos",
+                        type: "info",
+                        icon: FileText
+                      },
+                      {
+                        title: "Alerta de Productividad",
+                        description: "El técnico Juan Pérez ha superado el tiempo límite en una actividad.",
+                        time: "Hace 20 minutos",
+                        type: "warning",
+                        icon: AlertCircle
+                      },
+                      {
+                        title: "Tarea Completada",
+                        description: "La revisión de facturación de diciembre ha concluido.",
+                        time: "Hace 1 hora",
+                        type: "success",
+                        icon: CheckCircle2
+                      },
+                      {
+                        title: "Nuevo Mensaje",
+                        description: "Tienes un mensaje pendiente de la administración.",
+                        time: "Hace 3 horas",
+                        type: "info",
+                        icon: MessageSquare
+                      }
+                    ].map((notification, i) => (
+                      <div key={i} className="flex gap-4 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors border border-transparent hover:border-slate-100 dark:hover:border-slate-800">
+                        <div className={`mt-1 h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${notification.type === 'warning' ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-500' :
+                          notification.type === 'success' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-500' :
+                            'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-500'
+                          }`}>
+                          <notification.icon size={18} />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-200">{notification.title}</h4>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed">
+                            {notification.description}
+                          </p>
+                          <span className="text-[10px] text-slate-400 mt-2 block font-medium uppercase tracking-wider">
+                            {notification.time}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </SheetContent>
+            </Sheet>
 
             <button
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
