@@ -231,7 +231,7 @@ function ScannerInput() {
             payload: {
                 material: {
                     id: scannedCode,
-                    name: `Material Serie: ${scannedCode}`,
+                    name: scannedCode,
                     family: "SERIADO",
                     subFamily: "EQUIPOS"
                 },

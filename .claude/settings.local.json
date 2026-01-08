@@ -4,7 +4,16 @@
       "mcp__mysql-database__connect_db",
       "mcp__mysql-database__list_tables",
       "mcp__mysql-database__describe_table",
-      "mcp__mysql-database__query"
+      "mcp__mysql-database__query",
+      "mcp__n8n-mcp__n8n_health_check",
+      "mcp__n8n-mcp__search_nodes",
+      "mcp__n8n-mcp__search_templates",
+      "mcp__n8n-mcp__get_template",
+      "mcp__n8n-mcp__get_node",
+      "WebSearch",
+      "mcp__sqlserver-database__list_tables",
+      "mcp__sqlserver-database__describe_table",
+      "mcp__sqlserver-database__read_query"
     ]
   }
 }

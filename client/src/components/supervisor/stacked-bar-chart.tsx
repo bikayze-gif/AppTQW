@@ -32,6 +32,7 @@ interface StackedBarChartProps {
     ticks?: number[];
     customLegend?: LegendItem[];
     showBarLabels?: boolean;
+    stacked?: boolean;
 }
 
 export function StackedBarChart({
@@ -48,7 +49,8 @@ export function StackedBarChart({
     domain,
     ticks,
     customLegend,
-    showBarLabels = false
+    showBarLabels = false,
+    stacked = true
 }: StackedBarChartProps) {
     const { theme, resolvedTheme } = useTheme();
     const [mounted, setMounted] = useState(false);
@@ -83,11 +85,13 @@ export function StackedBarChart({
 
     return (
         <div className="flex flex-col h-full bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
-            <div className="bg-slate-50 dark:bg-slate-900/50 py-2 px-4 border-b border-slate-200 dark:border-slate-700">
-                <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider truncate" title={title}>
-                    {title}
-                </h3>
-            </div>
+            {title && (
+                <div className="bg-slate-50 dark:bg-slate-900/50 py-2 px-4 border-b border-slate-200 dark:border-slate-700">
+                    <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider truncate" title={title}>
+                        {title}
+                    </h3>
+                </div>
+            )}
             <div className="flex-1 p-2 w-full" style={{ height: height }}>
                 <ResponsiveContainer width="100%" height="100%">
                     <RechartsBarChart
@@ -168,11 +172,11 @@ export function StackedBarChart({
                             <Bar
                                 key={bar.key}
                                 dataKey={bar.key}
-                                stackId="a"
+                                stackId={stacked ? "a" : undefined}
                                 fill={bar.color}
                                 name={bar.name}
-                                radius={[0, 4, 4, 0]}
-                                barSize={12}
+                                radius={stacked ? [0, 4, 4, 0] : [0, 2, 2, 0]}
+                                barSize={stacked ? 12 : 8}
                             >
                                 {showBarLabels && (
                                     <LabelList

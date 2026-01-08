@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/auth-context";
 import {
   Calendar, MessageSquare, Users, ShoppingCart, Folder,
   HelpCircle, Mail, FileText, Trello, CheckSquare,
-  User, Bell, Settings, Menu, ChevronRight, Search,
+  User, Bell, Settings, Menu, ChevronRight,
   LogOut, NotebookPen, BarChart3, Receipt, Sun, Moon,
   AlertCircle, CheckCircle2, Package
 } from "lucide-react";
@@ -59,6 +59,8 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
       setLocation("/supervisor/calidad");
     } else if (label === "Logística") {
       setLocation("/supervisor/logistica");
+    } else if (label === "Configuración") {
+      setLocation("/supervisor/settings/parametros");
     }
   };
 
@@ -77,7 +79,7 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
     // { icon: CheckSquare, label: "Tasks", badge: "12 remaining tasks", hasSubmenu: false },
     // { icon: User, label: "Profile", hasSubmenu: false },
     { icon: Bell, label: "Notifications", hasSubmenu: false },
-    // { icon: Settings, label: "Settings", hasSubmenu: false },
+    { icon: Settings, label: "Configuración", hasSubmenu: false },
   ];
 
   return (
@@ -153,15 +155,7 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
               <Menu size={20} />
             </button>
 
-            {/* Search */}
-            <div className="ml-4 hidden md:flex items-center relative">
-              <Search size={18} className="text-slate-400 absolute left-3" />
-              <input
-                type="text"
-                placeholder="Search..."
-                className="pl-10 pr-4 py-1.5 bg-slate-100 dark:bg-slate-800 border-none rounded-full text-sm focus:ring-2 focus:ring-blue-500 w-64"
-              />
-            </div>
+
           </div>
 
           <div className="flex items-center gap-4">

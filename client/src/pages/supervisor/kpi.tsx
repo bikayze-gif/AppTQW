@@ -3,7 +3,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { SupervisorLayout } from "@/components/supervisor/supervisor-layout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Download, Search, X, ArrowUpDown, Users, LayoutDashboard, TrendingUp, Award, Zap, AlertCircle, Calendar, CheckCircle2 } from "lucide-react";
+import { Download, Copy, Search, X, ArrowUpDown, Users, LayoutDashboard, TrendingUp, Award, Zap, AlertCircle, Calendar, CheckCircle2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import {
   Select,
   SelectContent,
@@ -29,7 +30,7 @@ import {
 } from "@/components/ui/pagination";
 import * as XLSX from "xlsx";
 import { TqwComisionRenew } from "@shared/schema";
-import { cn } from "@/lib/utils";
+import { cn, formatDecimal } from "@/lib/utils";
 import { GaugeChart } from "@/components/supervisor/gauge-chart";
 import { KpiCard } from "@/components/supervisor/kpi-card";
 import { PieChart } from "@/components/supervisor/pie-chart";
@@ -41,9 +42,14 @@ export default function SupervisorKPI() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [sortConfig, setSortConfig] = useState<{ key: keyof TqwComisionRenew | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
-  const [activeTab, setActiveTab] = useState<'monitor' | 'mes' | 'benchmark' | 'comisiones'>('monitor');
+  const [activeTab, setActiveTab] = useState<'monitor' | 'mes' | 'benchmark' | 'comisiones' | 'detalleOt'>('monitor');
+  const [mesContable, setMesContable] = useState("");
+  const [detalleOtSearchTerm, setDetalleOtSearchTerm] = useState("");
+  const [detalleOtCurrentPage, setDetalleOtCurrentPage] = useState(1);
+  const [detalleOtSortConfig, setDetalleOtSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
   const rowsPerPage = 15;
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   // Real-time WebSocket connection
   useEffect(() => {
@@ -66,7 +72,7 @@ export default function SupervisorKPI() {
         ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {
-          console.log("[WS] Connected successfully");
+          // console.log("[WS] Connected successfully");
           reconnectAttempts = 0; // Reset on successful connection
         };
 
@@ -74,7 +80,7 @@ export default function SupervisorKPI() {
           try {
             const data = JSON.parse(event.data);
             if (data.type === "refresh" && data.target === "monitor-diario") {
-              console.log("[WS] Refresh signal received, invalidating dashboard query...");
+              // console.log("[WS] Refresh signal received, invalidating dashboard query...");
               queryClient.invalidateQueries({ queryKey: ["monitor-diario-dashboard"] });
             }
           } catch (e) {
@@ -86,7 +92,7 @@ export default function SupervisorKPI() {
           if (isMounted && reconnectAttempts < maxReconnectAttempts) {
             reconnectAttempts++;
             const delay = Math.min(5000 * Math.pow(2, reconnectAttempts - 1), 30000); // Exponential backoff, max 30s
-            console.log(`[WS] Connection closed, reconnecting in ${delay / 1000}s (attempt ${reconnectAttempts}/${maxReconnectAttempts})...`);
+            // console.log(`[WS] Connection closed, reconnecting in ${delay / 1000}s (attempt ${reconnectAttempts}/${maxReconnectAttempts})...`);
             reconnectTimeout = setTimeout(connect, delay);
           }
         };
@@ -147,6 +153,11 @@ export default function SupervisorKPI() {
     refetchOnWindowFocus: false, // No refrescar al enfocar ventana para evitar errores
   });
 
+  // Reset page when filter changes
+  useEffect(() => {
+    setDetalleOtCurrentPage(1);
+  }, [mesContable, detalleOtSearchTerm]);
+
   // Fetch KPI data
   const { data: kpiData = [], isLoading, error } = useQuery<TqwComisionRenew[]>({
     queryKey: ["kpi", periodo],
@@ -157,6 +168,28 @@ export default function SupervisorKPI() {
       return response.json();
     },
     enabled: !!periodo,
+  });
+
+  // Fetch Detalle OT periods
+  const { data: detalleOtPeriods = [] } = useQuery<string[]>({
+    queryKey: ["detalle-ot-periods"],
+    queryFn: async () => {
+      const response = await fetch("/api/detalle-ot-periods");
+      if (!response.ok) throw new Error("Failed to fetch Detalle OT periods");
+      return response.json();
+    },
+  });
+
+  // Fetch Detalle OT data
+  const { data: detalleOtData = [], isLoading: isDetalleOtLoading } = useQuery<any[]>({
+    queryKey: ["detalle-ot", mesContable],
+    queryFn: async () => {
+      if (!mesContable) return [];
+      const response = await fetch(`/api/detalle-ot?mesContable=${mesContable}`);
+      if (!response.ok) throw new Error("Failed to fetch Detalle OT data");
+      return response.json();
+    },
+    enabled: !!mesContable,
   });
 
   const handleSort = (key: keyof TqwComisionRenew) => {
@@ -201,10 +234,70 @@ export default function SupervisorKPI() {
   const totalPages = Math.ceil(filteredData.length / rowsPerPage);
 
   const handleExportExcel = () => {
-    const ws = XLSX.utils.json_to_sheet(filteredData);
+    const formattedData = filteredData.map(row => {
+      const newRow: any = {};
+      Object.entries(row).forEach(([key, val]) => {
+        newRow[key] = formatDecimal(val);
+      });
+      return newRow;
+    });
+    const ws = XLSX.utils.json_to_sheet(formattedData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "KPI Data");
     XLSX.writeFile(wb, `KPI_${periodo || "all"}.xlsx`);
+  };
+
+  const handleCopyDetalleOt = () => {
+    const filteredDetalleOt = detalleOtData.filter((item) =>
+      Object.values(item).some(
+        (val) =>
+          val &&
+          val.toString().toLowerCase().includes(detalleOtSearchTerm.toLowerCase())
+      )
+    ).sort((a, b) => {
+      if (!detalleOtSortConfig.key) return 0;
+      const valA = parseValue(a[detalleOtSortConfig.key]);
+      const valB = parseValue(b[detalleOtSortConfig.key]);
+      if (valA < valB) return detalleOtSortConfig.direction === 'asc' ? -1 : 1;
+      if (valA > valB) return detalleOtSortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    if (filteredDetalleOt.length === 0) {
+      toast({
+        title: "Sin datos",
+        description: "No hay datos para copiar",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Get headers
+    const headers = Object.keys(filteredDetalleOt[0]);
+    const headerRow = headers.map(h => h.replace(/_/g, ' ').toUpperCase()).join('\t');
+
+    // Get rows
+    const rows = filteredDetalleOt.map(row =>
+      headers.map(header => {
+        const val = row[header];
+        return val !== null && val !== undefined ? val.toString().replace(/\t/g, ' ') : '';
+      }).join('\t')
+    );
+
+    const content = [headerRow, ...rows].join('\n');
+    navigator.clipboard.writeText(content).then(() => {
+      toast({
+        title: "Copiado",
+        description: `${filteredDetalleOt.length} registros copiados al portapapeles`,
+      });
+    }).catch(err => {
+      console.error('Error al copiar: ', err);
+      toast({
+        title: "Error",
+        description: "No se pudo copiar al portapapeles",
+        variant: "destructive"
+      });
+    });
   };
 
   return (
@@ -272,6 +365,18 @@ export default function SupervisorKPI() {
             >
               <Zap className="w-4 h-4 inline-block mr-2" />
               Comisiones
+            </button>
+            <button
+              onClick={() => setActiveTab('detalleOt')}
+              className={cn(
+                "px-6 py-3 rounded-t-lg font-medium text-sm transition-all relative overflow-hidden",
+                activeTab === 'detalleOt'
+                  ? "text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-slate-800 border-b-2 border-teal-600 dark:border-teal-400"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800"
+              )}
+            >
+              <Zap className="w-4 h-4 inline-block mr-2" />
+              Detalle OT
             </button>
           </div>
         </div>
@@ -541,7 +646,7 @@ export default function SupervisorKPI() {
                   desiredOrder.map((supervisor) => {
                     const data = dashboardData?.technicianRecordCount?.[supervisor] || [];
                     return (
-                      <div key={supervisor} className="h-[400px]">
+                      <div key={supervisor} className="h-[460px]">
                         <StackedBarChart
                           title={supervisor}
                           data={data}
@@ -556,7 +661,7 @@ export default function SupervisorKPI() {
                               color: "#10b981"
                             }
                           ]}
-                          height={360}
+                          height={414}
                         />
                       </div>
                     );
@@ -624,6 +729,39 @@ export default function SupervisorKPI() {
                 </div>
               </div>
             </div>
+
+            {/* Top 10 Commissions Chart */}
+            {periodo && kpiData.length > 0 && (
+              <div className="mb-6 h-[500px]">
+                <StackedBarChart
+                  title="Top 10 Técnicos por Comisión FTTH (Ponderada vs Real)"
+                  data={[...kpiData]
+                    .map(item => ({
+                      ...item,
+                      parsedFtth: parseValue(item.Comision_FTTH) as number || 0,
+                      parsedFtthPond: parseValue(item.Comision_FTTH_Ponderada) as number || 0
+                    }))
+                    .filter(item => item.parsedFtth > 0 || item.parsedFtthPond > 0)
+                    .sort((a, b) => b.parsedFtthPond - a.parsedFtthPond)
+                    .slice(0, 10)
+                    .map(item => ({
+                      name: item.NombreTecnico || "Sin Nombre",
+                      ftth: item.parsedFtth,
+                      ftthPond: item.parsedFtthPond
+                    }))}
+                  xAxisKey="name"
+                  stacked={false}
+                  bars={[
+                    { key: "ftth", name: "Comisión FTTH", color: "#3b82f6" },
+                    { key: "ftthPond", name: "Comisión FTTH Ponderada", color: "#8b5cf6" }
+                  ]}
+                  height={420}
+                  yAxisWidth={180}
+                  showBarLabels={true}
+                  valueFormatter={(val) => `$${formatDecimal(val)}`}
+                />
+              </div>
+            )}
 
             {/* Table */}
             <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden overflow-x-auto">
@@ -719,20 +857,20 @@ export default function SupervisorKPI() {
                         <TableCell className="whitespace-nowrap text-slate-700 dark:text-slate-300">{row.modelo_turno}</TableCell>
                         <TableCell className="whitespace-nowrap text-slate-700 dark:text-slate-300">{row.categoria}</TableCell>
                         <TableCell className="whitespace-nowrap text-slate-700 dark:text-slate-300">{row.Original_RUT_TECNICO}</TableCell>
-                        <TableCell className="whitespace-nowrap text-right text-slate-700 dark:text-slate-300">{row.DIAS_BASE_DRIVE}</TableCell>
-                        <TableCell className="whitespace-nowrap text-right text-slate-700 dark:text-slate-300">{row.SUM_OPERATIVO}</TableCell>
-                        <TableCell className="whitespace-nowrap text-right text-slate-700 dark:text-slate-300">{row.Comision_HFC}</TableCell>
-                        <TableCell className="whitespace-nowrap text-right text-slate-700 dark:text-slate-300">{row.Comision_FTTH}</TableCell>
-                        <TableCell className="whitespace-nowrap text-right text-slate-700 dark:text-slate-300">{row.Comision_HFC_Ponderada}</TableCell>
-                        <TableCell className="whitespace-nowrap text-right text-slate-700 dark:text-slate-300">{row.Comision_FTTH_Ponderada}</TableCell>
-                        <TableCell className="whitespace-nowrap text-right text-slate-700 dark:text-slate-300">{row.Puntos}</TableCell>
-                        <TableCell className="whitespace-nowrap text-right text-slate-700 dark:text-slate-300">{row.Promedio_HFC}</TableCell>
-                        <TableCell className="whitespace-nowrap text-right text-slate-700 dark:text-slate-300">{row.Q_RGU}</TableCell>
-                        <TableCell className="whitespace-nowrap text-right text-slate-700 dark:text-slate-300">{row.Promedio_RGU}</TableCell>
-                        <TableCell className="whitespace-nowrap text-right text-slate-700 dark:text-slate-300">{row._CumplimientoProduccionHFC}</TableCell>
-                        <TableCell className="whitespace-nowrap text-right text-slate-700 dark:text-slate-300">{row._cumplimientoProduccionRGU}</TableCell>
-                        <TableCell className="whitespace-nowrap text-right text-slate-700 dark:text-slate-300">{row.Ratio_CalidadHFC}</TableCell>
-                        <TableCell className="whitespace-nowrap text-right text-slate-700 dark:text-slate-300">{row.Ratio_CalidadFTTH}</TableCell>
+                        <TableCell className="whitespace-nowrap text-right text-slate-700 dark:text-slate-300">{formatDecimal(row.DIAS_BASE_DRIVE)}</TableCell>
+                        <TableCell className="whitespace-nowrap text-right text-slate-700 dark:text-slate-300">{formatDecimal(row.SUM_OPERATIVO)}</TableCell>
+                        <TableCell className="whitespace-nowrap text-right text-slate-700 dark:text-slate-300">{formatDecimal(row.Comision_HFC)}</TableCell>
+                        <TableCell className="whitespace-nowrap text-right text-slate-700 dark:text-slate-300">{formatDecimal(row.Comision_FTTH)}</TableCell>
+                        <TableCell className="whitespace-nowrap text-right text-slate-700 dark:text-slate-300">{formatDecimal(row.Comision_HFC_Ponderada)}</TableCell>
+                        <TableCell className="whitespace-nowrap text-right text-slate-700 dark:text-slate-300">{formatDecimal(row.Comision_FTTH_Ponderada)}</TableCell>
+                        <TableCell className="whitespace-nowrap text-right text-slate-700 dark:text-slate-300">{formatDecimal(row.Puntos)}</TableCell>
+                        <TableCell className="whitespace-nowrap text-right text-slate-700 dark:text-slate-300">{formatDecimal(row.Promedio_HFC)}</TableCell>
+                        <TableCell className="whitespace-nowrap text-right text-slate-700 dark:text-slate-300">{formatDecimal(row.Q_RGU)}</TableCell>
+                        <TableCell className="whitespace-nowrap text-right text-slate-700 dark:text-slate-300">{formatDecimal(row.Promedio_RGU)}</TableCell>
+                        <TableCell className="whitespace-nowrap text-right text-slate-700 dark:text-slate-300">{formatDecimal(row._CumplimientoProduccionHFC)}</TableCell>
+                        <TableCell className="whitespace-nowrap text-right text-slate-700 dark:text-slate-300">{formatDecimal(row._cumplimientoProduccionRGU)}</TableCell>
+                        <TableCell className="whitespace-nowrap text-right text-slate-700 dark:text-slate-300">{formatDecimal(row.Ratio_CalidadHFC)}</TableCell>
+                        <TableCell className="whitespace-nowrap text-right text-slate-700 dark:text-slate-300">{formatDecimal(row.Ratio_CalidadFTTH)}</TableCell>
                         <TableCell className="whitespace-nowrap text-slate-700 dark:text-slate-300">{row.fecha_actualizacion}</TableCell>
                       </TableRow>
                     ))
@@ -827,6 +965,253 @@ export default function SupervisorKPI() {
           <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-8 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
             <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">Mes Actual</h2>
             <p className="text-slate-500 dark:text-slate-400">Contenido del Mes Actual en desarrollo.</p>
+          </div>
+        )}
+
+        {activeTab === 'detalleOt' && (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Filters */}
+            <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4 mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Mes Contable Filter */}
+                <div>
+                  <Select value={mesContable} onValueChange={setMesContable}>
+                    <SelectTrigger className="bg-slate-50 dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white">
+                      <SelectValue placeholder="Seleccionar Mes Contable" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {detalleOtPeriods.map((p) => (
+                        <SelectItem key={p} value={p}>
+                          {p}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Search */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Input
+                    placeholder="Buscar en resultados..."
+                    value={detalleOtSearchTerm}
+                    onChange={(e) => setDetalleOtSearchTerm(e.target.value)}
+                    className="pl-10 bg-slate-50 dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white placeholder:text-slate-500"
+                  />
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="gap-2 text-slate-700 dark:text-slate-200 border-slate-300 dark:border-slate-600"
+                    onClick={() => {
+                      setDetalleOtSearchTerm("");
+                      setMesContable("");
+                    }}
+                  >
+                    <X className="w-4 h-4" />
+                    Limpiar
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="gap-2 text-slate-700 dark:text-slate-200 border-slate-300 dark:border-slate-600"
+                    onClick={handleCopyDetalleOt}
+                    disabled={detalleOtData.length === 0}
+                  >
+                    <Copy className="w-4 h-4" />
+                    Copiar Contenido
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="gap-2 text-slate-700 dark:text-slate-200 border-slate-300 dark:border-slate-600"
+                    onClick={() => {
+                      const filteredDetalleOt = detalleOtData.filter((item) =>
+                        Object.values(item).some(
+                          (val) =>
+                            val &&
+                            val.toString().toLowerCase().includes(detalleOtSearchTerm.toLowerCase())
+                        )
+                      );
+                      const formattedDetalleOt = filteredDetalleOt.map(row => {
+                        const newRow: any = {};
+                        Object.entries(row).forEach(([key, val]) => {
+                          newRow[key] = formatDecimal(val);
+                        });
+                        return newRow;
+                      });
+                      const ws = XLSX.utils.json_to_sheet(formattedDetalleOt);
+                      const wb = XLSX.utils.book_new();
+                      XLSX.utils.book_append_sheet(wb, ws, "Detalle OT");
+                      XLSX.writeFile(wb, `Detalle_OT_${mesContable || "all"}.xlsx`);
+                    }}
+                    disabled={detalleOtData.length === 0}
+                  >
+                    <Download className="w-4 h-4" />
+                    Exportar Excel
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Table */}
+            <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-slate-50 dark:bg-slate-700">
+                    {detalleOtData.length > 0 && Object.keys(detalleOtData[0]).map((key) => (
+                      <TableHead
+                        key={key}
+                        className="whitespace-nowrap text-slate-700 dark:text-slate-300 font-semibold cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-600"
+                        onClick={() => {
+                          let direction: 'asc' | 'desc' = 'asc';
+                          if (detalleOtSortConfig.key === key && detalleOtSortConfig.direction === 'asc') {
+                            direction = 'desc';
+                          }
+                          setDetalleOtSortConfig({ key, direction });
+                        }}
+                      >
+                        <div className="flex items-center gap-2">
+                          {key.replace(/_/g, ' ').toUpperCase()}
+                          <ArrowUpDown className="h-4 w-4" />
+                        </div>
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isDetalleOtLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={100} className="h-24 text-center text-slate-600 dark:text-slate-400">
+                        Cargando datos...
+                      </TableCell>
+                    </TableRow>
+                  ) : (() => {
+                    const filteredDetalleOt = detalleOtData.filter((item) =>
+                      Object.values(item).some(
+                        (val) =>
+                          val &&
+                          val.toString().toLowerCase().includes(detalleOtSearchTerm.toLowerCase())
+                      )
+                    ).sort((a, b) => {
+                      if (!detalleOtSortConfig.key) return 0;
+                      const valA = parseValue(a[detalleOtSortConfig.key]);
+                      const valB = parseValue(b[detalleOtSortConfig.key]);
+                      if (valA < valB) return detalleOtSortConfig.direction === 'asc' ? -1 : 1;
+                      if (valA > valB) return detalleOtSortConfig.direction === 'asc' ? 1 : -1;
+                      return 0;
+                    });
+
+                    const paginatedDetalleOt = filteredDetalleOt.slice(
+                      (detalleOtCurrentPage - 1) * rowsPerPage,
+                      detalleOtCurrentPage * rowsPerPage
+                    );
+
+                    const totalDetalleOtPages = Math.ceil(filteredDetalleOt.length / rowsPerPage);
+
+                    return paginatedDetalleOt.length > 0 ? (
+                      <>
+                        {paginatedDetalleOt.map((row, idx) => (
+                          <TableRow key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-700 border-b border-slate-100 dark:border-slate-700">
+                            {Object.values(row).map((val, i) => (
+                              <TableCell key={i} className="whitespace-nowrap text-slate-700 dark:text-slate-300">
+                                {val !== null && val !== undefined ? formatDecimal(val) : ''}
+                              </TableCell>
+                            ))}
+                          </TableRow>
+                        ))}
+                      </>
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={100} className="h-24 text-center text-slate-500 dark:text-slate-400">
+                          {mesContable ? "No se encontraron registros para el mes contable seleccionado" : "Seleccione un mes contable para ver los datos"}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })()}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Footer with pagination */}
+            {(() => {
+              const filteredDetalleOt = detalleOtData.filter((item) =>
+                Object.values(item).some(
+                  (val) =>
+                    val &&
+                    val.toString().toLowerCase().includes(detalleOtSearchTerm.toLowerCase())
+                )
+              );
+              const totalDetalleOtPages = Math.ceil(filteredDetalleOt.length / rowsPerPage);
+
+              return filteredDetalleOt.length > 0 ? (
+                <div className="border-t border-slate-200 dark:border-slate-700 px-6 py-4 bg-slate-100 dark:bg-slate-800 mt-4 rounded-b-lg">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-slate-700 dark:text-slate-200">
+                      Mostrando <span className="font-semibold">{Math.min((detalleOtCurrentPage - 1) * rowsPerPage + 1, filteredDetalleOt.length)}</span> a{" "}
+                      <span className="font-semibold">{Math.min(detalleOtCurrentPage * rowsPerPage, filteredDetalleOt.length)}</span> de{" "}
+                      <span className="font-semibold">{filteredDetalleOt.length}</span> registros
+                    </p>
+
+                    {totalDetalleOtPages > 1 && (
+                      <Pagination>
+                        <PaginationContent>
+                          <PaginationItem>
+                            <PaginationPrevious
+                              onClick={() => setDetalleOtCurrentPage(prev => Math.max(1, prev - 1))}
+                              className={cn(
+                                "cursor-pointer border-slate-300 dark:border-slate-600 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200",
+                                detalleOtCurrentPage === 1 && "pointer-events-none opacity-50"
+                              )}
+                            />
+                          </PaginationItem>
+
+                          {Array.from({ length: Math.min(5, totalDetalleOtPages) }, (_, i) => {
+                            let pageNum;
+                            if (totalDetalleOtPages <= 5) {
+                              pageNum = i + 1;
+                            } else if (detalleOtCurrentPage <= 3) {
+                              pageNum = i + 1;
+                            } else if (detalleOtCurrentPage >= totalDetalleOtPages - 2) {
+                              pageNum = totalDetalleOtPages - 4 + i;
+                            } else {
+                              pageNum = detalleOtCurrentPage - 2 + i;
+                            }
+
+                            return (
+                              <PaginationItem key={pageNum}>
+                                <PaginationLink
+                                  onClick={() => setDetalleOtCurrentPage(pageNum)}
+                                  isActive={detalleOtCurrentPage === pageNum}
+                                  className={cn(
+                                    "cursor-pointer border transition-colors",
+                                    detalleOtCurrentPage === pageNum
+                                      ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700 hover:text-white"
+                                      : "bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-600"
+                                  )}
+                                >
+                                  {pageNum}
+                                </PaginationLink>
+                              </PaginationItem>
+                            );
+                          })}
+
+                          <PaginationItem>
+                            <PaginationNext
+                              onClick={() => setDetalleOtCurrentPage(prev => Math.min(totalDetalleOtPages, prev + 1))}
+                              className={cn(
+                                "cursor-pointer border-slate-300 dark:border-slate-600 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200",
+                                detalleOtCurrentPage === totalDetalleOtPages && "pointer-events-none opacity-50"
+                              )}
+                            />
+                          </PaginationItem>
+                        </PaginationContent>
+                      </Pagination>
+                    )}
+                  </div>
+                </div>
+              ) : null;
+            })()}
           </div>
         )}
       </div>

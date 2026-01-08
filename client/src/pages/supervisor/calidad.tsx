@@ -38,9 +38,9 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import * as XLSX from "xlsx";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn, formatDecimal } from "@/lib/utils";
+import * as XLSX from "xlsx";
 import { ChartSkeleton } from "@/components/ui/chart-skeleton";
 import { LineChart, Line, BarChart, Bar, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell, PieChart, Pie } from "recharts";
 
@@ -456,7 +456,7 @@ export default function SupervisorCalidad() {
             company,
             ...periods.map((p: string) => {
                 const val = matrix[company]?.[p];
-                return val !== undefined ? `${val.toFixed(2)}%` : '-';
+                return val !== undefined ? `${formatDecimal(val.toFixed(2))}%` : '-';
             })
         ]);
 
@@ -541,12 +541,12 @@ export default function SupervisorCalidad() {
             row.Comuna || '',
             row.id_actividad || '',
             formatDate(row.FECHA_EJECUCION),
-            row.descripcion_actividad || '',
-            row.DESCRIPCION_CIERRE || '',
+            formatDecimal(row.descripcion_actividad) || '',
+            formatDecimal(row.DESCRIPCION_CIERRE) || '',
             row.id_actividad_2 || '',
-            row.descripcion_actividad_2 || '',
+            formatDecimal(row.descripcion_actividad_2) || '',
             formatDate(row.fecha_ejecucion_2),
-            row.DESCRIPCION_CIERRE_2 || ''
+            formatDecimal(row.DESCRIPCION_CIERRE_2) || ''
         ]);
 
         // Combinar cabeceras y filas
@@ -730,7 +730,7 @@ export default function SupervisorCalidad() {
                                         <div>
                                             <p className="text-sm font-medium text-slate-500 dark:text-slate-400">% Calidad Global</p>
                                             <h4 className="text-2xl font-bold text-slate-900 dark:text-white">
-                                                {isLoading ? <Skeleton className="h-8 w-16" /> : `${telqwayStats?.complianceRate.toFixed(1)}%`}
+                                                {isLoading ? <Skeleton className="h-8 w-16" /> : `${formatDecimal(telqwayStats?.complianceRate.toFixed(1))}%`}
                                             </h4>
                                         </div>
                                     </div>
@@ -1211,7 +1211,7 @@ export default function SupervisorCalidad() {
                                                         </TableCell>
                                                         {sortedBenchmarkData.periods.map((period) => {
                                                             const value = sortedBenchmarkData.matrix[company]?.[period];
-                                                            const displayValue = value !== undefined ? value.toFixed(1) : '-';
+                                                            const displayValue = value !== undefined ? formatDecimal(value.toFixed(1)) : '-';
                                                             return (
                                                                 <TableCell key={period} className="text-center">
                                                                     <span className={cn(
@@ -1248,7 +1248,7 @@ export default function SupervisorCalidad() {
                                     { title: "Evaluaciones", value: stats.total, icon: Calendar, color: "blue" },
                                     { title: "Cumplimiento", value: stats.cumple, icon: CheckCircle2, color: "green" },
                                     { title: "Incumplimiento", value: stats.noCumple, icon: AlertCircle, color: "red" },
-                                    { title: "Eficiencia", value: `${stats.rate.toFixed(1)}%`, icon: TrendingUp, color: "purple" },
+                                    { title: "Eficiencia", value: `${formatDecimal(stats.rate.toFixed(1))}%`, icon: TrendingUp, color: "purple" },
                                 ].map((stat, i) => (
                                     <div key={i} className="bg-white dark:bg-slate-800 rounded-xl p-5 border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden group">
                                         <div className={cn("absolute right-0 top-0 w-24 h-24  opacity-5 rotate-12 -mr-6 -mt-6 transition-transform group-hover:scale-110", `bg-${stat.color}-500`)}></div>

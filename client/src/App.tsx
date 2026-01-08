@@ -28,6 +28,7 @@ import SupervisorBilling from "@/pages/supervisor/billing";
 import SupervisorKPI from "@/pages/supervisor/kpi";
 import SupervisorCalidad from "@/pages/supervisor/calidad";
 import SupervisorLogistica from "@/pages/supervisor/logistica";
+import ParametricoPuntaje from "@/pages/supervisor/settings/parametrico-puntaje";
 
 function Router() {
   return (
@@ -63,6 +64,9 @@ function Router() {
       </Route>
       <Route path="/supervisor/logistica">
         <ProtectedRoute><SupervisorLogistica /></ProtectedRoute>
+      </Route>
+      <Route path="/supervisor/settings/parametros">
+        <ProtectedRoute><ParametricoPuntaje /></ProtectedRoute>
       </Route>
 
       {/* Protected technician routes */}

@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import * as XLSX from "xlsx";
 import { useAuth } from "@/lib/auth-context";
+import { formatDecimal } from "@/lib/utils";
 
 
 
@@ -107,7 +108,7 @@ function OrderDetailsList({ selectedDate }: { selectedDate: string | null }) {
           {countFTTH > 0 && (
             <div className="bg-gradient-to-br from-[#f59e0b]/20 to-[#f59e0b]/5 rounded-lg p-3 border border-[#f59e0b]/30">
               <p className="text-xs text-slate-400 mb-1">RGU FTTH</p>
-              <p className="text-xl font-bold text-[#f59e0b]">{totalRguFTTH.toFixed(2)}</p>
+              <p className="text-xl font-bold text-[#f59e0b]">{formatDecimal(totalRguFTTH.toFixed(2))}</p>
               <p className="text-xs text-slate-400 mt-1">{countFTTH} órdenes</p>
             </div>
           )}
@@ -160,7 +161,7 @@ function OrderDetailsList({ selectedDate }: { selectedDate: string | null }) {
                     <td className="px-2 py-2 text-right font-semibold whitespace-nowrap">
                       {isFTTH ? (
                         <span className="text-[#f59e0b]">
-                          {(parseFloat(order.Q_SSPP) || 0).toFixed(2)}
+                          {formatDecimal((parseFloat(order.Q_SSPP) || 0).toFixed(2))}
                         </span>
                       ) : (
                         <span className="text-slate-600">-</span>
@@ -265,7 +266,15 @@ export default function Activity() {
         return;
       }
 
-      const worksheet = XLSX.utils.json_to_sheet(data);
+      const formattedData = data.map((row: any) => {
+        const newRow: any = {};
+        Object.entries(row).forEach(([key, val]) => {
+          newRow[key] = formatDecimal(val);
+        });
+        return newRow;
+      });
+
+      const worksheet = XLSX.utils.json_to_sheet(formattedData);
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Actividades");
       XLSX.writeFile(workbook, `Actividad_${period}.xlsx`);

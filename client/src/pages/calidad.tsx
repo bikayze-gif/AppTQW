@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import * as XLSX from "xlsx";
 import { useAuth } from "@/lib/auth-context";
+import { formatDecimal } from "@/lib/utils";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -17,25 +18,25 @@ const MONTH_NAMES = [
 // Función para parsear fechas en formato DD-MM-YYYY HH:MM
 function parseDateDDMMYYYY(dateString: string): string {
   if (!dateString) return 'N/A';
-  
+
   try {
     // Formato esperado: DD-MM-YYYY HH:MM
     const parts = dateString.trim().split(' ');
     if (parts.length < 1) return 'N/A';
-    
+
     const datePart = parts[0].split('-');
     if (datePart.length !== 3) return 'N/A';
-    
+
     const day = datePart[0].padStart(2, '0');
     const month = datePart[1].padStart(2, '0');
     const year = datePart[2];
-    
+
     // Crear fecha en formato ISO para JavaScript
     const isoDate = `${year}-${month}-${day}`;
     const date = new Date(isoDate);
-    
+
     if (isNaN(date.getTime())) return 'N/A';
-    
+
     // Formatear a DD/MM/YYYY
     return `${day}/${month}/${year}`;
   } catch (error) {
@@ -70,7 +71,7 @@ function CalidadDetailsList({ selectedMes, resumen, detalles }: {
           <div className="bg-gradient-to-br from-green-500/20 to-green-500/5 rounded-lg p-4 border border-green-500/30">
             <p className="text-xs text-slate-400 mb-1">Cumplen</p>
             <p className="text-2xl font-bold text-green-400">{resumen?.cumple || cumple.length}</p>
-            <p className="text-xs text-slate-400 mt-1">{resumen?.eficiencia || 0}% eficiencia</p>
+            <p className="text-xs text-slate-400 mt-1">{formatDecimal(resumen?.eficiencia || 0)}% eficiencia</p>
           </div>
           <div className="bg-gradient-to-br from-red-500/20 to-red-500/5 rounded-lg p-4 border border-red-500/30">
             <p className="text-xs text-slate-400 mb-1">No Cumplen</p>
@@ -105,31 +106,28 @@ function CalidadDetailsList({ selectedMes, resumen, detalles }: {
           <div className="flex gap-2">
             <button
               onClick={() => setFiltroCalidad('todos')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                filtroCalidad === 'todos'
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${filtroCalidad === 'todos'
                   ? 'bg-purple-500 text-white'
                   : 'bg-white/10 text-white hover:bg-white/20'
-              }`}
+                }`}
             >
               Todos
             </button>
             <button
               onClick={() => setFiltroCalidad('cumple')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                filtroCalidad === 'cumple'
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${filtroCalidad === 'cumple'
                   ? 'bg-green-500 text-white'
                   : 'bg-white/10 text-white hover:bg-white/20'
-              }`}
+                }`}
             >
               Cumple
             </button>
             <button
               onClick={() => setFiltroCalidad('no_cumple')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                filtroCalidad === 'no_cumple'
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${filtroCalidad === 'no_cumple'
                   ? 'bg-red-500 text-white'
                   : 'bg-white/10 text-white hover:bg-white/20'
-              }`}
+                }`}
             >
               No Cumple
             </button>
@@ -340,7 +338,15 @@ export default function Calidad() {
         return;
       }
 
-      const worksheet = XLSX.utils.json_to_sheet(data);
+      const formattedData = data.map((row: any) => {
+        const newRow: any = {};
+        Object.entries(row).forEach(([key, val]) => {
+          newRow[key] = formatDecimal(val);
+        });
+        return newRow;
+      });
+
+      const worksheet = XLSX.utils.json_to_sheet(formattedData);
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Calidad Reactiva");
       XLSX.writeFile(workbook, `Calidad_Reactiva_${selectedDownloadMonth}.xlsx`);
@@ -508,7 +514,7 @@ export default function Calidad() {
               </button>
             )}
           </div>
-          
+
           <div className="flex gap-2 items-center">
             <select
               value={selectedDownloadMonth}
@@ -522,7 +528,7 @@ export default function Calidad() {
                 </option>
               ))}
             </select>
-            
+
             <button
               onClick={handleDownloadExcel}
               disabled={!selectedDownloadMonth}
@@ -650,7 +656,7 @@ export default function Calidad() {
                               ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
                               : 'bg-red-500/20 text-red-400 border border-red-500/30'
                             }`}>
-                            {row.eficiencia_general}%
+                            {formatDecimal(row.eficiencia_general)}%
                           </span>
                         </td>
                       </tr>

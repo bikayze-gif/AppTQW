@@ -274,3 +274,29 @@ export const materialSolicitudRequestSchema = z.object({
 });
 
 export type MaterialSolicitudRequest = z.infer<typeof materialSolicitudRequestSchema>;
+// ============================================
+// TABLA DE PUNTOS PARAMETRICOS - TP_PTOS_23_NEW
+// ============================================
+
+export const puntosParameters = mysqlTable("TP_PTOS_23_NEW", {
+  id: bigint("id", { mode: "number" }).primaryKey().autoincrement(),
+  tipoRed: varchar("Tipo red", { length: 50 }),
+  trabajo: varchar("Trabajo", { length: 255 }),
+  producto: varchar("Producto", { length: 255 }),
+  claseVivienda: varchar("Clase vivienda", { length: 50 }),
+  tipoVivienda: varchar("Tipo vivienda", { length: 50 }),
+  llave: text("llave"),
+  puntosVTROct2023: decimal("PuntosVTROct2023", { precision: 10, scale: 2 }),
+  puntosTQWOct23: bigint("PuntosTQWOct23", { mode: "number" }),
+  qActividadSSPP: decimal("Q actividad SSPP", { precision: 10, scale: 2 }),
+  qActServicio: decimal("Q act. Servicio", { precision: 10, scale: 2 }),
+  rgu: decimal("RGU", { precision: 10, scale: 2 }),
+  clasifFinal: varchar("Clasif_final", { length: 50 }),
+  segmento: varchar("Segmento", { length: 50 }),
+});
+
+export type PuntosParameter = typeof puntosParameters.$inferSelect;
+
+export const insertPuntosParameterSchema = createInsertSchema(puntosParameters).omit({ id: true });
+export type InsertPuntosParameter = z.infer<typeof insertPuntosParameterSchema>;
+

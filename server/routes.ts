@@ -425,6 +425,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Detalle OT API routes
+  app.get("/api/detalle-ot-periods", async (req, res) => {
+    try {
+      const periods = await storage.getDetalleOtPeriods();
+      res.json(periods);
+    } catch (error) {
+      console.error("[Detalle OT Periods API] Error:", error);
+      res.status(500).json({ error: "Failed to fetch Detalle OT periods" });
+    }
+  });
+
+  app.get("/api/detalle-ot", async (req, res) => {
+    try {
+      const { mesContable } = req.query;
+      console.log(`[Detalle OT API] Request received for mesContable: ${mesContable}`);
+
+      if (!mesContable || typeof mesContable !== "string") {
+        return res.status(400).json({ error: "mesContable parameter is required" });
+      }
+
+      const data = await storage.getDetalleOtData(mesContable);
+      console.log(`[Detalle OT API] Sending ${data.length} records`);
+      res.json(data);
+    } catch (error) {
+      console.error("[Detalle OT API] Error:", error);
+      res.status(500).json({ error: "Failed to fetch Detalle OT data" });
+    }
+  });
+
+  // Points Parameters API Route
+  app.get("/api/points-parameters", requireAuth, async (req, res) => {
+    try {
+      const data = await storage.getPointsParameters();
+      res.json(data);
+    } catch (error) {
+      console.error("[Points Parameters API] Error:", error);
+      res.status(500).json({ error: "Failed to fetch points parameters" });
+    }
+  });
+
+  // Update Points Parameter
+  app.patch("/api/points-parameters/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid ID" });
+      }
+
+      const updated = await storage.updatePointsParameter(id, req.body);
+      if (!updated) {
+        return res.status(404).json({ error: "Record not found" });
+      }
+      res.json(updated);
+    } catch (error) {
+      console.error("[Points Parameters Update API] Error:", error);
+      res.status(500).json({ error: "Failed to update points parameter" });
+    }
+  });
+
   // Billing API routes
 
   // GET all billing records

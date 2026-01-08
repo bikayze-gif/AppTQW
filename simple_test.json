@@ -1,0 +1,24 @@
+{
+    "name": "Simple Test",
+    "nodes": [
+        {
+            "parameters": {
+                "path": "test",
+                "responseMode": "lastNode",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 2,
+            "position": [
+                460,
+                460
+            ],
+            "id": "e2f6943b-7f61-460d-9b5f-86111f92e420",
+            "name": "Webhook"
+        }
+    ],
+    "connections": {},
+    "settings": {},
+    "staticData": null,
+    "pinData": {}
+}

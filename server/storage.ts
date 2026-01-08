@@ -124,6 +124,12 @@ export interface IStorage {
   }>>;
   getCalidadTqwPeriods(): Promise<string[]>;
   getCalidadTqwData(mesContable: string): Promise<any[]>;
+  getDetalleOtPeriods(): Promise<string[]>;
+  getDetalleOtData(mesContable: string): Promise<any[]>;
+  getDetalleOtPeriods(): Promise<string[]>;
+  getDetalleOtData(mesContable: string): Promise<any[]>;
+  getPointsParameters(): Promise<schema.PuntosParameter[]>;
+  updatePointsParameter(id: number, data: Partial<schema.InsertPuntosParameter>): Promise<schema.PuntosParameter | undefined>;
 }
 
 export class MySQLStorage implements IStorage {
@@ -1376,6 +1382,60 @@ export class MySQLStorage implements IStorage {
     } catch (error) {
       console.error("Error fetching Benchmark data:", error);
       return [];
+    }
+  }
+
+  async getDetalleOtPeriods(): Promise<string[]> {
+    try {
+      const [rows] = await pool.execute(
+        `SELECT DISTINCT DATE_FORMAT(mes_contable, '%Y-%m-%d') as periodo 
+         FROM PRODUCCION_NDC_RANK_Red 
+         WHERE mes_contable IS NOT NULL 
+         ORDER BY mes_contable DESC`
+      );
+      return (rows as any[]).map(r => r.periodo);
+    } catch (error) {
+      console.error("Error fetching Detalle OT periods:", error);
+      return [];
+    }
+  }
+
+  async getDetalleOtData(mesContable: string): Promise<any[]> {
+    try {
+      console.log(`[Detalle OT] Fetching data for mes_contable: ${mesContable}`);
+
+      const [rows] = await pool.execute(
+        `SELECT * FROM PRODUCCION_NDC_RANK_Red 
+         WHERE DATE(mes_contable) = DATE(?) 
+         ORDER BY \`Fecha fin#\` DESC`,
+        [mesContable]
+      );
+
+      console.log(`[Detalle OT] Found ${(rows as any[]).length} records for mes_contable ${mesContable}`);
+      return rows as any[];
+    } catch (error) {
+      console.error(`[Detalle OT] Error fetching data for mes_contable ${mesContable}:`, error);
+      return [];
+    }
+  }
+
+  async getPointsParameters(): Promise<schema.PuntosParameter[]> {
+    try {
+      return await db.select().from(schema.puntosParameters);
+    } catch (error) {
+      console.error("Error fetching points parameters:", error);
+      return [];
+    }
+  }
+
+  async updatePointsParameter(id: number, data: Partial<schema.InsertPuntosParameter>): Promise<schema.PuntosParameter | undefined> {
+    try {
+      await db.update(schema.puntosParameters).set(data).where(eq(schema.puntosParameters.id, id));
+      const [updated] = await db.select().from(schema.puntosParameters).where(eq(schema.puntosParameters.id, id));
+      return updated;
+    } catch (error) {
+      console.error(`Error updating points parameter ${id}:`, error);
+      throw error;
     }
   }
 }

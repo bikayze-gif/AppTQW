@@ -1,4 +1,4 @@
-import { LayoutGrid, Activity, FileText, Ticket, Box, LogOut, Plus } from "lucide-react";
+import { LayoutGrid, Activity, FileText, Ticket, Box, LogOut, Plus, type LucideIcon } from "lucide-react";
 import { useLocation } from "wouter";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
