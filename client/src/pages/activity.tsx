@@ -374,7 +374,7 @@ export default function Activity() {
       <main className="px-2 md:px-5 space-y-5 max-w-6xl mx-auto pt-3">
 
         {/* Chart Card */}
-        <Card className="bg-card border-none shadow-xl rounded-2xl md:rounded-3xl overflow-hidden">
+        <Card className="bg-slate-800/50 border-none shadow-xl rounded-2xl md:rounded-3xl overflow-hidden">
           <CardContent className="p-2 md:p-4 pt-3">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm md:text-base font-bold text-white">Gráfico de Actividades</h2>
@@ -548,7 +548,7 @@ export default function Activity() {
         </div>
 
         {/* Table */}
-        <Card className="bg-card border-none shadow-xl rounded-2xl md:rounded-3xl overflow-hidden">
+        <Card className="bg-slate-800/50 border-none shadow-xl rounded-2xl md:rounded-3xl overflow-hidden">
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
@@ -715,7 +715,7 @@ export default function Activity() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="fixed right-0 top-0 bottom-0 w-full md:w-[60%] lg:w-[60%] bg-card border-l border-white/10 shadow-2xl z-50 flex flex-col overflow-hidden"
+              className="fixed right-0 top-0 bottom-0 w-full md:w-[60%] lg:w-[60%] bg-slate-900 border-l border-white/10 shadow-2xl z-50 flex flex-col overflow-hidden"
               data-testid="drawer-panel"
             >
               {/* Header */}

@@ -107,8 +107,8 @@ function CalidadDetailsList({ selectedMes, resumen, detalles }: {
             <button
               onClick={() => setFiltroCalidad('todos')}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${filtroCalidad === 'todos'
-                  ? 'bg-purple-500 text-white'
-                  : 'bg-white/10 text-white hover:bg-white/20'
+                ? 'bg-purple-500 text-white'
+                : 'bg-white/10 text-white hover:bg-white/20'
                 }`}
             >
               Todos
@@ -116,8 +116,8 @@ function CalidadDetailsList({ selectedMes, resumen, detalles }: {
             <button
               onClick={() => setFiltroCalidad('cumple')}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${filtroCalidad === 'cumple'
-                  ? 'bg-green-500 text-white'
-                  : 'bg-white/10 text-white hover:bg-white/20'
+                ? 'bg-green-500 text-white'
+                : 'bg-white/10 text-white hover:bg-white/20'
                 }`}
             >
               Cumple
@@ -125,8 +125,8 @@ function CalidadDetailsList({ selectedMes, resumen, detalles }: {
             <button
               onClick={() => setFiltroCalidad('no_cumple')}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${filtroCalidad === 'no_cumple'
-                  ? 'bg-red-500 text-white'
-                  : 'bg-white/10 text-white hover:bg-white/20'
+                ? 'bg-red-500 text-white'
+                : 'bg-white/10 text-white hover:bg-white/20'
                 }`}
             >
               No Cumple
@@ -364,7 +364,7 @@ export default function Calidad() {
       </header>
 
       <main className="px-2 md:px-5 space-y-5 max-w-6xl mx-auto pt-3">
-        <Card className="bg-card border-none shadow-xl rounded-xl md:rounded-2xl overflow-hidden">
+        <Card className="bg-slate-800/50 border-none shadow-xl rounded-xl md:rounded-2xl overflow-hidden">
           <CardContent className="p-2 md:p-5 pt-3">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm md:text-base font-bold text-white">Eficiencia General</h2>
@@ -427,7 +427,7 @@ export default function Calidad() {
           </CardContent>
         </Card>
 
-        <Card className="bg-card border-none shadow-xl rounded-xl md:rounded-2xl overflow-hidden">
+        <Card className="bg-slate-800/50 border-none shadow-xl rounded-xl md:rounded-2xl overflow-hidden">
           <CardContent className="p-2 md:p-5 pt-3">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm md:text-base font-bold text-white">Eficiencia por Tecnología</h2>
@@ -541,7 +541,7 @@ export default function Calidad() {
           </div>
         </div>
 
-        <Card className="bg-card border-none shadow-xl rounded-xl md:rounded-2xl overflow-hidden">
+        <Card className="bg-slate-800/50 border-none shadow-xl rounded-xl md:rounded-2xl overflow-hidden">
           <CardContent className="p-0">
             <div className="p-3 border-b border-white/5 bg-white/5">
               <h2 className="text-sm md:text-base font-bold text-white">Detalle por mes contable</h2>
