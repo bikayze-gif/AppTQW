@@ -207,7 +207,7 @@ export default function Activity() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [showDrawer, setShowDrawer] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedMonth, setSelectedMonth] = useState("12"); // Default to December 2025
+  const [selectedMonth, setSelectedMonth] = useState("202601"); // Default to January 2026
   const { user } = useAuth();
 
   const chartConfig = {
@@ -222,18 +222,19 @@ export default function Activity() {
   } satisfies ChartConfig
 
   const months = [
-    { value: "01", label: "Enero 2025" },
-    { value: "02", label: "Febrero 2025" },
-    { value: "03", label: "Marzo 2025" },
-    { value: "04", label: "Abril 2025" },
-    { value: "05", label: "Mayo 2025" },
-    { value: "06", label: "Junio 2025" },
-    { value: "07", label: "Julio 2025" },
-    { value: "08", label: "Agosto 2025" },
-    { value: "09", label: "Septiembre 2025" },
-    { value: "10", label: "Octubre 2025" },
-    { value: "11", label: "Noviembre 2025" },
-    { value: "12", label: "Diciembre 2025" },
+    { value: "202501", label: "Enero 2025" },
+    { value: "202502", label: "Febrero 2025" },
+    { value: "202503", label: "Marzo 2025" },
+    { value: "202504", label: "Abril 2025" },
+    { value: "202505", label: "Mayo 2025" },
+    { value: "202506", label: "Junio 2025" },
+    { value: "202507", label: "Julio 2025" },
+    { value: "202508", label: "Agosto 2025" },
+    { value: "202509", label: "Septiembre 2025" },
+    { value: "202510", label: "Octubre 2025" },
+    { value: "202511", label: "Noviembre 2025" },
+    { value: "202512", label: "Diciembre 2025" },
+    { value: "202601", label: "Enero 2026" },
   ];
 
   const handleDownloadPDF = () => {
@@ -251,7 +252,7 @@ export default function Activity() {
     if (!selectedMonth) return;
 
     try {
-      const period = `2025${selectedMonth}`;
+      const period = selectedMonth;
 
       const response = await fetch(`/api/activity/export-excel?period=${period}`, {
         credentials: 'include'
