@@ -367,11 +367,7 @@ export default function Activity() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white font-sans pb-20">
-      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-sm border-b border-white/5 px-3 md:px-5 pt-5 pb-3 flex items-center justify-center">
-        <h1 className="text-base md:text-lg font-bold tracking-tight text-white">Actividad</h1>
-      </header>
-
-      <main className="px-2 md:px-5 space-y-5 max-w-6xl mx-auto pt-3">
+      <main className="px-2 md:px-5 space-y-5 max-w-6xl mx-auto pt-5">
 
         {/* Chart Card */}
         <Card className="bg-slate-800/50 border-none shadow-xl rounded-2xl md:rounded-3xl overflow-hidden">
