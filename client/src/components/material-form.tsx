@@ -37,11 +37,11 @@ export function MaterialForm({ isOpen, onClose, onSubmit, userId }: MaterialForm
   const [tiposMaterial, setTiposMaterial] = useState<string[]>([]);
   const [familias, setFamilias] = useState<string[]>([]);
   const [subfamilias, setSubfamilias] = useState<string[]>([]);
-  const [materiales, setMateriales] = useState<Array<{id: string, description: string}>>([]);
+  const [materiales, setMateriales] = useState<Array<{ id: string, description: string }>>([]);
   const [loading, setLoading] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [submitResult, setSubmitResult] = useState<{success: boolean; message: string; ticket?: string} | null>(null);
+  const [submitResult, setSubmitResult] = useState<{ success: boolean; message: string; ticket?: string } | null>(null);
 
   // Load tipos on mount
   useEffect(() => {
@@ -155,10 +155,10 @@ export function MaterialForm({ isOpen, onClose, onSubmit, userId }: MaterialForm
 
   const handleConfirmOrder = async () => {
     if (cartItems.length === 0) return;
-    
+
     setSubmitting(true);
     setSubmitResult(null);
-    
+
     try {
       const response = await fetch("/api/materials/solicitud", {
         method: "POST",
@@ -186,7 +186,7 @@ export function MaterialForm({ isOpen, onClose, onSubmit, userId }: MaterialForm
           message: data.message || "Solicitud creada exitosamente",
           ticket: data.ticket,
         });
-        
+
         setTimeout(() => {
           onSubmit(formData);
           setCartItems([]);
@@ -231,14 +231,14 @@ export function MaterialForm({ isOpen, onClose, onSubmit, userId }: MaterialForm
 
           {/* Slide Panel */}
           <motion.div
-            className="absolute inset-y-0 right-0 w-full md:w-full max-w-md bg-card shadow-2xl flex flex-col overflow-hidden"
+            className="absolute inset-y-0 right-0 w-full md:w-full max-w-md bg-[#0F172A] border-l border-white/10 shadow-2xl flex flex-col overflow-hidden"
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
           >
             {/* Header */}
-            <div className="sticky top-0 bg-card/95 backdrop-blur border-b border-white/5 px-6 py-4 flex items-center justify-between">
+            <div className="sticky top-0 bg-[#0F172A]/95 backdrop-blur-md border-b border-white/10 px-6 py-4 flex items-center justify-between z-10">
               <div className="flex items-center gap-2">
                 <div className="text-[#06b6d4] bg-[#06b6d4]/10 p-2 rounded-lg">
                   <ShoppingCart size={20} />
@@ -262,7 +262,7 @@ export function MaterialForm({ isOpen, onClose, onSubmit, userId }: MaterialForm
                 <select
                   value={formData.tipo}
                   onChange={(e) => handleChange("tipo", e.target.value)}
-                  className="w-full bg-slate-900/50 border border-[#06b6d4]/30 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-[#06b6d4] focus:ring-2 focus:ring-[#06b6d4]/20 transition-all cursor-pointer hover:border-[#06b6d4]/50"
+                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-[#06b6d4] focus:ring-1 focus:ring-[#06b6d4]/50 transition-all cursor-pointer hover:border-slate-600 appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2306b6d4%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:12px_12px] bg-[position:right_1rem_center] bg-no-repeat"
                   data-testid="select-tipo-material"
                 >
                   <option value="" className="bg-slate-900">Seleccione un tipo de material</option>
@@ -281,7 +281,7 @@ export function MaterialForm({ isOpen, onClose, onSubmit, userId }: MaterialForm
                   value={formData.familia}
                   onChange={(e) => handleChange("familia", e.target.value)}
                   disabled={!formData.tipo || loading}
-                  className="w-full bg-slate-900/50 border border-[#06b6d4]/30 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-[#06b6d4] focus:ring-2 focus:ring-[#06b6d4]/20 transition-all cursor-pointer hover:border-[#06b6d4]/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-[#06b6d4] focus:ring-1 focus:ring-[#06b6d4]/50 transition-all cursor-pointer hover:border-slate-600 disabled:opacity-50 disabled:cursor-not-allowed appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2306b6d4%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:12px_12px] bg-[position:right_1rem_center] bg-no-repeat"
                   data-testid="select-familia"
                 >
                   <option value="" className="bg-slate-900">
@@ -302,7 +302,7 @@ export function MaterialForm({ isOpen, onClose, onSubmit, userId }: MaterialForm
                   value={formData.subfamilia}
                   onChange={(e) => handleChange("subfamilia", e.target.value)}
                   disabled={!formData.familia || loading}
-                  className="w-full bg-slate-900/50 border border-[#06b6d4]/30 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-[#06b6d4] focus:ring-2 focus:ring-[#06b6d4]/20 transition-all cursor-pointer hover:border-[#06b6d4]/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-[#06b6d4] focus:ring-1 focus:ring-[#06b6d4]/50 transition-all cursor-pointer hover:border-slate-600 disabled:opacity-50 disabled:cursor-not-allowed appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2306b6d4%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:12px_12px] bg-[position:right_1rem_center] bg-no-repeat"
                   data-testid="select-subfamilia"
                 >
                   <option value="" className="bg-slate-900">
@@ -323,7 +323,7 @@ export function MaterialForm({ isOpen, onClose, onSubmit, userId }: MaterialForm
                   value={formData.material}
                   onChange={(e) => handleChange("material", e.target.value)}
                   disabled={!formData.subfamilia || loading}
-                  className="w-full bg-slate-900/50 border border-[#06b6d4]/30 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-[#06b6d4] focus:ring-2 focus:ring-[#06b6d4]/20 transition-all cursor-pointer hover:border-[#06b6d4]/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-[#06b6d4] focus:ring-1 focus:ring-[#06b6d4]/50 transition-all cursor-pointer hover:border-slate-600 disabled:opacity-50 disabled:cursor-not-allowed appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2306b6d4%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:12px_12px] bg-[position:right_1rem_center] bg-no-repeat"
                   data-testid="select-material"
                 >
                   <option value="" className="bg-slate-900">
@@ -345,7 +345,7 @@ export function MaterialForm({ isOpen, onClose, onSubmit, userId }: MaterialForm
                   min="1"
                   value={formData.cantidad}
                   onChange={(e) => handleChange("cantidad", parseInt(e.target.value) || 1)}
-                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:border-[#06b6d4] transition-colors"
+                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-[#06b6d4] focus:ring-1 focus:ring-[#06b6d4]/50 transition-all"
                   data-testid="input-cantidad"
                 />
               </div>
@@ -362,7 +362,7 @@ export function MaterialForm({ isOpen, onClose, onSubmit, userId }: MaterialForm
 
               {/* Cart Items */}
               {cartItems.length > 0 && (
-                <motion.div 
+                <motion.div
                   className="mt-8 pt-8 border-t border-[#06b6d4]/20"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -374,7 +374,7 @@ export function MaterialForm({ isOpen, onClose, onSubmit, userId }: MaterialForm
                       {cartItems.length}
                     </span>
                   </div>
-                  
+
                   <div className="space-y-2 pr-1">
                     {cartItems.map((item, idx) => (
                       <motion.div
@@ -420,10 +420,10 @@ export function MaterialForm({ isOpen, onClose, onSubmit, userId }: MaterialForm
 
             {/* Footer Action */}
             {cartItems.length > 0 && !showConfirmation && (
-              <div className="border-t border-white/10 bg-card/95 p-6">
+              <div className="border-t border-white/10 bg-[#0F172A]/95 p-6 backdrop-blur-md">
                 <button
                   onClick={() => setShowConfirmation(true)}
-                  className="w-full bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/30 font-semibold py-3 rounded-lg transition-colors"
+                  className="w-full bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/30 font-semibold py-3 rounded-lg transition-colors shadow-lg shadow-green-500/10"
                   data-testid="button-confirm-order"
                 >
                   Confirmar Solicitud ({cartItems.length} items)
@@ -433,7 +433,7 @@ export function MaterialForm({ isOpen, onClose, onSubmit, userId }: MaterialForm
 
             {/* Confirmation Dialog */}
             {showConfirmation && (
-              <div className="border-t border-white/10 bg-card/95 p-6 space-y-3">
+              <div className="border-t border-white/10 bg-[#0F172A]/95 p-6 space-y-3 backdrop-blur-md">
                 {submitResult ? (
                   <div className="text-center py-2">
                     {submitResult.success ? (
