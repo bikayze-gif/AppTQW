@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/lib/auth-context";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
 interface BottomNavProps {
   onAddClick?: () => void;
@@ -14,28 +15,49 @@ function NavButton({
   href,
   isActive,
   iconSize = 18,
+  isComingSoon = false,
 }: {
   icon: LucideIcon;
   label: string;
   href: string;
   isActive: boolean;
   iconSize?: number;
+  isComingSoon?: boolean;
 }) {
   const [, setLocation] = useLocation();
 
-  return (
+  const buttonContent = (
     <button
-      onClick={() => setLocation(href)}
-      className={`flex flex-col items-center gap-0.5 px-1.5 py-1.5 rounded-lg transition-all ${
-        isActive
+      onClick={() => !isComingSoon && setLocation(href)}
+      className={`flex flex-col items-center gap-0.5 px-1.5 py-1.5 rounded-lg transition-all ${isActive
           ? "text-[#06b6d4]"
-          : "text-slate-400 hover:text-white"
-      }`}
+          : isComingSoon
+            ? "text-slate-500 cursor-not-allowed"
+            : "text-slate-400 hover:text-white"
+        }`}
+      disabled={isComingSoon}
     >
       <Icon size={iconSize} className={isActive ? "animate-bounce-subtle" : ""} />
       <span className="text-[9px] font-medium whitespace-nowrap">{label}</span>
     </button>
   );
+
+  if (isComingSoon) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            {buttonContent}
+          </TooltipTrigger>
+          <TooltipContent side="top" className="bg-slate-800 border-slate-700 text-white font-medium">
+            <p>Próximamente</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  return buttonContent;
 }
 
 
@@ -81,7 +103,7 @@ export function BottomNav({ onAddClick }: BottomNavProps) {
             isActive={isCalidad}
             iconSize={18}
           />
-          
+
           {/* Botón + Central */}
           <button
             onClick={onAddClick}
@@ -90,13 +112,14 @@ export function BottomNav({ onAddClick }: BottomNavProps) {
           >
             <Plus size={24} className="text-white" strokeWidth={2.5} />
           </button>
-          
+
           <NavButton
             icon={Ticket}
             label="Tickets"
             href="/tickets"
             isActive={isTickets}
             iconSize={18}
+            isComingSoon={true}
           />
           <NavButton
             icon={FileText}
@@ -104,6 +127,7 @@ export function BottomNav({ onAddClick }: BottomNavProps) {
             href="/analytics"
             isActive={isAnalytics}
             iconSize={18}
+            isComingSoon={true}
           />
           <button
             onClick={() => setShowLogoutModal(true)}
