@@ -654,24 +654,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const daysNum = parseInt(req.query.days as string) || 30;
+      const period = req.query.period as string;
       const endDate = new Date();
       let startDate = new Date();
 
-      // Si es mes completo (30 días), ajustar para que sea desde día 25 del mes anterior
-      if (daysNum === 30) {
+      if (period && period.length === 6) {
+        // Si hay un periodo específico (ej: 202601), calcular desde el 25 del mes anterior al 24 de ese mes
+        const year = parseInt(period.substring(0, 4));
+        const month = parseInt(period.substring(4, 6)) - 1; // 0-indexed
+
+        startDate = new Date(year, month - 1, 25);
+        endDate.setFullYear(year);
+        endDate.setMonth(month);
+        endDate.setDate(24);
+      } else if (daysNum === 30) {
+        // Lógica existente para "Mes completo" relativo a hoy
         const currentDay = endDate.getDate();
         const currentMonth = endDate.getMonth();
         const currentYear = endDate.getFullYear();
 
-        // Si estamos antes del día 25, el mes completo es desde 25 del mes antepasado
         if (currentDay < 25) {
           startDate = new Date(currentYear, currentMonth - 1, 25);
           endDate.setDate(24);
         } else {
-          // Si estamos después del día 25, el mes completo es desde 25 del mes pasado
           startDate = new Date(currentYear, currentMonth, 25);
-          endDate.setMonth(currentMonth + 1);
-          endDate.setDate(24);
+          const nextDate = new Date(endDate);
+          nextDate.setMonth(currentMonth + 1);
+          nextDate.setDate(24);
+          endDate.setTime(nextDate.getTime());
         }
       } else {
         startDate.setDate(endDate.getDate() - daysNum);
@@ -680,6 +690,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const formatDate = (date: Date) => {
         return date.toISOString().split('T')[0];
       };
+
+      console.log(`[Activity Chart] Range: ${formatDate(startDate)} to ${formatDate(endDate)} for RUT: ${rut}`);
 
       const data = await storage.getActivityChartData(
         rut,
@@ -704,24 +716,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const daysNum = parseInt(req.query.days as string) || 30;
+      const period = req.query.period as string;
       const endDate = new Date();
       let startDate = new Date();
 
-      // Si es mes completo (30 días), ajustar para que sea desde día 25 del mes anterior
-      if (daysNum === 30) {
+      if (period && period.length === 6) {
+        // Periodo específico (25 del mes anterior al 24 del mes seleccionado)
+        const year = parseInt(period.substring(0, 4));
+        const month = parseInt(period.substring(4, 6)) - 1;
+
+        startDate = new Date(year, month - 1, 25);
+        endDate.setFullYear(year);
+        endDate.setMonth(month);
+        endDate.setDate(24);
+      } else if (daysNum === 30) {
         const currentDay = endDate.getDate();
         const currentMonth = endDate.getMonth();
         const currentYear = endDate.getFullYear();
 
-        // Si estamos antes del día 25, el mes completo es desde 25 del mes antepasado
         if (currentDay < 25) {
           startDate = new Date(currentYear, currentMonth - 1, 25);
           endDate.setDate(24);
         } else {
-          // Si estamos después del día 25, el mes completo es desde 25 del mes pasado
           startDate = new Date(currentYear, currentMonth, 25);
-          endDate.setMonth(currentMonth + 1);
-          endDate.setDate(24);
+          const nextDate = new Date(endDate);
+          nextDate.setMonth(currentMonth + 1);
+          nextDate.setDate(24);
+          endDate.setTime(nextDate.getTime());
         }
       } else {
         startDate.setDate(endDate.getDate() - daysNum);
@@ -730,6 +751,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const formatDate = (date: Date) => {
         return date.toISOString().split('T')[0];
       };
+
+      console.log(`[Activity Table] Range: ${formatDate(startDate)} to ${formatDate(endDate)} for RUT: ${rut}`);
 
       const data = await storage.getActivityTableData(
         rut,

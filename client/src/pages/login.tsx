@@ -186,12 +186,11 @@ export default function Login() {
         <div className="relative z-10 text-center space-y-5 max-w-md">
           <div>
             <h2 className="text-4xl md:text-5xl font-bold text-white leading-tight mb-3">
-              Bienvenido a una nueva experiencia de trabajo
+              Nueva experiencia, diseñada para ti
             </h2>
             <p className="text-slate-300 text-sm leading-relaxed">
-              Bienvenido a Telqway, donde la excelencia y la innovación guían nuestro camino.
-              Te presentamos nuestra nueva interfaz de operaciones, diseñada para optimizar el rendimiento
-              y enriquecer continuamente la experiencia de nuestros usuarios
+              Descubre la nueva versión de Telqway. Una interfaz más intuitiva y eficiente,
+              creada pensando en hacerte el trabajo más fácil y el día a día más fluido.
             </p>
           </div>
 
