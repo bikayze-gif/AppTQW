@@ -261,7 +261,7 @@ export default function SupervisorNotes() {
 
   return (
     <SupervisorLayout>
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto" style={{ zoom: "85%" }}>
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm text-slate-500 mb-6">
           <span>Home</span>
@@ -294,8 +294,30 @@ export default function SupervisorNotes() {
         <div className="flex gap-6">
           {/* Sidebar */}
           <div className="w-56 flex-shrink-0 sticky top-8 h-[calc(100vh-250px)] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700">
+            <nav className="space-y-1 mb-8">
+              {categories.slice(0, 3).map((cat) => {
+                const Icon = cat.icon;
+                return (
+                  <button
+                    key={cat.name}
+                    onClick={() => setSelectedCategory(cat.name)}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${selectedCategory === cat.name
+                      ? "bg-blue-100 text-blue-700 font-medium dark:bg-blue-900/30 dark:text-blue-300"
+                      : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                      }`}
+                  >
+                    <Icon size={18} />
+                    <span>{cat.name}</span>
+                  </button>
+                );
+              })}
+            </nav>
+
+            <div className="px-4 mb-2">
+              <h3 className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Labels</h3>
+            </div>
             <nav className="space-y-1">
-              {categories.map((cat) => {
+              {categories.slice(3).map((cat) => {
                 const Icon = cat.icon;
                 return (
                   <button
@@ -427,7 +449,7 @@ export default function SupervisorNotes() {
                                 initial={{ opacity: 0, scale: 0.95, y: -10 }}
                                 animate={{ opacity: 1, scale: 1, y: 0 }}
                                 exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                                className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 w-[420px] z-50 overflow-hidden"
+                                className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/50 dark:border-slate-700/50 w-[380px] z-50 overflow-hidden ring-1 ring-black/5 dark:ring-white/10"
                               >
                                 <div className="flex gap-6 p-6">
                                   {/* Left: Calendar */}
@@ -439,18 +461,18 @@ export default function SupervisorNotes() {
                                       >
                                         <ChevronLeft size={18} className="text-slate-600 dark:text-slate-300" />
                                       </button>
-                                      <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{currentMonth.toLocaleDateString("en-US", { month: "short", year: "numeric" })}</span>
+                                      <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">{currentMonth.toLocaleDateString("en-US", { month: "long", year: "numeric" })}</span>
                                       <button
                                         onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}
-                                        className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors"
+                                        className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
                                       >
-                                        <ChevronRight size={18} className="text-slate-600 dark:text-slate-300" />
+                                        <ChevronRight size={18} className="text-slate-600 dark:text-slate-400" />
                                       </button>
                                     </div>
 
-                                    <div className="grid grid-cols-7 gap-1.5">
+                                    <div className="grid grid-cols-7 gap-1 mb-2">
                                       {["S", "M", "T", "W", "T", "F", "S"].map((day, idx) => (
-                                        <div key={`day-${idx}`} className="text-center text-xs font-bold text-slate-400 dark:text-slate-500 py-1.5">
+                                        <div key={`day-${idx}`} className="text-center text-[10px] font-bold text-slate-400 dark:text-slate-500 py-2 uppercase tracking-wide">
                                           {day}
                                         </div>
                                       ))}
@@ -476,22 +498,24 @@ export default function SupervisorNotes() {
                                   </div>
 
                                   {/* Divider */}
-                                  <div className="w-px bg-slate-200 dark:bg-slate-600" />
+                                  <div className="w-px bg-slate-200 dark:bg-slate-800 my-2" />
 
                                   {/* Right: Time Picker */}
-                                  <div className="flex flex-col items-center justify-center min-w-[80px]">
+                                  <div className="flex flex-col items-center justify-center min-w-[100px] px-2">
                                     <button
                                       onClick={() => {
                                         const h = parseInt(reminder.time.split(":")[0] || "0");
                                         const newH = h === 23 ? 0 : h + 1;
                                         setReminder({ ...reminder, time: `${String(newH).padStart(2, "0")}:${reminder.time.split(":")[1] || "00"}` });
                                       }}
-                                      className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors mb-2"
+                                      className="p-1 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors mb-2"
                                     >
-                                      <Plus size={22} />
+                                      <Plus size={16} />
                                     </button>
-                                    <div className="text-2xl font-bold text-slate-900 dark:text-white font-mono mb-2">
+                                    <div className="text-3xl font-bold text-slate-800 dark:text-white font-mono my-2 tracking-wider">
                                       {(reminder.time.split(":")[0] || "00").padStart(2, "0")}
+                                      <span className="text-slate-300 dark:text-slate-600 animate-pulse">:</span>
+                                      {(reminder.time.split(":")[1] || "00").padStart(2, "0")}
                                     </div>
                                     <button
                                       onClick={() => {
@@ -499,16 +523,16 @@ export default function SupervisorNotes() {
                                         const newH = h === 0 ? 23 : h - 1;
                                         setReminder({ ...reminder, time: `${String(newH).padStart(2, "0")}:${reminder.time.split(":")[1] || "00"}` });
                                       }}
-                                      className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+                                      className="p-1 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
                                     >
-                                      <Minus size={22} />
+                                      <Minus size={16} />
                                     </button>
 
-                                    <div className="flex flex-col gap-2 ml-2 mt-4">
-                                      <button className="px-4 py-1.5 text-xs font-bold bg-blue-600 text-white rounded-full hover:bg-blue-500 transition-colors shadow-md">
+                                    <div className="flex gap-1 mt-6 bg-slate-100 dark:bg-slate-800/50 p-1 rounded-lg">
+                                      <button className="px-3 py-1 text-[10px] font-bold bg-white dark:bg-slate-700 text-slate-800 dark:text-white rounded-md shadow-sm">
                                         AM
                                       </button>
-                                      <button className="px-4 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors">
+                                      <button className="px-3 py-1 text-[10px] font-bold text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-700/50 rounded-md transition-colors">
                                         PM
                                       </button>
                                     </div>
@@ -516,7 +540,7 @@ export default function SupervisorNotes() {
                                 </div>
 
                                 {/* Footer Buttons */}
-                                <div className="flex gap-3 px-6 py-4 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-700">
+                                <div className="flex gap-3 px-6 py-4 bg-slate-50/50 dark:bg-slate-900/30 border-t border-slate-200/50 dark:border-slate-800/50 backdrop-blur-sm">
                                   <button
                                     onClick={() => {
                                       setReminder({ date: "", time: "" });
@@ -628,7 +652,7 @@ export default function SupervisorNotes() {
                     top: `${reminderPopoverPos.top}px`,
                     left: `${reminderPopoverPos.left}px`,
                   }}
-                  className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 w-[420px] z-[100] overflow-hidden"
+                  className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/50 dark:border-slate-700/50 w-[380px] z-[100] overflow-hidden ring-1 ring-black/5 dark:ring-white/10"
                 >
                   <div className="flex gap-6 p-6">
                     {/* Left: Calendar */}

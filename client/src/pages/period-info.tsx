@@ -6,7 +6,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/lib/auth-context";
 import { MaterialForm } from "@/components/material-form";
 
-const GLOBAL_PERIODO = "202512";
+const GLOBAL_PERIODO = "202601";
 
 interface TqwData {
   RutTecnicoOrig: string;
@@ -300,7 +300,7 @@ export default function PeriodInfo() {
         </CollapsibleSection>
       </div>
 
-      <MaterialForm 
+      <MaterialForm
         isOpen={showMaterialForm}
         onClose={() => setShowMaterialForm(false)}
         onSubmit={handleMaterialSubmit}

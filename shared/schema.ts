@@ -233,7 +233,7 @@ export type MaterialOracle = typeof materialsOracle.$inferSelect;
 // TABLA DE SOLICITUDES DE MATERIALES - TB_LOGIS_TECNICO_SOLICITUD
 // ============================================
 
-export const materialSolicitud = mysqlTable("TB_LOGIS_TECNICO_SOLICITUD", {
+export const materialSolicitud = mysqlTable("tb_logis_tecnico_solicitud", {
   id: int("id").primaryKey().autoincrement(),
   material: text("material"),
   cantidad: int("cantidad"),
@@ -278,7 +278,7 @@ export type MaterialSolicitudRequest = z.infer<typeof materialSolicitudRequestSc
 // TABLA DE PUNTOS PARAMETRICOS - TP_PTOS_23_NEW
 // ============================================
 
-export const puntosParameters = mysqlTable("TP_PTOS_23_NEW", {
+export const puntosParameters = mysqlTable("tp_ptos_23_new", {
   id: bigint("id", { mode: "number" }).primaryKey().autoincrement(),
   tipoRed: varchar("Tipo red", { length: 50 }),
   trabajo: varchar("Trabajo", { length: 255 }),

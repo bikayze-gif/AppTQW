@@ -793,7 +793,7 @@ export class MySQLStorage implements IStorage {
   }): Promise<number> {
     try {
       const [result] = await pool.execute(
-        `INSERT INTO TB_LOGIS_TECNICO_SOLICITUD 
+        `INSERT INTO tb_logis_tecnico_solicitud 
          (material, cantidad, fecha, tecnico, id_tecnico_traspaso, TICKET, flag_regiones, flag_gestion_supervisor, campo_item) 
          VALUES (?, ?, NOW(), ?, ?, ?, ?, ?, ?)`,
         [
@@ -854,7 +854,7 @@ export class MySQLStorage implements IStorage {
             WHEN s.flag_gestion_supervisor = 2 THEN 'RECHAZADO'
             ELSE 'PENDIENTE'
           END as status
-        FROM TB_LOGIS_TECNICO_SOLICITUD s
+        FROM tb_logis_tecnico_solicitud s
         LEFT JOIN tb_user_tqw u1 ON s.tecnico = u1.ID AND s.tecnico != '0' AND s.tecnico != ''
         LEFT JOIN tb_user_tqw u2 ON s.id_tecnico_traspaso = u2.ID AND s.id_tecnico_traspaso != 0
         LEFT JOIN tp_logistica_mat_oracle m ON s.campo_item = m.Item
@@ -1051,7 +1051,7 @@ export class MySQLStorage implements IStorage {
         SUM(CASE WHEN CALIDAD_30 = '1' AND TIPO_RED_CALCULADO = 'HFC' THEN 1 ELSE 0 END) as no_cumple_hfc,
         SUM(CASE WHEN CALIDAD_30 = '0' AND TIPO_RED_CALCULADO IN ('FTTH', 'DUAL') THEN 1 ELSE 0 END) as cumple_ftth,
         SUM(CASE WHEN CALIDAD_30 = '1' AND TIPO_RED_CALCULADO IN ('FTTH', 'DUAL') THEN 1 ELSE 0 END) as no_cumple_ftth
-      FROM TB_CALIDAD_NARANJA_BASE
+      FROM tb_calidad_naranja_base
       WHERE RUT_TECNICO_FS = ?
       GROUP BY DATE_FORMAT(mes_contable, '%Y-%m-01'), YEAR(mes_contable), MONTH(mes_contable)
       ORDER BY mes_contable_fmt DESC
@@ -1112,7 +1112,7 @@ export class MySQLStorage implements IStorage {
         descripcion_actividad,
         descripcion_actividad_2,
         CALIDAD_30
-      FROM TB_CALIDAD_NARANJA_BASE
+      FROM tb_calidad_naranja_base
       WHERE RUT_TECNICO_FS = ?
         AND DATE_FORMAT(mes_contable, '%Y-%m-01') = ?
       ORDER BY FECHA_EJECUCION DESC`,
@@ -1320,7 +1320,7 @@ export class MySQLStorage implements IStorage {
         `SELECT DISTINCT DATE_FORMAT(mes_contable, '%Y-%m-%d') as periodo 
          FROM tb_calidad_naranja_base 
          WHERE mes_contable IS NOT NULL 
-         ORDER BY mes_contable DESC`
+         ORDER BY periodo DESC`
       );
       return (rows as any[]).map(r => r.periodo);
     } catch (error) {
@@ -1389,9 +1389,9 @@ export class MySQLStorage implements IStorage {
     try {
       const [rows] = await pool.execute(
         `SELECT DISTINCT DATE_FORMAT(mes_contable, '%Y-%m-%d') as periodo 
-         FROM PRODUCCION_NDC_RANK_Red 
+         FROM produccion_ndc_rank_red 
          WHERE mes_contable IS NOT NULL 
-         ORDER BY mes_contable DESC`
+         ORDER BY periodo DESC`
       );
       return (rows as any[]).map(r => r.periodo);
     } catch (error) {
@@ -1405,7 +1405,7 @@ export class MySQLStorage implements IStorage {
       console.log(`[Detalle OT] Fetching data for mes_contable: ${mesContable}`);
 
       const [rows] = await pool.execute(
-        `SELECT * FROM PRODUCCION_NDC_RANK_Red 
+        `SELECT * FROM produccion_ndc_rank_red 
          WHERE DATE(mes_contable) = DATE(?) 
          ORDER BY \`Fecha fin#\` DESC`,
         [mesContable]
