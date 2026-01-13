@@ -30,10 +30,10 @@ function NavButton({
     <button
       onClick={() => !isComingSoon && setLocation(href)}
       className={`flex flex-col items-center gap-0.5 px-1.5 py-1.5 rounded-lg transition-all ${isActive
-          ? "text-[#06b6d4]"
-          : isComingSoon
-            ? "text-slate-500 cursor-not-allowed"
-            : "text-slate-400 hover:text-white"
+        ? "text-[#06b6d4]"
+        : isComingSoon
+          ? "text-slate-500 cursor-not-allowed"
+          : "text-slate-400 hover:text-white"
         }`}
       disabled={isComingSoon}
     >
@@ -158,7 +158,7 @@ export function BottomNav({ onAddClick }: BottomNavProps) {
               exit={{ scale: 0.95, opacity: 0 }}
               className="fixed inset-0 flex items-center justify-center z-50 px-4"
             >
-              <div className="bg-card border border-white/10 rounded-2xl shadow-2xl p-6 max-w-sm w-full" data-testid="logout-modal">
+              <div className="bg-slate-900 border border-white/10 rounded-2xl shadow-2xl p-6 max-w-sm w-full" data-testid="logout-modal">
                 <h2 className="text-xl font-bold text-white mb-2">Cerrar Sesión</h2>
                 <p className="text-slate-300 text-sm mb-6">¿Estás seguro de que deseas cerrar sesión?</p>
 
