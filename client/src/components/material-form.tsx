@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Plus, ShoppingCart, Trash2, Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { X, Plus, Minus, ShoppingCart, Trash2, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 
 interface MaterialFormProps {
   isOpen: boolean;
@@ -16,7 +16,7 @@ export interface MaterialFormData {
   material: string;
   materialDescription?: string;
   itemCode?: string;
-  cantidad: number;
+  cantidad: number | string;
 }
 
 interface CartItem extends MaterialFormData {
@@ -136,11 +136,19 @@ export function MaterialForm({ isOpen, onClose, onSubmit, userId }: MaterialForm
     }));
   };
 
+  const handleUpdateCartQuantity = (idx: number, newQuantity: number | string) => {
+    setCartItems((prev) => prev.map((item, i) =>
+      i === idx ? { ...item, cantidad: newQuantity } : item
+    ));
+  };
+
   const handleAddToCart = () => {
-    if (formData.tipo && formData.familia && formData.subfamilia && formData.material && formData.cantidad > 0) {
+    const cantidadNum = typeof formData.cantidad === 'string' ? parseInt(formData.cantidad) : formData.cantidad;
+    if (formData.tipo && formData.familia && formData.subfamilia && formData.material && cantidadNum > 0) {
       const selectedMaterial = materiales.find(m => m.id === formData.material);
       const cartItem: CartItem = {
         ...formData,
+        cantidad: cantidadNum,
         itemCode: formData.material,
         materialDescription: selectedMaterial?.description || formData.material,
       };
@@ -171,7 +179,7 @@ export function MaterialForm({ isOpen, onClose, onSubmit, userId }: MaterialForm
           id_supervisor: 0,
           items: cartItems.map(item => ({
             material: item.materialDescription,
-            cantidad: item.cantidad,
+            cantidad: typeof item.cantidad === 'string' ? (parseInt(item.cantidad) || 0) : item.cantidad,
             item: item.itemCode,
             itemCode: item.itemCode,
           })),
@@ -340,14 +348,39 @@ export function MaterialForm({ isOpen, onClose, onSubmit, userId }: MaterialForm
               {/* Cantidad */}
               <div>
                 <label className="text-sm font-semibold text-white mb-2 block">Cantidad</label>
-                <input
-                  type="number"
-                  min="1"
-                  value={formData.cantidad}
-                  onChange={(e) => handleChange("cantidad", parseInt(e.target.value) || 1)}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-[#06b6d4] focus:ring-1 focus:ring-[#06b6d4]/50 transition-all"
-                  data-testid="input-cantidad"
-                />
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => {
+                      const current = typeof formData.cantidad === 'string' ? (parseInt(formData.cantidad) || 0) : formData.cantidad;
+                      if (current > 1) handleChange("cantidad", current - 1);
+                    }}
+                    className="p-3 bg-slate-800 border border-slate-700 rounded-lg text-white hover:bg-slate-700 transition-colors"
+                  >
+                    <Minus size={20} />
+                  </button>
+                  <input
+                    type="number"
+                    min="1"
+                    value={formData.cantidad}
+                    onChange={(e) => handleChange("cantidad", e.target.value)}
+                    onBlur={() => {
+                      if (!formData.cantidad || parseInt(formData.cantidad.toString()) < 1) {
+                        handleChange("cantidad", 1);
+                      }
+                    }}
+                    className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-white text-center placeholder-slate-500 focus:outline-none focus:border-[#06b6d4] focus:ring-1 focus:ring-[#06b6d4]/50 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    data-testid="input-cantidad"
+                  />
+                  <button
+                    onClick={() => {
+                      const current = typeof formData.cantidad === 'string' ? (parseInt(formData.cantidad) || 0) : formData.cantidad;
+                      handleChange("cantidad", current + 1);
+                    }}
+                    className="p-3 bg-slate-800 border border-slate-700 rounded-lg text-white hover:bg-slate-700 transition-colors"
+                  >
+                    <Plus size={20} />
+                  </button>
+                </div>
               </div>
 
               {/* Add to Cart Button */}
@@ -406,10 +439,38 @@ export function MaterialForm({ isOpen, onClose, onSubmit, userId }: MaterialForm
                           </button>
                         </div>
                         <div className="flex items-center justify-between pt-2 border-t border-[#06b6d4]/20">
-                          <span className="text-[#06b6d4] text-xs font-bold">Cantidad:</span>
-                          <span className="bg-[#06b6d4]/20 text-[#06b6d4] text-xs font-bold px-2.5 py-1 rounded">
-                            {item.cantidad}
-                          </span>
+                          <span className="text-[#06b6d4] text-xs font-bold uppercase tracking-wider">Cantidad:</span>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => {
+                                const current = typeof item.cantidad === 'string' ? (parseInt(item.cantidad) || 0) : item.cantidad;
+                                if (current > 1) handleUpdateCartQuantity(idx, current - 1);
+                              }}
+                              className="p-1 text-slate-400 hover:text-[#06b6d4] transition-colors"
+                            >
+                              <Minus size={14} />
+                            </button>
+                            <input
+                              type="number"
+                              value={item.cantidad}
+                              onChange={(e) => handleUpdateCartQuantity(idx, e.target.value)}
+                              onBlur={() => {
+                                if (!item.cantidad || parseInt(item.cantidad.toString()) < 1) {
+                                  handleUpdateCartQuantity(idx, 1);
+                                }
+                              }}
+                              className="w-12 bg-slate-900/50 border border-[#06b6d4]/30 rounded text-center text-white text-xs font-bold py-1 focus:outline-none focus:border-[#06b6d4] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            />
+                            <button
+                              onClick={() => {
+                                const current = typeof item.cantidad === 'string' ? (parseInt(item.cantidad) || 0) : item.cantidad;
+                                handleUpdateCartQuantity(idx, current + 1);
+                              }}
+                              className="p-1 text-slate-400 hover:text-[#06b6d4] transition-colors"
+                            >
+                              <Plus size={14} />
+                            </button>
+                          </div>
                         </div>
                       </motion.div>
                     ))}
