@@ -1098,6 +1098,7 @@ export class MySQLStorage implements IStorage {
 
   async getCalidadReactivaDetails(rut: string, mesContable: string): Promise<Array<{
     FECHA_EJECUCION: string;
+    fecha_ejecucion_2: string;
     TIPO_RED: string;
     id_actividad: string;
     id_actividad_2: string;
@@ -1106,10 +1107,12 @@ export class MySQLStorage implements IStorage {
     descripcion_actividad: string;
     descripcion_actividad_2: string;
     CALIDAD_30: string;
+    DIFERENCIA_DIAS: string;
   }>> {
     const [rows] = await pool.execute<RowDataPacket[]>(
       `SELECT
         FECHA_EJECUCION,
+        fecha_ejecucion_2,
         TIPO_RED_CALCULADO as TIPO_RED,
         id_actividad,
         id_actividad_2,
@@ -1117,7 +1120,8 @@ export class MySQLStorage implements IStorage {
         DESCRIPCION_CIERRE_2,
         descripcion_actividad,
         descripcion_actividad_2,
-        CALIDAD_30
+        CALIDAD_30,
+        DIFERENCIA_DIAS
       FROM tb_calidad_naranja_base
       WHERE RUT_TECNICO_FS = ?
         AND DATE_FORMAT(mes_contable, '%Y-%m-01') = ?
@@ -1127,6 +1131,7 @@ export class MySQLStorage implements IStorage {
 
     return rows as Array<{
       FECHA_EJECUCION: string;
+      fecha_ejecucion_2: string;
       TIPO_RED: string;
       id_actividad: string;
       id_actividad_2: string;
@@ -1135,6 +1140,7 @@ export class MySQLStorage implements IStorage {
       descripcion_actividad: string;
       descripcion_actividad_2: string;
       CALIDAD_30: string;
+      DIFERENCIA_DIAS: string;
     }>;
   }
 
@@ -1148,6 +1154,7 @@ export class MySQLStorage implements IStorage {
     TIPO_RED_CALCULADO: string;
     Comuna: string;
     CalidadReactiva: string;
+    DIFERENCIA_DIAS: string;
   }>> {
     const [rows] = await pool.execute<RowDataPacket[]>(
       `SELECT 
@@ -1163,7 +1170,8 @@ export class MySQLStorage implements IStorage {
           WHEN CALIDAD_30 = '0' THEN 'Cumple'
           WHEN CALIDAD_30 = '1' THEN 'No cumple'
           ELSE 'N/A'
-        END as CalidadReactiva
+        END as CalidadReactiva,
+        DIFERENCIA_DIAS
       FROM tb_calidad_naranja_base
       WHERE RUT_TECNICO_FS = ?
         AND DATE_FORMAT(mes_contable, '%Y-%m-01') = ?
@@ -1181,6 +1189,7 @@ export class MySQLStorage implements IStorage {
       TIPO_RED_CALCULADO: string;
       Comuna: string;
       CalidadReactiva: string;
+      DIFERENCIA_DIAS: string;
     }>;
   }
 

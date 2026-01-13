@@ -20,7 +20,8 @@ import {
     Activity,
     CheckCircle,
     AlertTriangle,
-    Clock
+    Clock,
+    Construction
 } from "lucide-react";
 import {
     Select,
@@ -690,16 +691,36 @@ export default function SupervisorCalidad() {
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                     {/* Dashboard View (High Level Summary) */}
                     {activeTab === "dashboard" && (
-                        <div className="space-y-6">
-                            <div className="bg-white dark:bg-slate-900/50 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 p-12 text-center">
-                                <div className="w-16 h-16 bg-blue-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <TrendingUp className="w-8 h-8 text-blue-500" />
+                        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-12 text-center min-h-[500px] flex flex-col items-center justify-center overflow-hidden relative">
+                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 via-indigo-400 to-blue-400" />
+                            <div className="max-w-md mx-auto space-y-6">
+                                <div className="relative group">
+                                    <div className="absolute -inset-1 bg-gradient-to-r from-blue-400 to-indigo-400 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+                                    <img
+                                        src="/under-construction.png"
+                                        alt="En construcción"
+                                        className="relative rounded-2xl shadow-2xl w-full max-w-[320px] mx-auto transform transition duration-500 hover:scale-105"
+                                    />
                                 </div>
-                                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Resumen General</h3>
-                                <p className="text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-                                    Aquí se mostrará un resumen ejecutivo de los indicadores de calidad y rendimiento global.
-                                    La información detallada se encuentra en la pestaña Cubo Datos.
-                                </p>
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-center gap-2 text-blue-500 dark:text-blue-400 mb-2">
+                                        <Construction className="w-5 h-5 animate-bounce" />
+                                        <span className="text-sm font-bold uppercase tracking-widest">Próximamente</span>
+                                    </div>
+                                    <h2 className="text-3xl font-bold text-slate-900 dark:text-white capitalize">Dashboard</h2>
+                                    <p className="text-slate-500 dark:text-slate-400 text-lg leading-relaxed">
+                                        Estamos diseñando un panel de indicadores de calidad de alto nivel para tu gestión.
+                                    </p>
+                                </div>
+                                <div className="pt-4">
+                                    <div className="inline-flex items-center px-4 py-2 rounded-full bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-500/20 text-sm font-medium">
+                                        <span className="relative flex h-2 w-2 mr-2">
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                                            <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                                        </span>
+                                        En construcción
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -1496,16 +1517,7 @@ export default function SupervisorCalidad() {
                                                             )}
                                                         </TableCell>
                                                         <TableCell className="text-center font-mono font-medium">
-                                                            {row.diff_dias !== null ? (
-                                                                <span className={cn(
-                                                                    "px-2 py-0.5 rounded-full text-xs",
-                                                                    Math.abs(row.diff_dias) <= 5 ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" :
-                                                                        Math.abs(row.diff_dias) <= 10 ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" :
-                                                                            "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                                                                )}>
-                                                                    {row.diff_dias}
-                                                                </span>
-                                                            ) : '-'}
+                                                            {row.diff_dias !== null ? row.diff_dias : '-'}
                                                         </TableCell>
                                                         <TableCell>
                                                             <Badge variant="outline" className={cn("text-xs font-semibold shadow-none",

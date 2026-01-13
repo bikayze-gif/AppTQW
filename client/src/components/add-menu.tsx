@@ -1,12 +1,12 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { ShoppingCart, FileText, Settings, Bot } from "lucide-react";
+import { ShoppingCart, FileText, Bot } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
 interface AddMenuProps {
   isOpen: boolean;
   onClose: () => void;
   onMaterialClick: () => void;
   onReportClick: () => void;
-  onSettingsClick: () => void;
   onAIClick: () => void;
 }
 
@@ -15,7 +15,6 @@ export function AddMenu({
   onClose,
   onMaterialClick,
   onReportClick,
-  onSettingsClick,
   onAIClick,
 }: AddMenuProps) {
   const menuItems = [
@@ -24,6 +23,7 @@ export function AddMenu({
       label: "Asistente IA",
       icon: Bot,
       onClick: onAIClick,
+      isUnderConstruction: true,
     },
     {
       id: "material",
@@ -36,12 +36,7 @@ export function AddMenu({
       label: "Nuevo Reporte",
       icon: FileText,
       onClick: onReportClick,
-    },
-    {
-      id: "settings",
-      label: "Configuración",
-      icon: Settings,
-      onClick: onSettingsClick,
+      isUnderConstruction: true,
     },
   ];
 
@@ -68,29 +63,53 @@ export function AddMenu({
               transition={{ type: "spring", stiffness: 400, damping: 30 }}
               className="flex flex-col gap-3 items-center"
             >
-              {/* Menu Items */}
-              {menuItems.map((item, index) => (
-                <motion.button
-                  key={item.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  onClick={() => {
-                    item.onClick();
-                    onClose();
-                  }}
-                  className="flex items-center gap-3 px-4 py-3 bg-[#1A1F33] border border-white/10 rounded-lg hover:bg-white/5 transition-colors group"
-                  data-testid={`menu-item-${item.id}`}
-                >
-                  <item.icon
-                    size={20}
-                    className="text-[#06b6d4] group-hover:text-white transition-colors"
-                  />
-                  <span className="text-sm font-medium text-white whitespace-nowrap">
-                    {item.label}
-                  </span>
-                </motion.button>
-              ))}
+              <TooltipProvider>
+                {/* Menu Items */}
+                {menuItems.map((item, index) => {
+                  const button = (
+                    <motion.button
+                      key={item.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      onClick={() => {
+                        if (!item.isUnderConstruction) {
+                          item.onClick();
+                          onClose();
+                        }
+                      }}
+                      className={`flex items-center gap-3 px-4 py-3 bg-[#1A1F33] border border-white/10 rounded-lg transition-colors group ${item.isUnderConstruction ? "cursor-not-allowed opacity-80" : "hover:bg-white/5"
+                        }`}
+                      data-test-id={`menu-item-${item.id}`}
+                    >
+                      <item.icon
+                        size={20}
+                        className={`${item.isUnderConstruction ? "text-slate-500" : "text-[#06b6d4] group-hover:text-white"
+                          } transition-colors`}
+                      />
+                      <span className={`text-sm font-medium whitespace-nowrap ${item.isUnderConstruction ? "text-slate-400" : "text-white"
+                        }`}>
+                        {item.label}
+                      </span>
+                    </motion.button>
+                  );
+
+                  if (item.isUnderConstruction) {
+                    return (
+                      <Tooltip key={item.id}>
+                        <TooltipTrigger asChild>
+                          {button}
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="bg-slate-800 border-slate-700 text-white font-medium">
+                          <p>En construcción</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    );
+                  }
+
+                  return button;
+                })}
+              </TooltipProvider>
             </motion.div>
           </div>
         </>

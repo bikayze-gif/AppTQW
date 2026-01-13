@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { SupervisorLayout } from "@/components/supervisor/supervisor-layout";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, TrendingUp, Award, Zap, Package, Truck, RotateCcw, ClipboardList } from "lucide-react";
+import { LayoutDashboard, TrendingUp, Award, Zap, Package, Truck, RotateCcw, ClipboardList, Construction } from "lucide-react";
 import { RequestDashboard } from "@/components/supervisor/logistica/solicitudes/request-dashboard";
 
 export default function SupervisorLogistica() {
@@ -81,10 +81,42 @@ export default function SupervisorLogistica() {
                     {activeTab === 'solicitudes' ? (
                         <RequestDashboard />
                     ) : (
-                        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-8 text-center min-h-[400px] flex items-center justify-center">
-                            <div>
-                                <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-2 capitalize">{activeTab}</h2>
-                                <p className="text-slate-500 dark:text-slate-400">Contenido de la sección {activeTab} en desarrollo.</p>
+                        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-12 text-center min-h-[500px] flex flex-col items-center justify-center overflow-hidden relative">
+                            {/* Decorative background elements */}
+                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-400 via-amber-400 to-orange-400" />
+
+                            <div className="max-w-md mx-auto space-y-6">
+                                <div className="relative group">
+                                    <div className="absolute -inset-1 bg-gradient-to-r from-orange-400 to-amber-400 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+                                    <img
+                                        src="/under-construction.png"
+                                        alt="En construcción"
+                                        className="relative rounded-2xl shadow-2xl w-full max-w-[320px] mx-auto transform transition duration-500 hover:scale-105"
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-center gap-2 text-orange-500 dark:text-orange-400 mb-2">
+                                        <Construction className="w-5 h-5 animate-bounce" />
+                                        <span className="text-sm font-bold uppercase tracking-widest">Próximamente</span>
+                                    </div>
+                                    <h2 className="text-3xl font-bold text-slate-900 dark:text-white capitalize">
+                                        {activeTab}
+                                    </h2>
+                                    <p className="text-slate-500 dark:text-slate-400 text-lg leading-relaxed">
+                                        Estamos trabajando duro para traerte la mejor experiencia en la gestión de <span className="text-slate-900 dark:text-white font-medium">{activeTab}</span>.
+                                    </p>
+                                </div>
+
+                                <div className="pt-4">
+                                    <div className="inline-flex items-center px-4 py-2 rounded-full bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-100 dark:border-orange-500/20 text-sm font-medium">
+                                        <span className="relative flex h-2 w-2 mr-2">
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+                                            <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
+                                        </span>
+                                        En construcción
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     )}

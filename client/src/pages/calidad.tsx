@@ -15,29 +15,43 @@ const MONTH_NAMES = [
   "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"
 ];
 
-// Función para parsear fechas en formato DD-MM-YYYY HH:MM
+// Función para parsear fechas en diversos formatos y retornar DD/MM/YYYY
 function parseDateDDMMYYYY(dateString: string): string {
   if (!dateString) return 'N/A';
 
   try {
-    // Formato esperado: DD-MM-YYYY HH:MM
-    const parts = dateString.trim().split(' ');
-    if (parts.length < 1) return 'N/A';
+    // Normalizar separadores y limpiar espacios
+    const cleanStr = dateString.trim().replace(/\//g, '-');
+    const parts = cleanStr.split(' ');
+    const datePart = parts[0];
+    const dateParts = datePart.split('-');
 
-    const datePart = parts[0].split('-');
-    if (datePart.length !== 3) return 'N/A';
+    if (dateParts.length !== 3) return 'N/A';
 
-    const day = datePart[0].padStart(2, '0');
-    const month = datePart[1].padStart(2, '0');
-    const year = datePart[2];
+    let day, month, year;
 
-    // Crear fecha en formato ISO para JavaScript
+    // Detectar si el primer componente es año (YYYY-MM-DD) o día (DD-MM-YYYY)
+    if (dateParts[0].length === 4) {
+      year = dateParts[0];
+      month = dateParts[1];
+      day = dateParts[2];
+    } else {
+      day = dateParts[0];
+      month = dateParts[1];
+      year = dateParts[2];
+    }
+
+    // Asegurar 2 dígitos para día y mes
+    day = day.padStart(2, '0');
+    month = month.padStart(2, '0');
+
+    // Validar que sea una fecha válida antes de retornar
+    // Usamos formato ISO YYYY-MM-DD para el constructor de Date
     const isoDate = `${year}-${month}-${day}`;
     const date = new Date(isoDate);
 
     if (isNaN(date.getTime())) return 'N/A';
 
-    // Formatear a DD/MM/YYYY
     return `${day}/${month}/${year}`;
   } catch (error) {
     console.error('Error parsing date:', dateString, error);
@@ -139,6 +153,8 @@ function CalidadDetailsList({ selectedMes, resumen, detalles }: {
               <tr className="border-b border-white/10 bg-white/5">
                 <th className="px-3 py-2 text-center font-semibold text-slate-300 whitespace-nowrap">Estado</th>
                 <th className="px-3 py-2 text-left font-semibold text-slate-300 whitespace-nowrap">Fecha</th>
+                <th className="px-3 py-2 text-left font-semibold text-slate-300 whitespace-nowrap">Fecha 2</th>
+                <th className="px-3 py-2 text-right font-semibold text-slate-300 whitespace-nowrap">Dif. Días</th>
                 <th className="px-3 py-2 text-center font-semibold text-slate-300 whitespace-nowrap">Tipo Red</th>
                 <th className="px-3 py-2 text-left font-semibold text-slate-300 whitespace-nowrap">ID Act. 1</th>
                 <th className="px-3 py-2 text-left font-semibold text-slate-300 whitespace-nowrap">ID Act. 2</th>
@@ -168,6 +184,12 @@ function CalidadDetailsList({ selectedMes, resumen, detalles }: {
                     </td>
                     <td className="px-3 py-3 text-slate-300 whitespace-nowrap">
                       {parseDateDDMMYYYY(orden.FECHA_EJECUCION)}
+                    </td>
+                    <td className="px-3 py-3 text-slate-300 whitespace-nowrap">
+                      {parseDateDDMMYYYY(orden.fecha_ejecucion_2)}
+                    </td>
+                    <td className="px-3 py-3 text-right text-slate-300 font-medium">
+                      {orden.DIFERENCIA_DIAS || '0'}
                     </td>
                     <td className="px-3 py-3 text-center whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 rounded text-xs font-semibold ${isHFC
@@ -338,13 +360,18 @@ export default function Calidad() {
         return;
       }
 
-      const formattedData = data.map((row: any) => {
-        const newRow: any = {};
-        Object.entries(row).forEach(([key, val]) => {
-          newRow[key] = formatDecimal(val);
-        });
-        return newRow;
-      });
+      const formattedData = data.map((row: any) => ({
+        'ID Actividad 1': row.id_actividad || 'N/A',
+        'ID Actividad 2': row.id_actividad_2 || 'N/A',
+        'Fecha 1': parseDateDDMMYYYY(row.FECHA_EJECUCION),
+        'Fecha 2': parseDateDDMMYYYY(row.fecha_ejecucion_2),
+        'Dif. Días': row.DIFERENCIA_DIAS || '0',
+        'Tipo Red': row.TIPO_RED_CALCULADO || 'N/A',
+        'Comuna': row.Comuna || 'N/A',
+        'Estado': row.CalidadReactiva || 'N/A',
+        'Desc. Cierre 1': row.DESCRIPCION_CIERRE || 'N/A',
+        'Desc. Cierre 2': row.DESCRIPCION_CIERRE_2 || 'N/A'
+      }));
 
       const worksheet = XLSX.utils.json_to_sheet(formattedData);
       const workbook = XLSX.utils.book_new();
@@ -704,7 +731,7 @@ export default function Calidad() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed right-0 top-0 h-full w-full md:w-[500px] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 z-50 shadow-2xl flex flex-col"
+              className="fixed right-0 top-0 h-full w-full md:w-[900px] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 z-50 shadow-2xl flex flex-col"
             >
               <div className="flex items-center justify-between p-6 border-b border-white/10">
                 <div className="flex items-center gap-3">

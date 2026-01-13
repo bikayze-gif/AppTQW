@@ -10,7 +10,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [role, setRole] = useState<"technician" | "supervisor">("technician");
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -55,12 +55,6 @@ export default function Login() {
         {/* Sign In Title */}
         <div className="mb-5">
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-1.5">Iniciar sesión</h1>
-          <p className="text-slate-400 text-xs md:text-sm">
-            ¿No tienes una cuenta?{" "}
-            <button className="text-[#06b6d4] hover:text-[#0891b2] font-semibold transition-colors" data-testid="link-signup">
-              Regístrate
-            </button>
-          </p>
         </div>
 
         {/* Error Message */}
@@ -73,30 +67,6 @@ export default function Login() {
 
         {/* Form */}
         <form onSubmit={handleSignIn} className="space-y-5">
-          {/* Role Selection */}
-          <div className="grid grid-cols-2 gap-3 p-1 bg-white/5 rounded-lg border border-white/10">
-            <button
-              type="button"
-              onClick={() => setRole("technician")}
-              className={`py-1.5 rounded-md text-xs font-medium transition-all ${role === "technician"
-                ? "bg-[#06b6d4] text-black shadow-lg"
-                : "text-slate-400 hover:text-white"
-                }`}
-            >
-              Técnico
-            </button>
-            <button
-              type="button"
-              onClick={() => setRole("supervisor")}
-              className={`py-1.5 rounded-md text-xs font-medium transition-all ${role === "supervisor"
-                ? "bg-[#06b6d4] text-black shadow-lg"
-                : "text-slate-400 hover:text-white"
-                }`}
-            >
-              Supervisor
-            </button>
-          </div>
-
           {/* Email Input */}
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-slate-300">Correo electrónico</label>

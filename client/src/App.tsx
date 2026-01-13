@@ -138,9 +138,6 @@ function AppLayout() {
     setIsReportChatOpen(true);
   };
 
-  const handleSettingsClick = () => {
-    console.log("Configuración clicked");
-  };
 
   const handleAIClick = () => {
     setIsMaterialFormOpen(false);
@@ -166,7 +163,6 @@ function AppLayout() {
         onClose={() => setIsAddMenuOpen(false)}
         onMaterialClick={handleMaterialClick}
         onReportClick={handleReportClick}
-        onSettingsClick={handleSettingsClick}
         onAIClick={handleAIClick}
       />
       <MaterialForm
