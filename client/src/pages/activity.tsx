@@ -25,10 +25,12 @@ const getStatusColor = (status: string) => {
 };
 
 const formatDate = (dateString: string) => {
+  if (!dateString) return "N/A";
   const date = new Date(dateString);
-  const day = date.getDate().toString().padStart(2, '0');
-  const month = (date.getMonth() + 1).toString().padStart(2, '0');
-  const year = date.getFullYear().toString().slice(2);
+  // Usar métodos UTC para evitar desfases por zona horaria
+  const day = date.getUTCDate().toString().padStart(2, '0');
+  const month = (date.getUTCMonth() + 1).toString().padStart(2, '0');
+  const year = date.getUTCFullYear().toString().slice(2);
   return `${day}-${month}-${year}`;
 };
 
@@ -303,7 +305,8 @@ export default function Activity() {
   const chartData = useMemo(() => {
     if (!chartDataApi) return [];
     return chartDataApi.map((item: any) => ({
-      day: new Date(item.fecha).getDate().toString().padStart(2, '0'),
+      // Usar getUTCDate para el gráfico también
+      day: new Date(item.fecha).getUTCDate().toString().padStart(2, '0'),
       puntos_hfc: item.puntos_hfc,
       q_rgu_ftth: item.q_rgu_ftth,
     }));
