@@ -300,3 +300,17 @@ export type PuntosParameter = typeof puntosParameters.$inferSelect;
 export const insertPuntosParameterSchema = createInsertSchema(puntosParameters).omit({ id: true });
 export type InsertPuntosParameter = z.infer<typeof insertPuntosParameterSchema>;
 
+
+// ============================================
+// SIDEBAR PERMISSIONS
+// ============================================
+
+export const sidebarPermissions = mysqlTable("tb_sidebar_permissions", {
+  id: bigint("id", { mode: "number" }).primaryKey().autoincrement(),
+  profile: varchar("profile", { length: 255 }).notNull().unique(),
+  allowedMenuItems: json("allowed_menu_items").notNull(),
+});
+
+export const insertSidebarPermissionSchema = createInsertSchema(sidebarPermissions);
+export type InsertSidebarPermission = z.infer<typeof insertSidebarPermissionSchema>;
+export type SidebarPermission = typeof sidebarPermissions.$inferSelect;

@@ -111,12 +111,13 @@ export interface IStorage {
   createSession(rut: string, token: string): Promise<void>;
   logConnection(usuario: string, pagina: string, ip: string): Promise<number>;
   closeConnection(id: number): Promise<void>;
-  getExportData(period: string): Promise<Array<{
+  getExportData(rut: string, period: string): Promise<Array<{
     'Fecha fin#': string;
     orden: string;
     'Dir# cliente': string;
     Trabajo: string;
     RGU: number;
+    Puntos: number;
     'Tipo Red': string;
     producto: string;
     'Tipo vivienda': string;
@@ -130,6 +131,11 @@ export interface IStorage {
   getDetalleOtData(mesContable: string): Promise<any[]>;
   getPointsParameters(): Promise<schema.PuntosParameter[]>;
   updatePointsParameter(id: number, data: Partial<schema.InsertPuntosParameter>): Promise<schema.PuntosParameter | undefined>;
+
+  // Sidebar Permissions
+  getSidebarPermissions(profile: string): Promise<string[]>;
+  getAllSidebarPermissions(): Promise<schema.SidebarPermission[]>;
+  updateSidebarPermissions(profile: string, allowedItems: string[]): Promise<schema.SidebarPermission>;
 }
 
 export class MySQLStorage implements IStorage {
@@ -1178,12 +1184,13 @@ export class MySQLStorage implements IStorage {
     }>;
   }
 
-  async getExportData(period: string): Promise<Array<{
+  async getExportData(rut: string, period: string): Promise<Array<{
     'Fecha fin#': string;
     orden: string;
     'Dir# cliente': string;
     Trabajo: string;
     RGU: number;
+    Puntos: number;
     'Tipo Red': string;
     producto: string;
     'Tipo vivienda': string;
@@ -1207,14 +1214,16 @@ export class MySQLStorage implements IStorage {
         orden, 
         \`Dir# cliente\`, 
         \`Trabajo\`, 
-        \`Q_SSPP\` as RGU, 
+        \`Q_SSPP\` as RGU,
+        \`Ptos_referencial\` as Puntos,
         \`Tipo Red\`, 
         producto, 
         \`Tipo vivienda\`, 
         \`Clase vivienda\`
       FROM tb_paso_pyndc
-      WHERE DATE_FORMAT(mes_contable, '%Y-%m-01') = ?`,
-      [formattedDate]
+      WHERE DATE_FORMAT(mes_contable, '%Y-%m-01') = ?
+        AND rut = ?`,
+      [formattedDate, rut]
     );
 
     return rows as Array<{
@@ -1223,6 +1232,7 @@ export class MySQLStorage implements IStorage {
       'Dir# cliente': string;
       Trabajo: string;
       RGU: number;
+      Puntos: number;
       'Tipo Red': string;
       producto: string;
       'Tipo vivienda': string;
@@ -1339,7 +1349,6 @@ export class MySQLStorage implements IStorage {
           cb.descripcion_actividad_2,
           cb.FECHA_EJECUCION,
           cb.fecha_ejecucion_2,
-          cb.ACTIVIDAD,
           cb.Comuna,
           cb.DESCRIPCION_CIERRE,
           cb.DESCRIPCION_CIERRE_2,
@@ -1351,7 +1360,8 @@ export class MySQLStorage implements IStorage {
           u.Nombre_short,
           u.supervisor,
           cb.ZONA,
-          cb.mes_contable
+          cb.mes_contable,
+          cb.DIFERENCIA_DIAS
         FROM tb_calidad_naranja_base cb
         LEFT JOIN tb_user_tqw u ON TRIM(u.rut) = TRIM(cb.rut_tecnico_fs)
         WHERE cb.mes_contable = ?
@@ -1435,6 +1445,62 @@ export class MySQLStorage implements IStorage {
       return updated;
     } catch (error) {
       console.error(`Error updating points parameter ${id}:`, error);
+      throw error;
+    }
+  }
+
+  // Sidebar Permissions
+  async getSidebarPermissions(profile: string): Promise<string[]> {
+    try {
+      const [rows] = await pool.execute(
+        `SELECT allowed_menu_items FROM tb_sidebar_permissions WHERE profile = ?`,
+        [profile]
+      );
+      const result = rows as any[];
+      if (result.length > 0) {
+        return result[0].allowed_menu_items;
+      }
+      return []; // Return empty if no permissions defined (or could default to all)
+    } catch (error) {
+      console.error(`Error fetching sidebar permissions for ${profile}:`, error);
+      return [];
+    }
+  }
+
+  async getAllSidebarPermissions(): Promise<schema.SidebarPermission[]> {
+    try {
+      const [rows] = await pool.execute(`SELECT * FROM tb_sidebar_permissions`);
+      const result = rows as any[];
+      // Map database field names to camelCase
+      return result.map(row => ({
+        id: row.id,
+        profile: row.profile,
+        allowedMenuItems: row.allowed_menu_items
+      }));
+    } catch (error) {
+      console.error("Error fetching all sidebar permissions:", error);
+      return [];
+    }
+  }
+
+  async updateSidebarPermissions(profile: string, allowedItems: string[]): Promise<schema.SidebarPermission> {
+    try {
+      const jsonItems = JSON.stringify(allowedItems);
+      // Insert or Update
+      await pool.execute(
+        `INSERT INTO tb_sidebar_permissions (profile, allowed_menu_items) 
+         VALUES (?, ?) 
+         ON DUPLICATE KEY UPDATE allowed_menu_items = ?`,
+        [profile, jsonItems, jsonItems]
+      );
+
+      const [rows] = await pool.execute(
+        `SELECT * FROM tb_sidebar_permissions WHERE profile = ?`,
+        [profile]
+      );
+      return (rows as any[])[0];
+    } catch (error) {
+      console.error(`Error updating sidebar permissions for ${profile}:`, error);
       throw error;
     }
   }

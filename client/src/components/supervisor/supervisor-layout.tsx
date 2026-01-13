@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useAuth } from "@/lib/auth-context";
 import {
@@ -37,14 +38,23 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
   const { logout } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const { theme, setTheme } = useTheme();
+  const { user } = useAuth();
+  const profile = user?.perfil || "user";
+
+  const { data: allowedItems } = useQuery<string[]>({
+    queryKey: ["/api/sidebar-permissions", profile],
+    enabled: !!profile,
+  });
 
   const handleLogout = async () => {
     await logout();
   };
 
   const handleNavigation = (label: string) => {
-    if (label === "Notes") {
-      setLocation("/supervisor");
+    if (label === "Calendar") {
+      setLocation("/supervisor/calendar");
+    } else if (label === "Notes") {
+      setLocation("/supervisor/notes");
     } else if (label === "Messenger") {
       setLocation("/supervisor/messenger");
     } else if (label === "Scrumboard") {
@@ -109,7 +119,14 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
         {/* Navigation */}
         <div className="flex-1 overflow-y-auto py-4">
           <nav className="px-3 space-y-1">
-            {menuItems.map((item, index) => (
+            {menuItems.filter(item => {
+              // If permissions haven't loaded yet, show all items
+              if (!allowedItems) return true;
+              // If permissions array is empty (no config for this profile), show all items
+              if (allowedItems.length === 0) return true;
+              // Otherwise, only show items that are in the allowedItems array
+              return allowedItems.includes(item.label);
+            }).map((item, index) => (
               <div key={index} className="group">
                 <button onClick={() => handleNavigation(item.label)} className="w-full flex items-center px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors group-hover:text-blue-600 dark:group-hover:text-blue-400">
                   <item.icon size={20} className="shrink-0" />

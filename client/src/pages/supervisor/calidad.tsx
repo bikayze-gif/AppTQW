@@ -126,7 +126,36 @@ export default function SupervisorCalidad() {
     };
 
     const filteredData = useMemo(() => {
-        let data = [...qualityData];
+        let data = qualityData.map(item => {
+            let diff = item.DIFERENCIA_DIAS != null ? parseInt(item.DIFERENCIA_DIAS) : null;
+
+            // Si el campo de la BD es nulo, intentamos calcularlo manualmente
+            if (diff === null && item.FECHA_EJECUCION && item.fecha_ejecucion_2) {
+                try {
+                    // Parsear DD-MM-YYYY HH:mm
+                    const parseDate = (dateStr: string) => {
+                        if (!dateStr) return new Date(NaN);
+                        if (dateStr.includes('-') && dateStr.indexOf('-') < 4) {
+                            const [datePart, timePart] = dateStr.split(' ');
+                            const [day, month, year] = datePart.split('-');
+                            return new Date(`${year}-${month}-${day}T${timePart || '00:00:00'}`);
+                        }
+                        return new Date(dateStr);
+                    };
+
+                    const d1 = parseDate(item.FECHA_EJECUCION);
+                    const d2 = parseDate(item.fecha_ejecucion_2);
+
+                    if (!isNaN(d1.getTime()) && !isNaN(d2.getTime())) {
+                        const timeDiff = d2.getTime() - d1.getTime();
+                        diff = Math.floor(timeDiff / (1000 * 3600 * 24));
+                    }
+                } catch (e) {
+                    console.error("Error parsing dates for diff:", e);
+                }
+            }
+            return { ...item, diff_dias: diff };
+        });
 
         if (statusFilter !== "all") {
             // Ensure specific string comparison for reliability
@@ -516,10 +545,10 @@ export default function SupervisorCalidad() {
         // Crear cabeceras
         const headers = [
             'Calidad30',
+            'Dif. Días',
             'Red',
             'Nombre Short',
             'Supervisor',
-            'Actividad',
             'Comuna',
             'ID Actividad',
             'Fecha Ejecución',
@@ -534,10 +563,10 @@ export default function SupervisorCalidad() {
         // Crear filas de datos
         const rows = filteredData.map((row: any) => [
             String(row.CALIDAD_30) === '0' ? 'CUMPLE' : 'NO CUMPLE',
+            row.diff_dias !== null ? row.diff_dias : '',
             row.TIPO_RED_CALCULADO || '',
             row.Nombre_short || '',
             row.supervisor || '',
-            row.ACTIVIDAD || '',
             row.Comuna || '',
             row.id_actividad || '',
             formatDate(row.FECHA_EJECUCION),
@@ -558,10 +587,10 @@ export default function SupervisorCalidad() {
         // Configurar ancho de columnas
         ws['!cols'] = [
             { wch: 12 },  // Calidad30
+            { wch: 10 },  // Dif. Días
             { wch: 10 },  // Red
             { wch: 20 },  // Nombre Short
             { wch: 20 },  // Supervisor
-            { wch: 30 },  // Actividad
             { wch: 20 },  // Comuna
             { wch: 18 },  // ID Actividad
             { wch: 15 },  // Fecha Ejecución
@@ -1366,6 +1395,11 @@ export default function SupervisorCalidad() {
                                                         Calidad30 <ArrowUpDown className="w-3 h-3 text-slate-400" />
                                                     </div>
                                                 </TableHead>
+                                                <TableHead className="cursor-pointer" onClick={() => handleSort('diff_dias')}>
+                                                    <div className="flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
+                                                        Dif. Días <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                                                    </div>
+                                                </TableHead>
                                                 <TableHead className="cursor-pointer" onClick={() => handleSort('TIPO_RED_CALCULADO')}>
                                                     <div className="flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
                                                         Red <ArrowUpDown className="w-3 h-3 text-slate-400" />
@@ -1379,11 +1413,6 @@ export default function SupervisorCalidad() {
                                                 <TableHead className="cursor-pointer" onClick={() => handleSort('supervisor')}>
                                                     <div className="flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
                                                         Supervisor <ArrowUpDown className="w-3 h-3 text-slate-400" />
-                                                    </div>
-                                                </TableHead>
-                                                <TableHead className="cursor-pointer" onClick={() => handleSort('ACTIVIDAD')}>
-                                                    <div className="flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
-                                                        Actividad <ArrowUpDown className="w-3 h-3 text-slate-400" />
                                                     </div>
                                                 </TableHead>
                                                 <TableHead className="cursor-pointer" onClick={() => handleSort('Comuna')}>
@@ -1466,6 +1495,18 @@ export default function SupervisorCalidad() {
                                                                 </Badge>
                                                             )}
                                                         </TableCell>
+                                                        <TableCell className="text-center font-mono font-medium">
+                                                            {row.diff_dias !== null ? (
+                                                                <span className={cn(
+                                                                    "px-2 py-0.5 rounded-full text-xs",
+                                                                    Math.abs(row.diff_dias) <= 5 ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" :
+                                                                        Math.abs(row.diff_dias) <= 10 ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" :
+                                                                            "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                                                )}>
+                                                                    {row.diff_dias}
+                                                                </span>
+                                                            ) : '-'}
+                                                        </TableCell>
                                                         <TableCell>
                                                             <Badge variant="outline" className={cn("text-xs font-semibold shadow-none",
                                                                 row.TIPO_RED_CALCULADO === 'FTTH'
@@ -1480,11 +1521,6 @@ export default function SupervisorCalidad() {
                                                         </TableCell>
                                                         <TableCell className="text-sm font-medium text-slate-700 dark:text-slate-200">
                                                             {row.supervisor || '-'}
-                                                        </TableCell>
-                                                        <TableCell className="max-w-[120px]">
-                                                            <div className="truncate text-sm text-slate-600 dark:text-slate-300" title={row.ACTIVIDAD}>
-                                                                {row.ACTIVIDAD}
-                                                            </div>
                                                         </TableCell>
                                                         <TableCell className="text-sm text-slate-600 dark:text-slate-300">
                                                             {row.Comuna}

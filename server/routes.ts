@@ -793,13 +793,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // GET activity export data for a specific period
   app.get("/api/activity/export-excel", requireAuth, async (req, res) => {
     try {
+      const rut = req.session.user?.rut;
+      if (!rut) {
+        return res.status(401).json({ error: "Usuario no autenticado" });
+      }
+
       const period = req.query.period as string;
       if (!period) {
         return res.status(400).json({ error: "Period parameter is required" });
       }
 
-      console.log(`[Export API] Requesting export data for period: ${period}`);
-      const data = await storage.getExportData(period);
+      console.log(`[Export API] Requesting export data for RUT: ${rut}, period: ${period}`);
+      const data = await storage.getExportData(rut, period);
       console.log(`[Export API] Found ${data.length} records`);
 
       res.json(data);
@@ -1047,6 +1052,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("[Benchmark Data API] Error:", error);
       res.status(500).json({ error: "Failed to fetch Benchmark data" });
+    }
+  });
+
+
+  // ============================================
+  // SIDEBAR PERMISSIONS ROUTES
+  // ============================================
+
+  app.get("/api/sidebar-permissions", requireAuth, async (req, res) => {
+    try {
+      const permissions = await storage.getAllSidebarPermissions();
+      res.json(permissions);
+    } catch (error) {
+      console.error("[Sidebar Permissions API] Error:", error);
+      res.status(500).json({ error: "Failed to fetch all permissions" });
+    }
+  });
+
+  app.get("/api/sidebar-permissions/:profile", requireAuth, async (req, res) => {
+    try {
+      const { profile } = req.params;
+      const permissions = await storage.getSidebarPermissions(profile);
+      res.json(permissions);
+    } catch (error) {
+      console.error("[Sidebar Permissions API] Error:", error);
+      res.status(500).json({ error: "Failed to fetch permissions for profile" });
+    }
+  });
+
+  app.post("/api/sidebar-permissions", requireRole("admin", "supervisor", "logistica", "bodega", "gerencia"), async (req, res) => {
+    try {
+      const { profile, allowedItems } = req.body;
+      if (!profile || !Array.isArray(allowedItems)) {
+        return res.status(400).json({ error: "Invalid data" });
+      }
+      const updated = await storage.updateSidebarPermissions(profile, allowedItems);
+      res.json(updated);
+    } catch (error) {
+      console.error("[Sidebar Permissions API] Error:", error);
+      res.status(500).json({ error: "Failed to update permissions" });
     }
   });
 

@@ -11,6 +11,7 @@ import { MaterialForm, type MaterialFormData } from "@/components/material-form"
 import { AIChat } from "@/components/ai-chat";
 import { ChatReporte } from "@/components/chat-reporte";
 import { AuthProvider, ProtectedRoute, useAuth } from "@/lib/auth-context";
+import { PermissionProtectedRoute } from "@/components/permission-protected-route";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import ForgotPassword from "@/pages/forgot-password";
@@ -21,6 +22,8 @@ import Activity from "@/pages/activity";
 import Tickets from "@/pages/tickets";
 import SupervisorHome from "@/pages/supervisor/home";
 import SupervisorNotes from "@/pages/supervisor/notes";
+import SupervisorLanding from "@/pages/supervisor/landing";
+import SupervisorCalendar from "@/pages/supervisor/calendar";
 import SupervisorMessenger from "@/pages/supervisor/messenger";
 import SupervisorScrumboard from "@/pages/supervisor/scrumboard";
 import SupervisorMonitoring from "@/pages/supervisor/monitoring";
@@ -29,6 +32,7 @@ import SupervisorKPI from "@/pages/supervisor/kpi";
 import SupervisorCalidad from "@/pages/supervisor/calidad";
 import SupervisorLogistica from "@/pages/supervisor/logistica";
 import ParametricoPuntaje from "@/pages/supervisor/settings/parametrico-puntaje";
+import SidebarPermissions from "@/pages/supervisor/settings/permissions";
 
 function Router() {
   return (
@@ -39,10 +43,20 @@ function Router() {
 
       {/* Protected supervisor routes */}
       <Route path="/supervisor">
-        <ProtectedRoute><SupervisorNotes /></ProtectedRoute>
+        <ProtectedRoute><SupervisorLanding /></ProtectedRoute>
+      </Route>
+      <Route path="/supervisor/notes">
+        <ProtectedRoute>
+          <PermissionProtectedRoute requiredMenuItem="Notes">
+            <SupervisorNotes />
+          </PermissionProtectedRoute>
+        </ProtectedRoute>
       </Route>
       <Route path="/supervisor/home">
         <ProtectedRoute><SupervisorHome /></ProtectedRoute>
+      </Route>
+      <Route path="/supervisor/calendar">
+        <ProtectedRoute><SupervisorCalendar /></ProtectedRoute>
       </Route>
       <Route path="/supervisor/messenger">
         <ProtectedRoute><SupervisorMessenger /></ProtectedRoute>
@@ -66,7 +80,18 @@ function Router() {
         <ProtectedRoute><SupervisorLogistica /></ProtectedRoute>
       </Route>
       <Route path="/supervisor/settings/parametros">
-        <ProtectedRoute><ParametricoPuntaje /></ProtectedRoute>
+        <ProtectedRoute>
+          <PermissionProtectedRoute requiredMenuItem="Configuración">
+            <ParametricoPuntaje />
+          </PermissionProtectedRoute>
+        </ProtectedRoute>
+      </Route>
+      <Route path="/supervisor/settings/permissions">
+        <ProtectedRoute>
+          <PermissionProtectedRoute requiredMenuItem="Configuración">
+            <SidebarPermissions />
+          </PermissionProtectedRoute>
+        </ProtectedRoute>
       </Route>
 
       {/* Protected technician routes */}
