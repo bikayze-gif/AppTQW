@@ -840,21 +840,77 @@ export class MySQLStorage implements IStorage {
 
   async getSupervisorLogisticsMaterials(): Promise<any[]> {
     try {
-      console.log('[Supervisor Logistics] Starting query for all fields...');
-      const [rows] = await pool.execute(`
+      console.log('[Supervisor Logistics] Starting query for grouped tickets...');
+
+      // Fetch all individual items
+      const [allItems] = await pool.execute(`
         SELECT 
-          tlts.*,
+          tlts.id,
+          tlts.TICKET,
+          tlts.material,
+          tlts.cantidad,
+          tlts.campo_item,
+          tlts.fecha,
+          tlts.tecnico,
+          tlts.id_tecnico_traspaso,
+          tlts.flag_regiones,
+          tlts.flag_gestion_supervisor,
+          tlts.flag_gestion_bodega,
+          tlts.FLAG_BODEGA,
           tut.Nombre_short as tecnicoOrigen,
-          tut2.Nombre_short as tecnicoDestino,
-          CASE WHEN tlts.FLAG_BODEGA IS NOT NULL THEN 'OK' ELSE '-' END AS ESTADO_BODEGA
+          tut2.Nombre_short as tecnicoDestino
         FROM tb_logis_tecnico_solicitud tlts
         LEFT JOIN tb_user_tqw tut ON tut.id = tlts.tecnico
         LEFT JOIN tb_user_tqw tut2 ON tut2.id = tlts.id_tecnico_traspaso
-        ORDER BY tlts.fecha DESC
-        LIMIT 200
+        ORDER BY tlts.fecha DESC, tlts.TICKET, tlts.id
+        LIMIT 1000
       `);
-      console.log(`[Supervisor Logistics] Fetched ${(rows as any[]).length} rows with all fields`);
-      return rows as any[];
+
+      // Group items by TICKET in JavaScript
+      const ticketMap = new Map<string, any>();
+
+      (allItems as any[]).forEach((item: any) => {
+        const ticket = item.TICKET;
+
+        if (!ticketMap.has(ticket)) {
+          ticketMap.set(ticket, {
+            TICKET: ticket,
+            fecha: item.fecha,
+            tecnico: item.tecnico,
+            tecnicoOrigen: item.tecnicoOrigen,
+            id_tecnico_traspaso: item.id_tecnico_traspaso,
+            tecnicoDestino: item.tecnicoDestino,
+            flag_regiones: item.flag_regiones,
+            flag_gestion_supervisor: item.flag_gestion_supervisor,
+            flag_gestion_bodega: item.flag_gestion_bodega,
+            ESTADO_BODEGA: item.FLAG_BODEGA !== null ? 'OK' : '-',
+            total_items: 0,
+            total_cantidad: 0,
+            items: []
+          });
+        }
+
+        const ticketData = ticketMap.get(ticket);
+        ticketData.total_items++;
+        ticketData.total_cantidad += Number(item.cantidad) || 0;
+        ticketData.items.push({
+          id: item.id,
+          material: item.material || '',
+          cantidad: Number(item.cantidad) || 0,
+          campo_item: item.campo_item || ''
+        });
+      });
+
+      const groupedTickets = Array.from(ticketMap.values())
+        .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
+        .slice(0, 200);
+
+      console.log(`[Supervisor Logistics] Fetched ${groupedTickets.length} grouped tickets`);
+      if (groupedTickets.length > 0) {
+        console.log(`[Supervisor Logistics] Sample ticket with ${groupedTickets[0].items.length} items`);
+      }
+
+      return groupedTickets;
     } catch (error) {
       console.error("[Supervisor Logistics] Error fetching supervisor logistics materials:", error);
       return [];
