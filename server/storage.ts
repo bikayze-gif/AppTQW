@@ -815,10 +815,12 @@ export class MySQLStorage implements IStorage {
     campo_item: string;
   }): Promise<number> {
     try {
+      console.log('[createMaterialSolicitud] Starting insert with data:', JSON.stringify(data, null, 2));
+
       // Using raw query for insert to handle the table name case sensitivity if needed
       // and match the existing pattern in other methods
       const [result] = await pool.execute(
-        `INSERT INTO TB_LOGIS_TECNICO_SOLICITUD 
+        `INSERT INTO tb_logis_tecnico_solicitud 
          (material, cantidad, tecnico, id_tecnico_traspaso, ticket, fecha, flag_regiones, flag_gestion_supervisor, campo_item)
          VALUES (?, ?, ?, ?, ?, NOW(), ?, ?, ?)`,
         [
@@ -832,9 +834,18 @@ export class MySQLStorage implements IStorage {
           data.campo_item
         ]
       );
-      return (result as any).insertId;
-    } catch (error) {
-      console.error("Error creating material solicitud:", error);
+
+      const insertId = (result as any).insertId;
+      console.log('[createMaterialSolicitud] Successfully inserted with ID:', insertId);
+      return insertId;
+    } catch (error: any) {
+      console.error('[createMaterialSolicitud] ERROR DETAILS:');
+      console.error('  - Error message:', error.message);
+      console.error('  - Error code:', error.code);
+      console.error('  - SQL State:', error.sqlState);
+      console.error('  - SQL Message:', error.sqlMessage);
+      console.error('  - Data attempted:', JSON.stringify(data, null, 2));
+      console.error('  - Full error:', error);
       throw error;
     }
   }
@@ -858,11 +869,15 @@ export class MySQLStorage implements IStorage {
           tlts.flag_gestion_supervisor,
           tlts.flag_gestion_bodega,
           tlts.FLAG_BODEGA,
-          tut.Nombre_short as tecnicoOrigen,
-          tut2.Nombre_short as tecnicoDestino
+          MAX(tut.Nombre_short) as tecnicoOrigen,
+          MAX(tut2.Nombre_short) as tecnicoDestino
         FROM tb_logis_tecnico_solicitud tlts
         LEFT JOIN tb_user_tqw tut ON tut.id = tlts.tecnico
         LEFT JOIN tb_user_tqw tut2 ON tut2.id = tlts.id_tecnico_traspaso
+        GROUP BY 
+          tlts.id, tlts.TICKET, tlts.material, tlts.cantidad, tlts.campo_item, 
+          tlts.fecha, tlts.tecnico, tlts.id_tecnico_traspaso, tlts.flag_regiones, 
+          tlts.flag_gestion_supervisor, tlts.flag_gestion_bodega, tlts.FLAG_BODEGA
         ORDER BY tlts.fecha DESC, tlts.TICKET, tlts.id
         LIMIT 5000
       `);
@@ -892,14 +907,20 @@ export class MySQLStorage implements IStorage {
         }
 
         const ticketData = ticketMap.get(ticket);
-        ticketData.total_items++;
-        ticketData.total_cantidad += Number(item.cantidad) || 0;
-        ticketData.items.push({
-          id: item.id,
-          material: item.material || '',
-          cantidad: Number(item.cantidad) || 0,
-          campo_item: item.campo_item || ''
-        });
+
+        // Prevent duplicate items (handling potential multiple rows from Joins)
+        const isDuplicate = ticketData.items.some((existingItem: any) => existingItem.id === item.id);
+
+        if (!isDuplicate) {
+          ticketData.total_items++;
+          ticketData.total_cantidad += Number(item.cantidad) || 0;
+          ticketData.items.push({
+            id: item.id,
+            material: item.material || '',
+            cantidad: Number(item.cantidad) || 0,
+            campo_item: item.campo_item || ''
+          });
+        }
       });
 
       const groupedTickets = Array.from(ticketMap.values())

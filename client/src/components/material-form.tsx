@@ -168,6 +168,8 @@ export function MaterialForm({ isOpen, onClose, onSubmit, userId }: MaterialForm
     setSubmitResult(null);
 
     try {
+      console.log('[MaterialForm] Submitting order with items:', cartItems);
+
       const response = await fetch("/api/materials/solicitud", {
         method: "POST",
         headers: {
@@ -187,6 +189,7 @@ export function MaterialForm({ isOpen, onClose, onSubmit, userId }: MaterialForm
       });
 
       const data = await response.json();
+      console.log('[MaterialForm] Response:', { status: response.status, data });
 
       if (response.ok) {
         setSubmitResult({
@@ -203,16 +206,31 @@ export function MaterialForm({ isOpen, onClose, onSubmit, userId }: MaterialForm
           onClose();
         }, 2000);
       } else {
+        // Construir mensaje de error detallado
+        let errorMessage = data.error || "Error al crear la solicitud";
+
+        // Si hay detalles de validación, agregarlos
+        if (data.details && Array.isArray(data.details)) {
+          errorMessage += ": " + data.details.map((d: any) => d.message).join(", ");
+        }
+
+        // Si hay un mensaje adicional del servidor
+        if (data.message && data.message !== data.error) {
+          errorMessage += " - " + data.message;
+        }
+
+        console.error('[MaterialForm] Error response:', errorMessage, data);
+
         setSubmitResult({
           success: false,
-          message: data.error || "Error al crear la solicitud",
+          message: errorMessage,
         });
       }
     } catch (error) {
-      console.error("Error submitting solicitud:", error);
+      console.error("[MaterialForm] Network/Connection error:", error);
       setSubmitResult({
         success: false,
-        message: "Error de conexión al enviar la solicitud",
+        message: "Error de conexión al enviar la solicitud. Por favor, verifica tu conexión a internet.",
       });
     } finally {
       setSubmitting(false);

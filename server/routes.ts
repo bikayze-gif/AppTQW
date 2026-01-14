@@ -984,23 +984,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/materials/solicitud", requireAuth, async (req, res) => {
     try {
+      console.log('[Material Solicitud API] ========== NEW REQUEST ==========');
+      console.log('[Material Solicitud API] Request body:', JSON.stringify(req.body, null, 2));
+      console.log('[Material Solicitud API] User session:', {
+        id: req.session.user?.id,
+        email: req.session.user?.email,
+        rut: req.session.user?.rut
+      });
+
       const validatedData = materialSolicitudRequestSchema.parse(req.body);
+      console.log('[Material Solicitud API] Data validated successfully');
+
       const { id_destino, id_supervisor, items } = validatedData;
 
       // Obtener el ID del usuario desde la sesión autenticada (más seguro que confiar en el cliente)
       const id_usuario = req.session.user?.id;
 
       if (!id_usuario) {
+        console.error('[Material Solicitud API] No user ID in session');
         return res.status(401).json({ error: "Usuario no autenticado" });
       }
 
+      console.log('[Material Solicitud API] User ID from session:', id_usuario);
+
       // Validar permisos del usuario
       const userPerfil2 = await storage.getUserPerfil2(id_usuario);
+      console.log('[Material Solicitud API] User perfil2:', userPerfil2);
 
       // Validar permisos del supervisor si se proporciona
       let supervisorPerfil2: string | null = null;
       if (id_supervisor) {
         supervisorPerfil2 = await storage.getUserPerfil2(id_supervisor);
+        console.log('[Material Solicitud API] Supervisor perfil2:', supervisorPerfil2);
       }
 
       // Determinar flags basados en perfil2 según lógica PHP
@@ -1009,31 +1024,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const flag_regiones = effectivePerfil2 ? effectivePerfil2 : "No";
       const flag_gestion_supervisor = effectivePerfil2 ? 1 : 0;
 
+      console.log('[Material Solicitud API] Flags calculated:', {
+        flag_regiones,
+        flag_gestion_supervisor
+      });
+
       // Generar ticket único de 8 caracteres
       const ticket = crypto.randomBytes(4).toString('hex');
+      console.log('[Material Solicitud API] Generated ticket:', ticket);
 
       const insertedIds: number[] = [];
 
       // Insertar cada item del carrito
-      for (const item of items) {
+      console.log(`[Material Solicitud API] Processing ${items.length} items...`);
+      for (let index = 0; index < items.length; index++) {
+        const item = items[index];
+        console.log(`[Material Solicitud API] Processing item ${index + 1}/${items.length}:`, item);
+
         // Obtener el código del item
         let campo_item = item.item || item.itemCode || "";
 
         // Si no tiene código, intentar buscarlo por descripción
         if (!campo_item && item.material) {
+          console.log(`[Material Solicitud API] No item code, searching by description: ${item.material}`);
           const foundCode = await storage.getItemCodeByDescription(item.material);
           if (foundCode) {
             campo_item = foundCode;
+            console.log(`[Material Solicitud API] Found item code: ${foundCode}`);
+          } else {
+            console.log(`[Material Solicitud API] No item code found for description`);
           }
         }
 
         // Asegurarse de que id_usuario es un número válido
         const tecnicoId = Number(id_usuario);
         if (isNaN(tecnicoId) || tecnicoId <= 0) {
+          console.error(`[Material Solicitud API] Invalid user ID: ${id_usuario}`);
           throw new Error(`ID de usuario inválido: ${id_usuario}`);
         }
 
-        const insertId = await storage.createMaterialSolicitud({
+        const insertData = {
           material: item.material,
           cantidad: item.cantidad,
           tecnico: tecnicoId,
@@ -1042,10 +1072,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
           flag_regiones,
           flag_gestion_supervisor,
           campo_item,
-        });
+        };
 
-        insertedIds.push(insertId);
+        console.log(`[Material Solicitud API] Attempting to insert item ${index + 1}:`, insertData);
+
+        try {
+          const insertId = await storage.createMaterialSolicitud(insertData);
+          insertedIds.push(insertId);
+          console.log(`[Material Solicitud API] Item ${index + 1} inserted successfully with ID: ${insertId}`);
+        } catch (itemError: any) {
+          console.error(`[Material Solicitud API] Failed to insert item ${index + 1}:`, itemError);
+          throw itemError;
+        }
       }
+
+      console.log('[Material Solicitud API] All items inserted successfully:', insertedIds);
 
       res.status(201).json({
         success: true,
@@ -1055,13 +1096,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       if (error instanceof z.ZodError) {
+        console.error('[Material Solicitud API] Validation error:', error.errors);
         return res.status(400).json({
           error: "Datos de solicitud inválidos",
           details: error.errors
         });
       }
-      console.error("Error creating material solicitud:", error);
-      res.status(500).json({ error: "Error al crear la solicitud de materiales" });
+      console.error("[Material Solicitud API] Unexpected error:", error);
+      console.error("[Material Solicitud API] Error stack:", (error as Error).stack);
+      res.status(500).json({
+        error: "Error al crear la solicitud de materiales",
+        message: (error as Error).message
+      });
     }
   });
 

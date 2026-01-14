@@ -274,12 +274,36 @@ Host telqway
 
 ---
 
+## 📦 Cambios Pendientes de Despliegue (Enero 2026)
+
+### 🚚 Módulo Logístico (Supervisor)
+- **Panel de Detalle Optimizado:** Nueva vista lateral (45% ancho) con desglose de materiales en formato tabla.
+- **Acciones Directas:** Implementación de botones de **Aprobar** y **Rechazar** por cada ítem de material, con actualización inmediata en base de datos.
+- **KPIs Visuales:** Indicadores de "Total Items" y "Cantidad Total" integrados en una sola fila para maximizar espacio vertical.
+- **Actualización Dinámica:** Sistema de sondeo (polling) cada 5 segundos para reflejar nuevas solicitudes en tiempo real sin recargar.
+- **Legibilidad:** Incremento del 20% en el tamaño de fuente de los encabezados críticos.
+
+### ⚙️ Backend y Seguridad
+- **Validación de Sesión:** Nuevo middleware de timeout (6 horas) para cerrar sesiones inactivas automáticamente.
+- **Logging Extendido:** Trazabilidad completa en la creación de solicitudes de material para depuración.
+- **Corrección de Duplicidad:** Optimización de queries SQL con `GROUP BY` y agregaciones para evitar duplicados causados por inconsistencias en `tb_user_tqw`.
+- **Compatibilidad SQL:** Ajuste de consultas para modo `ONLY_FULL_GROUP_BY`.
+- **Estandarización:** Unificación de nombres de tablas a minúsculas (`tb_logis_tecnico_solicitud`) para compatibilidad Linux/Windows.
+
+### 🧪 Pruebas Recomendadas (Post-Despliegue)
+1. Verificar que el panel lateral de logística cargue los materiales correctamente sin duplicados.
+2. Probar la aprobación de un ítem y confirmar que los flags en DB cambien a `164`, `APROBADO` y `1`.
+3. Validar que la tabla se actualice sola cada 5 segundos al recibir un nuevo registro.
+
+---
+
 ## 📅 Historial de Despliegues
 
 | Fecha | Versión/Commit | Cambios Principales | Estado |
 |-------|----------------|---------------------|--------|
+| 2026-01-14 | PENDING | Módulo Logístico, Polling, Seguridad Sesiones | ⏳ Pendiente |
 | 2026-01-08 | 7bd2d6f | Workflow updates, UI improvements | ✅ Exitoso |
 
 ---
 
-**Última actualización:** 2026-01-08
+**Última actualización:** 2026-01-14
