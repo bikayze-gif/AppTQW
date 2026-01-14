@@ -257,14 +257,14 @@ export function MaterialForm({ isOpen, onClose, onSubmit, userId }: MaterialForm
 
           {/* Slide Panel */}
           <motion.div
-            className="absolute inset-y-0 right-0 w-full md:w-full max-w-md bg-[#0F172A] border-l border-white/10 shadow-2xl flex flex-col overflow-hidden"
+            className="absolute inset-y-0 right-0 w-full md:w-full max-w-md bg-[#0F172A] border-l border-white/10 shadow-2xl flex flex-col h-full overflow-hidden"
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
           >
             {/* Header */}
-            <div className="sticky top-0 bg-[#0F172A]/95 backdrop-blur-md border-b border-white/10 px-6 py-4 flex items-center justify-between z-10">
+            <div className="flex-none bg-[#0F172A]/95 backdrop-blur-md border-b border-white/10 px-6 py-4 flex items-center justify-between z-10">
               <div className="flex items-center gap-2">
                 <div className="text-[#06b6d4] bg-[#06b6d4]/10 p-2 rounded-lg">
                   <ShoppingCart size={20} />
@@ -281,7 +281,7 @@ export function MaterialForm({ isOpen, onClose, onSubmit, userId }: MaterialForm
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4" style={{ maxHeight: 'calc(100vh - 180px)' }}>
+            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4 custom-scrollbar">
               {/* Tipo de Material */}
               <div>
                 <label className="text-sm font-semibold text-white mb-2 block">Tipo de Material</label>
@@ -499,13 +499,13 @@ export function MaterialForm({ isOpen, onClose, onSubmit, userId }: MaterialForm
 
             {/* Footer Action */}
             {cartItems.length > 0 && !showConfirmation && (
-              <div className="border-t border-white/10 bg-[#0F172A]/95 p-6 backdrop-blur-md">
+              <div className="flex-none border-t border-white/10 bg-[#0F172A]/95 p-6 pb-12 backdrop-blur-md">
                 <button
                   onClick={() => setShowConfirmation(true)}
-                  className="w-full bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/30 font-semibold py-3 rounded-lg transition-colors shadow-lg shadow-green-500/10"
+                  className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3.5 rounded-lg transition-all shadow-lg shadow-green-900/40 active:scale-[0.98]"
                   data-testid="button-confirm-order"
                 >
-                  Confirmar Solicitud ({cartItems.length} items)
+                  Confirmar Solicitud Materiales
                 </button>
               </div>
             )}
