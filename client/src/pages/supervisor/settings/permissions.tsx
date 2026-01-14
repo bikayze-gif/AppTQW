@@ -26,7 +26,7 @@ const MENU_ITEMS = [
     "Scrumboard",
     "Facturación",
     "Logística",
-    "SME",
+    "Formulario SME",
     "Modulo Logistico",
     "KPI",
     "Calidad",

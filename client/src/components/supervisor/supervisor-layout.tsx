@@ -69,7 +69,7 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
       setLocation("/supervisor/calidad");
     } else if (label === "Logística") {
       setLocation("/supervisor/logistica");
-    } else if (label === "SME") {
+    } else if (label === "Formulario SME") {
       setLocation("/supervisor/sme");
     } else if (label === "Modulo Logistico") {
       setLocation("/supervisor/modulo-logistico");
@@ -88,7 +88,7 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
     // { icon: BarChart3, label: "Monitoring", hasSubmenu: false },
     { icon: Receipt, label: "Facturación", hasSubmenu: false },
     { icon: Package, label: "Logística", hasSubmenu: false },
-    { icon: Briefcase, label: "SME", hasSubmenu: false },
+    { icon: Briefcase, label: "Formulario SME", hasSubmenu: false },
     { icon: Truck, label: "Modulo Logistico", hasSubmenu: false },
     { icon: BarChart3, label: "KPI", hasSubmenu: false },
     { icon: CheckSquare, label: "Calidad", hasSubmenu: false },

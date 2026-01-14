@@ -657,7 +657,7 @@ export default function SupervisorSME() {
                                             type="date"
                                             value={startDate}
                                             onChange={(e) => setStartDate(e.target.value)}
-                                            className="h-8 text-xs w-[130px] bg-white dark:bg-slate-900"
+                                            className="h-9 text-xs w-[145px] bg-white dark:bg-slate-900 border-slate-200 shadow-sm"
                                         />
                                     </div>
                                     <div className="flex items-center gap-2">
@@ -666,7 +666,7 @@ export default function SupervisorSME() {
                                             type="date"
                                             value={endDate}
                                             onChange={(e) => setEndDate(e.target.value)}
-                                            className="h-8 text-xs w-[130px] bg-white dark:bg-slate-900"
+                                            className="h-9 text-xs w-[145px] bg-white dark:bg-slate-900 border-slate-200 shadow-sm"
                                         />
                                     </div>
                                 </div>
