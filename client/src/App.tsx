@@ -83,7 +83,7 @@ function Router() {
       </Route>
       <Route path="/supervisor/sme">
         <ProtectedRoute>
-          <PermissionProtectedRoute requiredMenuItem="SME">
+          <PermissionProtectedRoute requiredMenuItem="Formulario SME">
             <SupervisorSME />
           </PermissionProtectedRoute>
         </ProtectedRoute>
