@@ -114,11 +114,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const data = await response.json();
 
         if (data.sessionExpired) {
+          console.log("[AUTH] Sesión expirada detectada por ping");
           setUser(null);
           setLocation("/login");
         }
       } catch (error) {
         console.error("Session ping error:", error);
+        // No destruir sesión por error de red, solo loguear
       }
     };
 

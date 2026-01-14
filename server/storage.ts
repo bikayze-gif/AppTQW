@@ -146,6 +146,7 @@ export interface IStorage {
 
   // Logistics Operations
   getSupervisorLogisticsMaterials(): Promise<any[]>;
+  updateLogisticsMaterialStatus(id: number, status: 'approved' | 'rejected'): Promise<boolean>;
 
   // SME Operations
   getSmeActivities(startDate?: string, endDate?: string): Promise<any[]>;
@@ -863,7 +864,7 @@ export class MySQLStorage implements IStorage {
         LEFT JOIN tb_user_tqw tut ON tut.id = tlts.tecnico
         LEFT JOIN tb_user_tqw tut2 ON tut2.id = tlts.id_tecnico_traspaso
         ORDER BY tlts.fecha DESC, tlts.TICKET, tlts.id
-        LIMIT 1000
+        LIMIT 5000
       `);
 
       // Group items by TICKET in JavaScript
@@ -914,6 +915,38 @@ export class MySQLStorage implements IStorage {
     } catch (error) {
       console.error("[Supervisor Logistics] Error fetching supervisor logistics materials:", error);
       return [];
+    }
+  }
+
+  async updateLogisticsMaterialStatus(id: number, status: 'approved' | 'rejected'): Promise<boolean> {
+    try {
+      console.log(`[Supervisor Logistics] Updating status for item ${id} to ${status}`);
+
+      let query = '';
+      if (status === 'approved') {
+        query = `
+          UPDATE tb_logis_tecnico_solicitud 
+          SET FLAG_BODEGA = 164, 
+              flag_gestion_bodega = 'APROBADO', 
+              flag_gestion_supervisor = 1 
+          WHERE id = ?
+        `;
+      } else {
+        query = `
+          UPDATE tb_logis_tecnico_solicitud 
+          SET FLAG_BODEGA = 164, 
+              flag_gestion_bodega = 'RECHAZADO', 
+              flag_gestion_supervisor = 2 
+          WHERE id = ?
+        `;
+      }
+
+      await pool.execute(query, [id]);
+      console.log(`[Supervisor Logistics] Successfully updated item ${id}`);
+      return true;
+    } catch (error) {
+      console.error("[Supervisor Logistics] Error updating logistics material status:", error);
+      return false;
     }
   }
 

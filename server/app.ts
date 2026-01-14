@@ -2,13 +2,10 @@ import { type Server } from "node:http";
 
 import express, { type Express, type Request, Response, NextFunction } from "express";
 import session from "express-session";
-import MemoryStore from "memorystore";
-import pgSession from "connect-pg-simple";
-import pkg from "pg";
-const { Pool } = pkg;
+import MySQLStore from "express-mysql-session";
 import { registerRoutes } from "./routes";
 import type { AuthenticatedUser } from "./storage";
-import { sessionConfig, appConfig, validateConfig, logConfig, pgConfig } from "./config";
+import { sessionConfig, appConfig, validateConfig, logConfig, dbConfig } from "./config";
 import { setupWebSockets } from "./websocket";
 
 // Validar y mostrar configuración al iniciar
@@ -41,37 +38,29 @@ export const app = express();
 // Session configuration with security best practices
 let sessionStore: any;
 
-try {
-  // Intentar usar PostgreSQL para sesiones (solo en producción)
-  if (!appConfig.isProduction) {
-    throw new Error("Use MemoryStore in development");
-  }
 
-  const pgPool = new Pool({
-    host: pgConfig.host,
-    port: pgConfig.port,
-    user: pgConfig.user,
-    password: pgConfig.password,
-    database: pgConfig.database,
-    ssl: { rejectUnauthorized: false },
-  });
+// Usar MySQL para almacenar sesiones (desarrollo y producción)
+const MySQLStoreSession = MySQLStore(session);
+sessionStore = new MySQLStoreSession({
+  host: dbConfig.host,
+  port: dbConfig.port,
+  user: dbConfig.user,
+  password: dbConfig.password,
+  database: dbConfig.database,
+  createDatabaseTable: true, // Crear tabla automáticamente si no existe
+  schema: {
+    tableName: 'sessions',
+    columnNames: {
+      session_id: 'session_id',
+      expires: 'expires',
+      data: 'data'
+    }
+  },
+  checkExpirationInterval: 900000, // Limpiar sesiones expiradas cada 15 minutos
+  expiration: 6 * 60 * 60 * 1000, // 6 horas
+});
 
-  const PgSession = pgSession(session);
-  sessionStore = new PgSession({
-    pool: pgPool,
-    tableName: 'session',
-    schemaName: 'public',
-  });
-
-  log("Session store: PostgreSQL");
-} catch (error) {
-  // Fallback a MemoryStore en desarrollo
-  log("Fallback to MemoryStore for sessions (Development mode or PG error)");
-  const MemoryStoreSession = MemoryStore(session);
-  sessionStore = new MemoryStoreSession({
-    checkPeriod: 86400000,
-  });
-}
+log("Session store: MySQL");
 
 app.use(
   session({

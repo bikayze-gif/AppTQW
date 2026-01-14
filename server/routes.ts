@@ -11,10 +11,12 @@ import { broadcast } from "./websocket";
 // Middleware para verificar autenticación
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
   if (!req.session.user) {
+    console.log(`[AUTH] Request sin autenticación: ${req.method} ${req.path}, Session ID: ${req.sessionID}`);
     return res.status(401).json({ error: "No autenticado", code: "UNAUTHORIZED" });
   }
   // Actualizar última actividad
   req.session.lastActivity = Date.now();
+  console.log(`[AUTH] Request autenticado: ${req.session.user.email}, ${req.method} ${req.path}`);
   next();
 }
 
@@ -33,7 +35,40 @@ export function requireRole(...roles: string[]) {
   };
 }
 
+// Middleware para validar timeout de inactividad
+export function validateSessionTimeout(req: Request, res: Response, next: NextFunction) {
+  // Solo validar si hay sesión activa
+  if (!req.session.user) {
+    return next();
+  }
+
+  const now = Date.now();
+  const lastActivity = req.session.lastActivity || now;
+  const inactiveTime = now - lastActivity;
+  const maxInactiveTime = 6 * 60 * 60 * 1000; // 6 horas
+
+  if (inactiveTime > maxInactiveTime) {
+    console.log(`[AUTH] Sesión expirada por inactividad: ${req.session.user.email}, Inactivo por: ${Math.floor(inactiveTime / 1000 / 60)} minutos`);
+
+    req.session.destroy((err) => {
+      if (err) {
+        console.error("Error destroying expired session:", err);
+      }
+    });
+
+    return res.status(401).json({
+      error: "Sesión expirada por inactividad",
+      code: "SESSION_TIMEOUT"
+    });
+  }
+
+  next();
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Aplicar validación de timeout a todas las rutas API
+  app.use('/api/*', validateSessionTimeout);
+
   // ============================================
   // AUTHENTICATION ROUTES
   // ============================================
@@ -333,13 +368,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     // Actualizar última actividad
     req.session.lastActivity = Date.now();
-
-    // Regenerar ID de sesión periódicamente
-    req.session.regenerate((err) => {
-      if (err) {
-        console.error("Error regenerating session on ping:", err);
-      }
-    });
 
     res.json({
       success: true,
@@ -642,6 +670,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting billing:", error);
       res.status(500).json({ error: "Failed to delete billing record" });
+    }
+  });
+
+  // ============================================
+  // SUPERVISOR LOGISTICS ROUTES
+  // ============================================
+
+  app.get("/api/supervisor/logistica/materiales", async (req, res) => {
+    try {
+      console.log('Fetching supervisor logistics materials...');
+      const materials = await storage.getSupervisorLogisticsMaterials();
+      console.log(`Returning ${materials.length} grouped tickets`);
+      res.json(materials);
+    } catch (error) {
+      console.error("Error fetching supervisor logistics materials:", error);
+      res.status(500).json({ error: "Failed to fetch supervisor logistics materials" });
+    }
+  });
+
+  app.post("/api/supervisor/logistica/materiales/:id/status", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+
+      if (!id || !status || (status !== 'approved' && status !== 'rejected')) {
+        return res.status(400).json({ error: "Invalid parameters. status must be 'approved' or 'rejected'." });
+      }
+
+      const success = await storage.updateLogisticsMaterialStatus(Number(id), status);
+
+      if (success) {
+        res.json({ success: true, message: `Status updated to ${status}` });
+      } else {
+        res.status(500).json({ error: "Failed to update status" });
+      }
+    } catch (error) {
+      console.error("Error updating logistics material status:", error);
+      res.status(500).json({ error: "Failed to update logistics material status" });
     }
   });
 

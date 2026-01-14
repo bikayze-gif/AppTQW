@@ -1,8 +1,9 @@
 import { SupervisorLayout } from "@/components/supervisor/supervisor-layout";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Loader2, AlertCircle, X, Package, ChevronRight } from "lucide-react";
+import { Loader2, AlertCircle, X, Package, ChevronRight, Check, X as XIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
     Table,
@@ -15,6 +16,7 @@ import {
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 interface MaterialItem {
     id: number;
@@ -40,10 +42,41 @@ interface SolicitudLogistica {
 }
 
 export default function SupervisorModuloLogistico() {
+    const { toast } = useToast();
+    const queryClient = useQueryClient();
     const [selectedTicket, setSelectedTicket] = useState<SolicitudLogistica | null>(null);
 
     const { data: solicitudes, isLoading, error } = useQuery<SolicitudLogistica[]>({
         queryKey: ["/api/supervisor/logistica/materiales"],
+        refetchInterval: 5000, // Poll every 5 seconds
+    });
+
+    const updateStatusMutation = useMutation({
+        mutationFn: async ({ id, status }: { id: number; status: 'approved' | 'rejected' }) => {
+            await apiRequest("POST", `/api/supervisor/logistica/materiales/${id}/status`, { status });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["/api/supervisor/logistica/materiales"] });
+            // Refresh selected ticket if consistent
+            if (selectedTicket) {
+                // We rely on the parent query invalidation to update the data, 
+                // but setting selectedTicket to null might be jarring. 
+                // Ideal would be to refetch data and find the updated ticket to update local state.
+                // For now, let's keep it simple.
+            }
+            toast({
+                title: "Éxito",
+                description: "Estado actualizado correctamente",
+            });
+        },
+        onError: (error) => {
+            console.error("Failed to update status", error);
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Error al actualizar el estado",
+            });
+        }
     });
 
     const handleRowClick = (solicitud: SolicitudLogistica) => {
@@ -54,13 +87,23 @@ export default function SupervisorModuloLogistico() {
         setSelectedTicket(null);
     };
 
+    const handleApprove = (e: React.MouseEvent, id: number) => {
+        e.stopPropagation();
+        updateStatusMutation.mutate({ id, status: 'approved' });
+    };
+
+    const handleReject = (e: React.MouseEvent, id: number) => {
+        e.stopPropagation();
+        updateStatusMutation.mutate({ id, status: 'rejected' });
+    };
+
     return (
         <SupervisorLayout>
             <div className="flex h-[calc(100vh-4rem)]">
                 {/* Main Table Section */}
                 <div
-                    className={`transition-all duration-300 ease-in-out ${selectedTicket ? 'w-[70%]' : 'w-full'
-                        } overflow-y-auto border-r border-slate-200 dark:border-slate-700`}
+                    className={`transition-all duration-300 ease-in-out border-r border-slate-200 dark:border-slate-700 ${selectedTicket ? 'w-[55%]' : 'w-full'
+                        } overflow-y-auto`}
                 >
                     <div className="p-6">
                         <div className="space-y-6">
@@ -178,13 +221,13 @@ export default function SupervisorModuloLogistico() {
 
                 {/* Detail Panel */}
                 <div
-                    className={`transition-all duration-300 ease-in-out overflow-y-auto bg-white dark:bg-slate-900 ${selectedTicket ? 'w-[30%]' : 'w-0'
+                    className={`transition-all duration-300 ease-in-out overflow-y-auto bg-white dark:bg-slate-900 ${selectedTicket ? 'w-[45%]' : 'w-0'
                         }`}
                 >
                     {selectedTicket && (
                         <div className="p-6 space-y-6">
                             {/* Header */}
-                            <div className="flex items-start justify-between sticky top-0 bg-white dark:bg-slate-900 pb-4 border-b border-slate-200 dark:border-slate-700">
+                            <div className="flex items-start justify-between sticky top-0 bg-white dark:bg-slate-900 pb-4 border-b border-slate-200 dark:border-slate-700 z-10">
                                 <div>
                                     <h2 className="text-xl font-bold text-slate-900 dark:text-white">
                                         Detalle de Solicitud
@@ -203,81 +246,123 @@ export default function SupervisorModuloLogistico() {
                                 </Button>
                             </div>
 
-                            {/* Summary Info */}
-                            <div className="space-y-3">
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg">
-                                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Total Items</p>
-                                        <p className="text-2xl font-bold text-slate-900 dark:text-white">
-                                            {selectedTicket.total_items}
-                                        </p>
-                                    </div>
-                                    <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg">
-                                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Cantidad Total</p>
-                                        <p className="text-2xl font-bold text-slate-900 dark:text-white">
-                                            {selectedTicket.total_cantidad}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
-                                    <p className="text-xs text-blue-600 dark:text-blue-400 mb-1">Fecha de Solicitud</p>
-                                    <p className="text-sm font-semibold text-blue-900 dark:text-blue-300">
-                                        {format(new Date(selectedTicket.fecha), "dd 'de' MMMM 'de' yyyy 'a las' HH:mm", {
-                                            locale: es,
-                                        })}
+                            {/* Combined Header Info Row */}
+                            <div className="grid grid-cols-12 gap-4 items-stretch">
+                                {/* KPI Items */}
+                                <div className="col-span-2 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700 flex flex-col justify-center text-center">
+                                    <p className="text-[11px] uppercase tracking-tight font-bold text-slate-500 mb-1">Items</p>
+                                    <p className="text-3xl font-black text-slate-900 dark:text-white leading-none">
+                                        {selectedTicket.total_items}
                                     </p>
                                 </div>
 
-                                <div className="space-y-2">
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-xs text-slate-500">Origen:</span>
-                                        <span className="text-sm font-medium">{selectedTicket.tecnicoOrigen || `ID: ${selectedTicket.tecnico}`}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-xs text-slate-500">Destino:</span>
-                                        <span className="text-sm font-medium">{selectedTicket.tecnicoDestino || "Bodega"}</span>
-                                    </div>
-                                    {selectedTicket.flag_regiones && (
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-xs text-slate-500">Región:</span>
-                                            <span className="text-sm font-medium">{selectedTicket.flag_regiones}</span>
+                                {/* KPI Total */}
+                                <div className="col-span-2 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700 flex flex-col justify-center text-center">
+                                    <p className="text-[11px] uppercase tracking-tight font-bold text-slate-500 mb-1">Total</p>
+                                    <p className="text-3xl font-black text-slate-900 dark:text-white leading-none">
+                                        {selectedTicket.total_cantidad}
+                                    </p>
+                                </div>
+
+                                {/* Metadata & Flow */}
+                                <div className="col-span-8 bg-blue-50/30 dark:bg-blue-900/10 rounded-xl p-3 border border-blue-100 dark:border-blue-900/20 flex flex-col justify-between overflow-hidden">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[11px] uppercase font-bold text-slate-400">Fecha:</span>
+                                            <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                                                {format(new Date(selectedTicket.fecha), "dd/MM/yy HH:mm", { locale: es })}
+                                            </span>
                                         </div>
-                                    )}
+                                        <Badge className={`h-5 px-2 text-[10px] uppercase font-black border-none ${selectedTicket.ESTADO_BODEGA === "OK"
+                                            ? "bg-green-500 text-white"
+                                            : "bg-amber-500 text-white"
+                                            }`}>
+                                            {selectedTicket.ESTADO_BODEGA}
+                                        </Badge>
+                                    </div>
+                                    <div className="flex items-center gap-4 pt-2 border-t border-blue-100/50 dark:border-blue-900/20">
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-[10px] uppercase font-bold text-slate-400 truncate">Origen</p>
+                                            <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                                                {selectedTicket.tecnicoOrigen || `ID: ${selectedTicket.tecnico}`}
+                                            </p>
+                                        </div>
+                                        <div className="text-slate-400 text-sm font-bold">→</div>
+                                        <div className="flex-1 min-w-0 text-right">
+                                            <p className="text-[10px] uppercase font-bold text-slate-400 truncate">Destino</p>
+                                            <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                                                {selectedTicket.tecnicoDestino || "Bodega"}
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
-                            {/* Materials List */}
+                            {/* Materials List Table */}
                             <div>
                                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
                                     <Package className="h-4 w-4" />
                                     Materiales Solicitados
                                 </h3>
-                                <div className="space-y-2">
-                                    {selectedTicket.items.map((item, index) => (
-                                        <div
-                                            key={item.id}
-                                            className="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-700 transition-colors"
-                                        >
-                                            <div className="flex items-start justify-between mb-2">
-                                                <span className="text-xs font-mono text-slate-400">#{index + 1}</span>
-                                                <Badge variant="outline" className="font-mono text-xs">
-                                                    {item.cantidad} unid.
-                                                </Badge>
-                                            </div>
-                                            <p className="text-sm font-medium text-slate-900 dark:text-white mb-2 leading-tight">
-                                                {item.material}
-                                            </p>
-                                            {item.campo_item && (
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-xs text-slate-500">Código Oracle:</span>
-                                                    <code className="text-xs bg-white dark:bg-slate-900 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">
-                                                        {item.campo_item}
-                                                    </code>
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))}
+                                <div key={selectedTicket.TICKET} className="rounded-md border border-slate-200 dark:border-slate-700 overflow-hidden">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow className="bg-slate-50 dark:bg-slate-800/50">
+                                                <TableHead className="w-[50px]">#</TableHead>
+                                                <TableHead>Material</TableHead>
+                                                <TableHead className="text-center w-[80px]">Cant.</TableHead>
+                                                <TableHead className="text-right w-[100px]">Acciones</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {selectedTicket.items.map((item, index) => (
+                                                <TableRow key={item.id}>
+                                                    <TableCell className="font-mono text-xs text-slate-500">
+                                                        {index + 1}
+                                                    </TableCell>
+                                                    <TableCell className="py-3">
+                                                        <div className="flex flex-col gap-1">
+                                                            <span className="text-sm font-medium text-slate-900 dark:text-white leading-tight">
+                                                                {item.material}
+                                                            </span>
+                                                            {item.campo_item && (
+                                                                <code className="text-[10px] bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded w-fit text-slate-500">
+                                                                    ID: {item.campo_item}
+                                                                </code>
+                                                            )}
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell className="text-center">
+                                                        <Badge variant="outline" className="font-mono text-xs">
+                                                            {item.cantidad}
+                                                        </Badge>
+                                                    </TableCell>
+                                                    <TableCell className="text-right">
+                                                        <div className="flex justify-end gap-1">
+                                                            <Button
+                                                                variant="outline"
+                                                                size="icon"
+                                                                onClick={(e) => handleApprove(e, item.id)}
+                                                                className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200 dark:border-green-800 dark:hover:bg-green-900/20"
+                                                                title="Aprobar"
+                                                            >
+                                                                <Check className="h-4 w-4" />
+                                                            </Button>
+                                                            <Button
+                                                                variant="outline"
+                                                                size="icon"
+                                                                onClick={(e) => handleReject(e, item.id)}
+                                                                className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 dark:border-red-800 dark:hover:bg-red-900/20"
+                                                                title="Rechazar"
+                                                            >
+                                                                <XIcon className="h-4 w-4" />
+                                                            </Button>
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
                                 </div>
                             </div>
                         </div>

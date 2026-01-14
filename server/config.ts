@@ -21,14 +21,7 @@ export const dbConfig = {
   database: process.env.MYSQL_DATABASE || "operaciones_tqw",
 };
 
-// Configuración de base de datos PostgreSQL para sesiones
-export const pgConfig = {
-  host: process.env.PGHOST || "localhost",
-  port: parseInt(process.env.PGPORT || "5432"),
-  user: process.env.PGUSER || "postgres",
-  password: process.env.PGPASSWORD || "",
-  database: process.env.PGDATABASE || "replit",
-};
+
 
 // Configuración de la aplicación
 export const appConfig = {
