@@ -13,6 +13,13 @@ const pool = mysql.createPool({
   user: dbConfig.user,
   password: dbConfig.password,
   database: dbConfig.database,
+  waitForConnections: true,
+  connectionLimit: 10,
+  maxIdle: 10,
+  idleTimeout: 60000,
+  queueLimit: 0,
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 10000,
 });
 
 const db = drizzle(pool, { schema, mode: "default" });
@@ -136,6 +143,14 @@ export interface IStorage {
   getSidebarPermissions(profile: string): Promise<string[]>;
   getAllSidebarPermissions(): Promise<schema.SidebarPermission[]>;
   updateSidebarPermissions(profile: string, allowedItems: string[]): Promise<schema.SidebarPermission>;
+
+  // Logistics Operations
+  getSupervisorLogisticsMaterials(): Promise<any[]>;
+
+  // SME Operations
+  getSmeActivities(): Promise<any[]>;
+  createSmeActivity(data: any): Promise<void>;
+  getLocalidadesByZona(zona: string): Promise<any[]>;
 }
 
 export class MySQLStorage implements IStorage {
@@ -798,10 +813,12 @@ export class MySQLStorage implements IStorage {
     campo_item: string;
   }): Promise<number> {
     try {
+      // Using raw query for insert to handle the table name case sensitivity if needed
+      // and match the existing pattern in other methods
       const [result] = await pool.execute(
-        `INSERT INTO tb_logis_tecnico_solicitud 
-         (material, cantidad, fecha, tecnico, id_tecnico_traspaso, TICKET, flag_regiones, flag_gestion_supervisor, campo_item) 
-         VALUES (?, ?, NOW(), ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO TB_LOGIS_TECNICO_SOLICITUD 
+         (material, cantidad, tecnico, id_tecnico_traspaso, ticket, fecha, flag_regiones, flag_gestion_supervisor, campo_item)
+         VALUES (?, ?, ?, ?, ?, NOW(), ?, ?, ?)`,
         [
           data.material,
           data.cantidad,
@@ -819,6 +836,32 @@ export class MySQLStorage implements IStorage {
       throw error;
     }
   }
+
+  async getSupervisorLogisticsMaterials(): Promise<any[]> {
+    try {
+      console.log('[Supervisor Logistics] Starting query...');
+      const [rows] = await pool.execute(`
+        SELECT tlts.TICKET, tut.Nombre_short, tlts.fecha, tlts.id_tecnico_traspaso,
+               tut2.Nombre_short as tecnicoDestino,
+               CASE WHEN tlts.FLAG_BODEGA IS NOT NULL THEN 'OK' ELSE '-' END AS ESTADO
+        FROM tb_logis_tecnico_solicitud tlts
+        LEFT JOIN tb_user_tqw tut ON tut.id = tlts.tecnico
+        LEFT JOIN tb_user_tqw tut2 ON tut2.id = tlts.id_tecnico_traspaso
+        ORDER BY tlts.fecha DESC
+        LIMIT 100
+      `);
+      console.log(`[Supervisor Logistics] Fetched ${(rows as any[]).length} rows`);
+      if ((rows as any[]).length > 0) {
+        console.log('[Supervisor Logistics] Sample row:', (rows as any[])[0]);
+      }
+      return rows as any[];
+    } catch (error) {
+      console.error("[Supervisor Logistics] Error fetching supervisor logistics materials:", error);
+      return [];
+    }
+  }
+
+
 
   async getTechnicians(): Promise<Array<{ id: number, name: string, rut: string }>> {
     const [rows] = await pool.execute<RowDataPacket[]>(
@@ -1511,6 +1554,69 @@ export class MySQLStorage implements IStorage {
     } catch (error) {
       console.error(`Error updating sidebar permissions for ${profile}:`, error);
       throw error;
+    }
+  }
+
+  // SME Operations
+  async getSmeActivities(): Promise<any[]> {
+    try {
+      const [rows] = await pool.execute(
+        `SELECT CAST(a.ID AS SIGNED) as ID, a.NombreTecnico, a.NombreCoordinador, a.Fecha, a.HoraInicio, a.HoraTermino, 
+                a.Actividad, a.localidad, a.rut_cliente, a.zona, a.direccion, a.nombre_cliente, a.observacion,
+                u.nombre_short as technicianName
+         FROM TB_SME_FORM_actividad a
+         LEFT JOIN tb_user_tqw u ON a.NombreTecnico = u.Rut COLLATE utf8mb4_unicode_ci
+         ORDER BY a.Fecha DESC, a.ID DESC
+         LIMIT 100`
+      );
+      return rows as any[];
+    } catch (error) {
+      console.error("Error fetching SME activities:", error);
+      return [];
+    }
+  }
+
+  async createSmeActivity(data: any): Promise<void> {
+    try {
+      await pool.execute(
+        `INSERT INTO TB_SME_FORM_actividad 
+        (NombreTecnico, NombreCoordinador, Fecha, HoraInicio, HoraTermino, Actividad, 
+         localidad, rut_cliente, zona, direccion, nombre_cliente, observacion) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          data.nombre_tecnico,
+          data.nombre_coordinador,
+          data.fecha,
+          data.hora_inicio,
+          data.hora_termino,
+          data.actividad,
+          data.localidad,
+          data.rut_cliente,
+          data.zona,
+          data.direccion,
+          data.nombre_cliente,
+          data.observacion
+        ]
+      );
+    } catch (error) {
+      console.error("Error creating SME activity:", error);
+      throw error;
+    }
+  }
+
+  async getLocalidadesByZona(zona: string): Promise<any[]> {
+    try {
+      const [rows] = await pool.execute(
+        `SELECT Comuna_1 as COMUNA_1, Comuna_2 
+         FROM tp_comunas_andes 
+         WHERE Zona = ?
+         ORDER BY Comuna_2 ASC`,
+        [zona]
+      );
+      return rows as any[];
+    } catch (error) {
+      console.error("Error fetching localidades by zona:", error);
+      return [];
     }
   }
 }

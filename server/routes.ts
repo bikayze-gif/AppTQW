@@ -454,6 +454,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ============================================
+  // SME ROUTES
+  // ============================================
+
+  app.get("/api/sme/activities", requireAuth, async (req, res) => {
+    try {
+      const data = await storage.getSmeActivities();
+      res.json(data);
+    } catch (error) {
+      console.error("[SME Activities API] Error:", error);
+      res.status(500).json({ error: "Failed to fetch SME activities" });
+    }
+  });
+
+  app.post("/api/sme/activities", requireAuth, async (req, res) => {
+    try {
+      await storage.createSmeActivity(req.body);
+      res.json({ success: true, message: "Activity saved successfully" });
+    } catch (error) {
+      console.error("[SME Create Activity API] Error:", error);
+      res.status(500).json({ error: "Failed to create SME activity" });
+    }
+  });
+
+  app.get("/api/sme/localidades/:zona", requireAuth, async (req, res) => {
+    try {
+      const { zona } = req.params;
+      const data = await storage.getLocalidadesByZona(zona);
+      res.json(data);
+    } catch (error) {
+      console.error("[SME Localidades API] Error:", error);
+      res.status(500).json({ error: "Failed to fetch localidades" });
+    }
+  });
+
   // Points Parameters API Route
   app.get("/api/points-parameters", requireAuth, async (req, res) => {
     try {
@@ -637,6 +672,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching material items:", error);
       res.status(500).json({ error: "Failed to fetch material items" });
+    }
+  });
+
+  // GET supervisor logistics material requests
+  app.get("/api/supervisor/logistica/materiales", requireAuth, async (req, res) => {
+    try {
+      console.log("[API] GET /api/supervisor/logistica/materiales - Request received");
+      const data = await storage.getSupervisorLogisticsMaterials();
+      console.log(`[API] Returning ${data.length} records`);
+      res.json(data);
+    } catch (error) {
+      console.error("[API] Error fetching supervisor logistics materials:", error);
+      res.status(500).json({ error: "Failed to fetch supervisor logistics materials" });
     }
   });
 

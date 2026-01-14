@@ -31,6 +31,8 @@ import SupervisorBilling from "@/pages/supervisor/billing";
 import SupervisorKPI from "@/pages/supervisor/kpi";
 import SupervisorCalidad from "@/pages/supervisor/calidad";
 import SupervisorLogistica from "@/pages/supervisor/logistica";
+import SupervisorSME from "@/pages/supervisor/sme";
+import SupervisorModuloLogistico from "@/pages/supervisor/modulo-logistico";
 import ParametricoPuntaje from "@/pages/supervisor/settings/parametrico-puntaje";
 import SidebarPermissions from "@/pages/supervisor/settings/permissions";
 
@@ -78,6 +80,20 @@ function Router() {
       </Route>
       <Route path="/supervisor/logistica">
         <ProtectedRoute><SupervisorLogistica /></ProtectedRoute>
+      </Route>
+      <Route path="/supervisor/sme">
+        <ProtectedRoute>
+          <PermissionProtectedRoute requiredMenuItem="SME">
+            <SupervisorSME />
+          </PermissionProtectedRoute>
+        </ProtectedRoute>
+      </Route>
+      <Route path="/supervisor/modulo-logistico">
+        <ProtectedRoute>
+          <PermissionProtectedRoute requiredMenuItem="Modulo Logistico">
+            <SupervisorModuloLogistico />
+          </PermissionProtectedRoute>
+        </ProtectedRoute>
       </Route>
       <Route path="/supervisor/settings/parametros">
         <ProtectedRoute>

@@ -26,6 +26,8 @@ const MENU_ITEMS = [
     "Scrumboard",
     "Facturación",
     "Logística",
+    "SME",
+    "Modulo Logistico",
     "KPI",
     "Calidad",
     "Notifications",
@@ -33,6 +35,7 @@ const MENU_ITEMS = [
 ];
 
 const PROFILES = [
+    "SME",
     "Supervisor Tecnico",
     "Generico Bodega",
     "LOGISTICA",
@@ -151,7 +154,7 @@ export default function SidebarPermissions() {
                 <div className="p-6 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1e293b] flex justify-between items-start">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-                            Permisos de Menú
+                            Permisos de Menú (v1.1)
                         </h1>
                         <p className="text-slate-500 dark:text-slate-400">
                             Configure qué elementos del menú lateral son visibles para cada perfil.
