@@ -52,6 +52,11 @@ import {
     ArrowDown,
     Download,
     Sheet,
+    Wrench,
+    Calendar,
+    User,
+    Clock,
+    MapPin,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -106,6 +111,7 @@ const ZONAS = ["Centro", "Norte", "Sur", "Metro"];
 
 export default function SupervisorSME() {
     const queryClient = useQueryClient();
+    const [selectedZona, setSelectedZona] = useState<string>("");
     const [startDate, setStartDate] = useState<string>(new Date().toISOString().split("T")[0]);
     const [endDate, setEndDate] = useState<string>(new Date().toISOString().split("T")[0]);
     const [searchTerm, setSearchTerm] = useState("");
