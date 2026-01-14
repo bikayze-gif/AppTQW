@@ -460,11 +460,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/sme/activities", requireAuth, async (req, res) => {
     try {
-      const data = await storage.getSmeActivities();
+      const { startDate, endDate } = req.query;
+      const data = await storage.getSmeActivities(
+        startDate as string,
+        endDate as string
+      );
       res.json(data);
     } catch (error) {
       console.error("[SME Activities API] Error:", error);
       res.status(500).json({ error: "Failed to fetch SME activities" });
+    }
+  });
+
+  app.get("/api/sme/activities/export", requireAuth, async (req, res) => {
+    try {
+      const { startDate, endDate } = req.query;
+      const data = await storage.getSmeActivities(
+        startDate as string,
+        endDate as string
+      );
+      res.json(data);
+    } catch (error) {
+      console.error("[SME Export API] Error:", error);
+      res.status(500).json({ error: "Failed to fetch SME activities for export" });
+    }
+  });
+
+  app.get("/api/sme/technicians", requireAuth, async (req, res) => {
+    try {
+      const data = await storage.getSmeTechnicians();
+      res.json(data);
+    } catch (error) {
+      console.error("[SME Technicians API] Error:", error);
+      res.status(500).json({ error: "Failed to fetch SME technicians" });
     }
   });
 

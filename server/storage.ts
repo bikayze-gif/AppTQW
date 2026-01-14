@@ -148,7 +148,8 @@ export interface IStorage {
   getSupervisorLogisticsMaterials(): Promise<any[]>;
 
   // SME Operations
-  getSmeActivities(): Promise<any[]>;
+  getSmeActivities(startDate?: string, endDate?: string): Promise<any[]>;
+  getSmeTechnicians(): Promise<Array<{ id: number, name: string, rut: string }>>;
   createSmeActivity(data: any): Promise<void>;
   getLocalidadesByZona(zona: string): Promise<any[]>;
 }
@@ -839,21 +840,20 @@ export class MySQLStorage implements IStorage {
 
   async getSupervisorLogisticsMaterials(): Promise<any[]> {
     try {
-      console.log('[Supervisor Logistics] Starting query...');
+      console.log('[Supervisor Logistics] Starting query for all fields...');
       const [rows] = await pool.execute(`
-        SELECT tlts.TICKET, tut.Nombre_short, tlts.fecha, tlts.id_tecnico_traspaso,
-               tut2.Nombre_short as tecnicoDestino,
-               CASE WHEN tlts.FLAG_BODEGA IS NOT NULL THEN 'OK' ELSE '-' END AS ESTADO
+        SELECT 
+          tlts.*,
+          tut.Nombre_short as tecnicoOrigen,
+          tut2.Nombre_short as tecnicoDestino,
+          CASE WHEN tlts.FLAG_BODEGA IS NOT NULL THEN 'OK' ELSE '-' END AS ESTADO_BODEGA
         FROM tb_logis_tecnico_solicitud tlts
         LEFT JOIN tb_user_tqw tut ON tut.id = tlts.tecnico
         LEFT JOIN tb_user_tqw tut2 ON tut2.id = tlts.id_tecnico_traspaso
         ORDER BY tlts.fecha DESC
-        LIMIT 100
+        LIMIT 200
       `);
-      console.log(`[Supervisor Logistics] Fetched ${(rows as any[]).length} rows`);
-      if ((rows as any[]).length > 0) {
-        console.log('[Supervisor Logistics] Sample row:', (rows as any[])[0]);
-      }
+      console.log(`[Supervisor Logistics] Fetched ${(rows as any[]).length} rows with all fields`);
       return rows as any[];
     } catch (error) {
       console.error("[Supervisor Logistics] Error fetching supervisor logistics materials:", error);
@@ -1558,22 +1558,50 @@ export class MySQLStorage implements IStorage {
   }
 
   // SME Operations
-  async getSmeActivities(): Promise<any[]> {
+  async getSmeActivities(startDate?: string, endDate?: string): Promise<any[]> {
     try {
-      const [rows] = await pool.execute(
-        `SELECT CAST(a.ID AS SIGNED) as ID, a.NombreTecnico, a.NombreCoordinador, a.Fecha, a.HoraInicio, a.HoraTermino, 
+      let query = `SELECT CAST(a.ID AS SIGNED) as ID, a.NombreTecnico, a.NombreCoordinador, a.Fecha, a.HoraInicio, a.HoraTermino, 
                 a.Actividad, a.localidad, a.rut_cliente, a.zona, a.direccion, a.nombre_cliente, a.observacion,
                 u.nombre_short as technicianName
          FROM TB_SME_FORM_actividad a
-         LEFT JOIN tb_user_tqw u ON a.NombreTecnico = u.Rut COLLATE utf8mb4_unicode_ci
-         ORDER BY a.Fecha DESC, a.ID DESC
-         LIMIT 100`
-      );
+         LEFT JOIN tb_user_tqw u ON a.NombreTecnico = u.Rut COLLATE utf8mb4_unicode_ci`;
+
+      const params: any[] = [];
+      if (startDate && endDate) {
+        query += ` WHERE a.Fecha BETWEEN ? AND ?`;
+        params.push(startDate, endDate);
+      }
+
+      query += ` ORDER BY a.Fecha DESC, a.ID DESC LIMIT 200`;
+
+      const [rows] = await pool.execute(query, params);
       return rows as any[];
     } catch (error) {
       console.error("Error fetching SME activities:", error);
       return [];
     }
+  }
+
+  async getSmeTechnicians(): Promise<Array<{ id: number, name: string, rut: string }>> {
+    const smreRuts = [
+      '18405333-0', '12860911-3', '18439126-0', '17924391-1', '14112874-4',
+      '16230717-7', '20206906-1', '16266710-6', '18320644-3', '14034104-5',
+      '16393999-1', '26413363-7', '11832936-8', '17674688-2', '10191407-0',
+      '15537722-4', '18518435-8', '13622877-3'
+    ];
+
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      `SELECT ID as id, nombre_short as name, Rut as rut 
+       FROM tb_user_tqw 
+       WHERE Rut IN (${smreRuts.map(() => '?').join(',')})
+       ORDER BY nombre_short ASC`,
+      smreRuts
+    );
+    return rows.map(r => ({
+      id: Number(r.id),
+      name: r.name || 'Sin nombre',
+      rut: r.rut || ''
+    }));
   }
 
   async createSmeActivity(data: any): Promise<void> {
