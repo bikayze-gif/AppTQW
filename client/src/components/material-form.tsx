@@ -241,7 +241,7 @@ export function MaterialForm({ isOpen, onClose, onSubmit, userId }: MaterialForm
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-50 overflow-hidden"
+          className="fixed inset-0 z-[100] overflow-hidden"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
