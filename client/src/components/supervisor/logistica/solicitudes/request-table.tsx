@@ -21,12 +21,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, X } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { DateRange } from "react-day-picker";
-import { addDays, isWithinInterval, startOfDay, endOfDay } from "date-fns";
 
 // Mock Data
 const MOCK_REQUESTS: MaterialRequest[] = [
@@ -52,14 +48,24 @@ export function RequestTable() {
     const [supervisorFilter, setSupervisorFilter] = useState<string>("ALL");
     const [sortConfig, setSortConfig] = useState<{ key: keyof MaterialRequest; direction: 'asc' | 'desc' } | null>({ key: 'date', direction: 'desc' });
     const [currentPage, setCurrentPage] = useState(1);
-    const [date, setDate] = useState<DateRange | undefined>();
+
+    // Date filter matching SME.tsx style
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const formatDate = (d: Date) => d.toISOString().split('T')[0];
+
+    const [startDate, setStartDate] = useState<string>(formatDate(yesterday));
+    const [endDate, setEndDate] = useState<string>(formatDate(today));
+
     const pageSize = 10;
 
     const clearFilters = () => {
         setSearchTerm("");
         setStatusFilter("ALL");
         setSupervisorFilter("ALL");
-        setDate(undefined);
+        setStartDate(formatDate(yesterday));
+        setEndDate(formatDate(today));
         setCurrentPage(1);
     };
 
@@ -73,13 +79,17 @@ export function RequestTable() {
         const matchesStatus = statusFilter === "ALL" || req.status === statusFilter;
         const matchesSupervisor = supervisorFilter === "ALL" || req.supervisorName === supervisorFilter;
 
-        // Date Range filtering
+        // Date Range filtering using string comparison (Lexicographical)
         let matchesDate = true;
-        if (date?.from) {
-            const reqDate = new Date(req.date);
-            const start = startOfDay(date.from);
-            const end = date.to ? endOfDay(date.to) : endOfDay(date.from);
-            matchesDate = isWithinInterval(reqDate, { start, end });
+        if (req.date) {
+            const reqDateStr = req.date.split('T')[0];
+            if (startDate && endDate) {
+                matchesDate = reqDateStr >= startDate && reqDateStr <= endDate;
+            } else if (startDate) {
+                matchesDate = reqDateStr >= startDate;
+            } else if (endDate) {
+                matchesDate = reqDateStr <= endDate;
+            }
         }
 
         return matchesSearch && matchesStatus && matchesSupervisor && matchesDate;
@@ -131,9 +141,9 @@ export function RequestTable() {
         <div className="space-y-4">
             {/* Actions Bar */}
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-                <div className="flex flex-wrap gap-2 items-center flex-1 w-full">
+                <div className="flex flex-wrap gap-3 items-center flex-1 w-full">
                     {/* Status Filters */}
-                    <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+                    <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700">
                         {(["ALL", "PENDIENTE", "APROBADO", "RECHAZADO"] as const).map(status => (
                             <button
                                 key={status}
@@ -141,8 +151,8 @@ export function RequestTable() {
                                     setStatusFilter(status);
                                     setCurrentPage(1);
                                 }}
-                                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${statusFilter === status
-                                    ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
+                                className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${statusFilter === status
+                                    ? "bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm"
                                     : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
                                     }`}
                             >
@@ -156,11 +166,13 @@ export function RequestTable() {
                         setSupervisorFilter(val);
                         setCurrentPage(1);
                     }}>
-                        <SelectTrigger className="w-[180px]">
-                            <Filter className="w-4 h-4 mr-2 text-slate-400" />
-                            <SelectValue placeholder="Supervisor" />
+                        <SelectTrigger className="w-[180px] bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-9 text-xs">
+                            <div className="flex items-center">
+                                <Filter className="w-3.5 h-3.5 mr-2 text-slate-400" />
+                                <SelectValue placeholder="Supervisor" />
+                            </div>
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="dark:bg-slate-900 dark:border-slate-700">
                             <SelectItem value="ALL">Todos los Supers</SelectItem>
                             {uniqueSupervisors.map(name => (
                                 <SelectItem key={name} value={name!}>{name}</SelectItem>
@@ -168,55 +180,41 @@ export function RequestTable() {
                         </SelectContent>
                     </Select>
 
-                    {/* Date Filter */}
-                    <div className="flex items-center gap-2">
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button
-                                    variant="outline"
-                                    className={cn(
-                                        "w-[240px] justify-start text-left font-normal",
-                                        !date && "text-muted-foreground"
-                                    )}
-                                >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {date?.from ? (
-                                        date.to ? (
-                                            <>
-                                                {format(date.from, "dd MMM", { locale: es })} -{" "}
-                                                {format(date.to, "dd MMM", { locale: es })}
-                                            </>
-                                        ) : (
-                                            format(date.from, "dd MMM yyyy", { locale: es })
-                                        )
-                                    ) : (
-                                        <span>Filtrar por fecha</span>
-                                    )}
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                    initialFocus
-                                    mode="range"
-                                    defaultMonth={date?.from}
-                                    selected={date}
-                                    onSelect={(val) => {
-                                        setDate(val);
-                                        setCurrentPage(1);
-                                    }}
-                                    numberOfMonths={2}
-                                />
-                            </PopoverContent>
-                        </Popover>
+                    {/* Date Filters matching SME style */}
+                    <div className="flex flex-wrap items-center gap-2 p-1 bg-slate-100/50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <div className="flex items-center gap-2 px-1">
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tight">Desde:</span>
+                            <Input
+                                type="date"
+                                value={startDate}
+                                onChange={(e) => {
+                                    setStartDate(e.target.value);
+                                    setCurrentPage(1);
+                                }}
+                                className="h-8 text-[11px] w-[160px] bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 shadow-sm"
+                            />
+                        </div>
+                        <div className="flex items-center gap-2 px-1">
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tight">Hasta:</span>
+                            <Input
+                                type="date"
+                                value={endDate}
+                                onChange={(e) => {
+                                    setEndDate(e.target.value);
+                                    setCurrentPage(1);
+                                }}
+                                className="h-8 text-[11px] w-[160px] bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 shadow-sm"
+                            />
+                        </div>
                     </div>
 
                     {/* Clear Button */}
-                    {(searchTerm || statusFilter !== "ALL" || supervisorFilter !== "ALL" || date) && (
+                    {(searchTerm || statusFilter !== "ALL" || supervisorFilter !== "ALL" || startDate !== formatDate(yesterday) || endDate !== formatDate(today)) && (
                         <Button
                             variant="ghost"
                             size="sm"
                             onClick={clearFilters}
-                            className="text-slate-500 hover:text-blue-600 hover:bg-blue-50 gap-2"
+                            className="text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 gap-2 h-9 text-xs"
                         >
                             <RotateCcw className="w-3.5 h-3.5" />
                             Limpiar

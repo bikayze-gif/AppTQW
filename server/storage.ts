@@ -13,6 +13,7 @@ const pool = mysql.createPool({
   user: dbConfig.user,
   password: dbConfig.password,
   database: dbConfig.database,
+  timezone: "-03:00",
   waitForConnections: true,
   connectionLimit: 10,
   maxIdle: 10,
@@ -822,13 +823,14 @@ export class MySQLStorage implements IStorage {
       const [result] = await pool.execute(
         `INSERT INTO tb_logis_tecnico_solicitud 
          (material, cantidad, tecnico, id_tecnico_traspaso, ticket, fecha, flag_regiones, flag_gestion_supervisor, campo_item)
-         VALUES (?, ?, ?, ?, ?, NOW(), ?, ?, ?)`,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           data.material,
           data.cantidad,
           data.tecnico,
           data.id_tecnico_traspaso,
           data.ticket,
+          new Date(),
           data.flag_regiones,
           data.flag_gestion_supervisor,
           data.campo_item
@@ -1425,9 +1427,9 @@ export class MySQLStorage implements IStorage {
   async validatePasswordResetCode(email: string, code: string): Promise<boolean> {
     const [rows] = await pool.execute<RowDataPacket[]>(
       `SELECT id FROM password_reset_tokens 
-       WHERE email = ? AND reset_code = ? AND used = FALSE AND expires_at > NOW()
+       WHERE email = ? AND reset_code = ? AND used = FALSE AND expires_at > ?
        ORDER BY created_at DESC LIMIT 1`,
-      [email, code]
+      [email, code, new Date()]
     );
     return rows.length > 0;
   }
@@ -1435,9 +1437,9 @@ export class MySQLStorage implements IStorage {
   async markPasswordResetCodeUsed(email: string, code: string): Promise<void> {
     await pool.execute(
       `UPDATE password_reset_tokens 
-       SET used = TRUE, used_at = NOW() 
+       SET used = TRUE, used_at = ? 
        WHERE email = ? AND reset_code = ?`,
-      [email, code]
+      [new Date(), email, code]
     );
   }
 
@@ -1458,8 +1460,8 @@ export class MySQLStorage implements IStorage {
       const [insertResult] = await pool.execute(
         `INSERT INTO tb_claves_usuarios 
          (usuario, pass_new, pass_anterior, fecha_registro, ult_modificacion) 
-         VALUES (?, ?, ?, NOW(), NOW())`,
-        [email, hashedPassword, currentPassword]
+         VALUES (?, ?, ?, ?, ?)`,
+        [email, hashedPassword, currentPassword, new Date(), new Date()]
       );
 
       console.log(`[PASSWORD UPDATE] Contraseña actualizada para ${email}, registro insertado con ID: ${(insertResult as any).insertId}`);
@@ -1481,8 +1483,8 @@ export class MySQLStorage implements IStorage {
 
   async invalidateAllPasswordResetTokens(email: string): Promise<void> {
     await pool.execute(
-      `UPDATE password_reset_tokens SET used = TRUE, used_at = NOW() WHERE email = ? AND used = FALSE`,
-      [email]
+      `UPDATE password_reset_tokens SET used = TRUE, used_at = ? WHERE email = ? AND used = FALSE`,
+      [new Date(), email]
     );
   }
 

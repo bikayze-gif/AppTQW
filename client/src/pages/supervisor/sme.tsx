@@ -112,8 +112,13 @@ const ZONAS = ["Centro", "Norte", "Sur", "Metro"];
 export default function SupervisorSME() {
     const queryClient = useQueryClient();
     const [selectedZona, setSelectedZona] = useState<string>("");
-    const [startDate, setStartDate] = useState<string>(new Date().toISOString().split("T")[0]);
-    const [endDate, setEndDate] = useState<string>(new Date().toISOString().split("T")[0]);
+    const todayStr = new Date().toISOString().split("T")[0];
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split("T")[0];
+
+    const [startDate, setStartDate] = useState<string>(yesterdayStr);
+    const [endDate, setEndDate] = useState<string>(todayStr);
     const [searchTerm, setSearchTerm] = useState("");
     const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
 
@@ -657,7 +662,7 @@ export default function SupervisorSME() {
                                             type="date"
                                             value={startDate}
                                             onChange={(e) => setStartDate(e.target.value)}
-                                            className="h-9 text-xs w-[145px] bg-white dark:bg-slate-900 border-slate-200 shadow-sm"
+                                            className="h-9 text-xs w-[160px] bg-white dark:bg-slate-900 border-slate-200 shadow-sm"
                                         />
                                     </div>
                                     <div className="flex items-center gap-2">
@@ -666,7 +671,7 @@ export default function SupervisorSME() {
                                             type="date"
                                             value={endDate}
                                             onChange={(e) => setEndDate(e.target.value)}
-                                            className="h-9 text-xs w-[145px] bg-white dark:bg-slate-900 border-slate-200 shadow-sm"
+                                            className="h-9 text-xs w-[160px] bg-white dark:bg-slate-900 border-slate-200 shadow-sm"
                                         />
                                     </div>
                                 </div>
