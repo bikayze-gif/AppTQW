@@ -70,7 +70,7 @@ export function BottomNav({ onAddClick }: BottomNavProps) {
   const isPeriodInfo = currentPath === "/";
   const isCalidad = currentPath === "/calidad"; // Changed from isDashboard
   const isActivity = currentPath === "/activity";
-  const isAnalytics = currentPath === "/analytics";
+  const isLogistica = currentPath === "/analytics";
   const isTickets = currentPath === "/tickets";
 
   const handleLogout = async () => {
@@ -123,9 +123,9 @@ export function BottomNav({ onAddClick }: BottomNavProps) {
           />
           <NavButton
             icon={FileText}
-            label="Analytics"
+            label="Logistica"
             href="/analytics"
-            isActive={isAnalytics}
+            isActive={isLogistica}
             iconSize={18}
             isComingSoon={true}
           />

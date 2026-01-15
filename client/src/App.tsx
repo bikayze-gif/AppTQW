@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Switch, Route, useLocation, Redirect } from "wouter";
+import { AlertCircle } from "lucide-react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
@@ -172,8 +173,32 @@ function AppLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Router />
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Warning Banner para Perfil Técnico */}
+      <div className="relative overflow-hidden bg-[#d97706] border-b border-amber-700 px-4 py-2 flex items-center gap-3 group transition-all duration-300 z-[60]">
+        {/* Animated background glow */}
+        <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent animate-pulse pointer-events-none" />
+
+        <div className="flex-shrink-0 flex items-center justify-center w-7 h-7 bg-white/20 rounded-lg shadow-sm border border-white/30 transition-transform group-hover:scale-105 duration-300">
+          <AlertCircle className="text-white" size={16} />
+        </div>
+
+        <div className="flex items-start gap-2.5 z-10 flex-1 min-w-0 py-0.5">
+          <div className="flex items-center gap-1.5 flex-shrink-0 mt-0.5">
+            <span className="text-white font-black text-[9px] uppercase tracking-wider bg-black/20 px-1.5 py-0.5 rounded leading-none">
+              Aviso Importante
+            </span>
+            <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
+          </div>
+          <p className="text-white text-[11px] sm:text-xs font-bold leading-tight">
+            El modulo de logistica para el perfil técnico se encuentra deshabilitado de forma temporal , se trabaja con alta prioridad para reestablecer las funciones principales
+          </p>
+        </div>
+      </div>
+
+      <div className="flex-1">
+        <Router />
+      </div>
       <AddMenu
         isOpen={isAddMenuOpen}
         onClose={() => setIsAddMenuOpen(false)}

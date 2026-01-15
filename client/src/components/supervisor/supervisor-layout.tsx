@@ -224,6 +224,28 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
           </div>
         </header>
 
+        {/* Warning Banner */}
+        <div className="relative overflow-hidden bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-800/50 px-6 py-2 flex items-center gap-4 group transition-all duration-300">
+          {/* Animated background glow */}
+          <div className="absolute inset-0 bg-gradient-to-r from-amber-500/5 to-transparent animate-pulse pointer-events-none" />
+
+          <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 bg-amber-100 dark:bg-amber-900/60 rounded-lg shadow-sm border border-amber-200/50 dark:border-amber-700/50 transition-transform group-hover:scale-105 duration-300">
+            <AlertCircle className="text-amber-600 dark:text-amber-400" size={18} />
+          </div>
+
+          <div className="flex items-center gap-4 z-10 flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              <span className="text-amber-900 dark:text-amber-300 font-black text-[10px] uppercase tracking-wider bg-amber-200/50 dark:bg-amber-900/50 px-2 py-0.5 rounded">
+                Aviso Importante
+              </span>
+              <span className="w-1 h-1 rounded-full bg-amber-500 animate-pulse" />
+            </div>
+            <p className="text-amber-800 dark:text-amber-200 text-[13px] font-bold leading-none whitespace-nowrap overflow-hidden text-ellipsis">
+              El modulo de logistica para el perfil técnico se encuentra deshabilitado de forma temporal , se trabaja con alta prioridad para reestablecer las funciones principales
+            </p>
+          </div>
+        </div>
+
         {/* Main Content Area */}
         <main className="flex-1 overflow-y-auto bg-[#F1F5F9] dark:bg-[#0f172a] p-3 sm:p-4 lg:p-6">
           {children}
