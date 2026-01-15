@@ -233,14 +233,14 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
             <AlertCircle className="text-amber-600 dark:text-amber-400" size={18} />
           </div>
 
-          <div className="flex items-center gap-4 z-10 flex-1 min-w-0">
+          <div className="flex flex-col gap-1 z-10 flex-1 min-w-0">
             <div className="flex items-center gap-1.5 flex-shrink-0">
               <span className="text-amber-900 dark:text-amber-300 font-black text-[10px] uppercase tracking-wider bg-amber-200/50 dark:bg-amber-900/50 px-2 py-0.5 rounded">
                 Aviso Importante
               </span>
               <span className="w-1 h-1 rounded-full bg-amber-500 animate-pulse" />
             </div>
-            <p className="text-amber-800 dark:text-amber-200 text-[13px] font-bold leading-none whitespace-nowrap overflow-hidden text-ellipsis">
+            <p className="text-amber-800 dark:text-amber-200 text-[13px] font-bold leading-snug">
               El modulo de logistica para el perfil técnico se encuentra deshabilitado de forma temporal , se trabaja con alta prioridad para reestablecer las funciones principales
             </p>
           </div>

@@ -183,8 +183,8 @@ function AppLayout() {
           <AlertCircle className="text-white" size={16} />
         </div>
 
-        <div className="flex items-start gap-2.5 z-10 flex-1 min-w-0 py-0.5">
-          <div className="flex items-center gap-1.5 flex-shrink-0 mt-0.5">
+        <div className="flex flex-col gap-1 z-10 flex-1 min-w-0 py-0.5">
+          <div className="flex items-center gap-1.5">
             <span className="text-white font-black text-[9px] uppercase tracking-wider bg-black/20 px-1.5 py-0.5 rounded leading-none">
               Aviso Importante
             </span>
