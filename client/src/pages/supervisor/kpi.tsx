@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { SupervisorLayout } from "@/components/supervisor/supervisor-layout";
+import { TechnicianDailyMatrix } from "@/components/supervisor/technician-daily-matrix";
 
 import { Input } from "@/components/ui/input";
 
@@ -1844,23 +1845,45 @@ export default function SupervisorKPI() {
         {activeTab === 'mes' && (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Cabecera y Filtros */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-start gap-8">
               <div>
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Análisis de Operación Mensual</h2>
                 <p className="text-slate-500">Métricas acumuladas del mes actual en tiempo real</p>
               </div>
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-slate-500">Tipo de Equipo:</span>
-                <Select value={mesActualEquipmentType} onValueChange={setMesActualEquipmentType}>
-                  <SelectTrigger className="w-[180px] bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-                    <SelectValue placeholder="Seleccionar tipo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="TODOS">Todos</SelectItem>
-                    <SelectItem value="RESIDENCIAL">Residencial</SelectItem>
-                    <SelectItem value="SME">SME</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700">
+                <button
+                  onClick={() => setMesActualEquipmentType('TODOS')}
+                  className={cn(
+                    "px-4 py-1.5 text-sm font-medium rounded-md transition-all",
+                    mesActualEquipmentType === 'TODOS'
+                      ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
+                      : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                  )}
+                >
+                  Todos
+                </button>
+                <button
+                  onClick={() => setMesActualEquipmentType('RESIDENCIAL')}
+                  className={cn(
+                    "px-4 py-1.5 text-sm font-medium rounded-md transition-all",
+                    mesActualEquipmentType === 'RESIDENCIAL'
+                      ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
+                      : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                  )}
+                >
+                  Residencial
+                </button>
+                <button
+                  onClick={() => setMesActualEquipmentType('SME')}
+                  className={cn(
+                    "px-4 py-1.5 text-sm font-medium rounded-md transition-all",
+                    mesActualEquipmentType === 'SME'
+                      ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
+                      : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                  )}
+                >
+                  SME
+                </button>
               </div>
             </div>
 
@@ -1974,7 +1997,7 @@ export default function SupervisorKPI() {
                       <BarChart
                         title="Producción Diaria"
                         data={mesActualData.dailyTrend.map((d: any) => ({
-                          name: new Date(d.date).getDate().toString(),
+                          name: new Date(d.date).getUTCDate().toString(),
                           rgu: d.rgu,
                           technicians: d.technicians
                         }))}
@@ -2009,25 +2032,7 @@ export default function SupervisorKPI() {
 
                 {/* Comparativa Supervisores y Tipos de Equipo */}
                 {/* Rendimiento por Supervisor */}
-                <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">Rendimiento por Supervisor</h3>
-                  <div className="h-[350px] w-full mt-2">
-                    <StackedBarChart
-                      title=""
-                      data={mesActualData.supervisorPerformance.map((s: any) => ({
-                        name: s.supervisor,
-                        rgu: s.totalRGU,
-                        actividades: s.completedActivities
-                      }))}
-                      bars={[
-                        { key: 'rgu', name: 'Total RGU', color: '#8b5cf6' },
-                        { key: 'actividades', name: 'Actividades Realizadas', color: '#3b82f6' }
-                      ]}
-                      showBarLabels={true}
-                      height={350}
-                    />
-                  </div>
-                </div>
+                {/* Detalle Diario por Técnico (Matriz) */}
 
                 {/* Comparativa Técnicos: Mejores vs Peores */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -2127,6 +2132,11 @@ export default function SupervisorKPI() {
                     </div>
                   </div>
                 </div>
+
+                {/* Detalle Diario por Técnico (Matriz) */}
+                <TechnicianDailyMatrix
+                  data={mesActualData.technicianDailyDetail || []}
+                />
               </>
             ) : (
               <div className="flex flex-col items-center justify-center p-12 text-center bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700">

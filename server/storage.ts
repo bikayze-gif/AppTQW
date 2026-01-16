@@ -1990,6 +1990,21 @@ export class MySQLStorage implements IStorage {
         params
       );
 
+      // 7. Technician Daily Detail (Matrix Data)
+      const [dailyDetailRows] = await pool.execute<RowDataPacket[]>(
+        `SELECT 
+            RUT_FORMAT as rut,
+            Nombre_short as name,
+            supervisor,
+            DAY(fecha_format) as day,
+            SUM(Completado_RGU) as rgu
+         FROM tb_kpi_gerencia_rgu_tecnicos
+         WHERE YEAR(fecha_format) = ? AND MONTH(fecha_format) = ?${equipmentFilter}
+         GROUP BY RUT_FORMAT, Nombre_short, supervisor, DAY(fecha_format)
+         ORDER BY RUT_FORMAT, day`,
+        params
+      );
+
       const response = {
         summary: {
           totalRGU: Number(summary.totalRGU),
@@ -2050,6 +2065,13 @@ export class MySQLStorage implements IStorage {
           completed: Number(summary.completedActivities),
           notCompleted: Number(summary.notCompletedActivities),
         },
+        technicianDailyDetail: dailyDetailRows.map((r: any) => ({
+          rut: r.rut,
+          name: r.name || 'Sin Nombre',
+          supervisor: r.supervisor,
+          day: Number(r.day),
+          rgu: Number(r.rgu)
+        })),
       };
 
       console.log(`[KPI Mes Actual] Successfully aggregated data for  ${targetYear}-${targetMonth}`);
