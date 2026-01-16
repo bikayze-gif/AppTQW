@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 
 import { Button } from "@/components/ui/button";
 
-import { Download, Copy, Search, X, ArrowUpDown, Users, LayoutDashboard, TrendingUp, Award, Zap, AlertCircle, Calendar, CheckCircle2, Construction } from "lucide-react";
+import { Download, Copy, Search, X, ArrowUpDown, Users, LayoutDashboard, TrendingUp, Award, Zap, AlertCircle, Calendar, CheckCircle2, Construction, PieChart as PieChartIcon } from "lucide-react";
 
 import { useToast } from "@/hooks/use-toast";
 
@@ -58,6 +58,8 @@ import {
 
 } from "@/components/ui/pagination";
 
+import { Skeleton } from "@/components/ui/skeleton";
+
 import * as XLSX from "xlsx";
 
 import { TqwComisionRenew } from "@shared/schema";
@@ -95,6 +97,8 @@ export default function SupervisorKPI() {
   const [detalleOtCurrentPage, setDetalleOtCurrentPage] = useState(1);
 
   const [detalleOtSortConfig, setDetalleOtSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
+
+  const [mesActualEquipmentType, setMesActualEquipmentType] = useState<string>("TODOS");
 
   const rowsPerPage = 15;
 
@@ -381,8 +385,21 @@ export default function SupervisorKPI() {
     },
 
     enabled: !!mesContable,
-
   });
+
+  const { data: mesActualData, isLoading: isMesActualLoading } = useQuery({
+    queryKey: ["kpi-mes-actual", mesActualEquipmentType],
+    queryFn: async () => {
+      const url = new URL("/api/supervisor/kpi-mes-actual", window.location.origin);
+      if (mesActualEquipmentType && mesActualEquipmentType !== "TODOS") {
+        url.searchParams.append("equipmentType", mesActualEquipmentType);
+      }
+      const response = await fetch(url.toString());
+      return response.json();
+    },
+    enabled: activeTab === 'mes',
+  });
+
 
 
 
@@ -887,17 +904,11 @@ export default function SupervisorKPI() {
               <div className="flex flex-col border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden bg-white dark:bg-slate-800 shadow-sm p-2 justify-center items-center h-[240px]">
 
                 <GaugeChart
-
                   value={dashboardData?.globalCompletionRate || 0}
-
-                  label="% de ordenes finalizadas GLOBAL"
-
-                  size={240}
-
+                  label="Finalización Global"
+                  size={220}
                   color="#22c55e"
-
                   showPercentage={true}
-
                 />
 
               </div>
@@ -912,91 +923,70 @@ export default function SupervisorKPI() {
 
               {/* Pie Chart: Activity Type */}
 
-              <div className="h-[340px]">
-
-                {isDashboardLoading ? (
-
-                  <div className="flex items-center justify-center h-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">
-
-                    <div className="text-slate-500 dark:text-slate-400 text-sm">Cargando datos...</div>
-
+              {isDashboardLoading ? (
+                <div className="flex items-center justify-center h-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm">
+                  <div className="text-slate-500 dark:text-slate-400 text-sm">Cargando datos...</div>
+                </div>
+              ) : (
+                <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm h-full flex flex-col">
+                  <h3 className="text-sm font-bold text-slate-800 dark:text-white mb-4 uppercase tracking-wider">
+                    Distribución tipo de actividad
+                  </h3>
+                  <div className="flex-1">
+                    <PieChart
+                      title=""
+                      data={dashboardData?.activityTypeCounts || []}
+                      height={260}
+                    />
                   </div>
-
-                ) : (
-
-                  <PieChart
-
-                    title="Distribución por tipo de actividad"
-
-                    data={dashboardData?.activityTypeCounts || []}
-
-                    height={300}
-
-                  />
-
-                )}
-
-              </div>
+                </div>
+              )}
 
 
 
               {/* Pie Chart: Status Distribution */}
 
-              <div className="h-[340px]">
-
-                {isDashboardLoading ? (
-
-                  <div className="flex items-center justify-center h-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">
-
-                    <div className="text-slate-500 dark:text-slate-400 text-sm">Cargando datos...</div>
-
+              {isDashboardLoading ? (
+                <div className="flex items-center justify-center h-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm">
+                  <div className="text-slate-500 dark:text-slate-400 text-sm">Cargando datos...</div>
+                </div>
+              ) : (
+                <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm h-full flex flex-col">
+                  <h3 className="text-sm font-bold text-slate-800 dark:text-white mb-4 uppercase tracking-wider">
+                    % Distribución por Estado
+                  </h3>
+                  <div className="flex-1">
+                    <PieChart
+                      title=""
+                      data={dashboardData?.statusDistribution || []}
+                      height={260}
+                    />
                   </div>
-
-                ) : (
-
-                  <PieChart
-
-                    title="% Distribución por Estado"
-
-                    data={dashboardData?.statusDistribution || []}
-
-                    height={300}
-
-                  />
-
-                )}
-
-              </div>
+                </div>
+              )}
 
 
 
               {/* Pie Chart: Closing Code */}
 
-              <div className="h-[340px]">
-
-                {isDashboardLoading ? (
-
-                  <div className="flex items-center justify-center h-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">
-
-                    <div className="text-slate-500 dark:text-slate-400 text-sm">Cargando datos...</div>
-
+              {isDashboardLoading ? (
+                <div className="flex items-center justify-center h-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm">
+                  <div className="text-slate-500 dark:text-slate-400 text-sm">Cargando datos...</div>
+                </div>
+              ) : (
+                <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm h-full flex flex-col">
+                  <h3 className="text-sm font-bold text-slate-800 dark:text-white mb-4 uppercase tracking-wider">
+                    Motivos de no finalización
+                  </h3>
+                  <div className="flex-1">
+                    <PieChart
+                      title=""
+                      data={dashboardData?.closingCodeDistribution || []}
+                      height={260}
+                    />
                   </div>
-
-                ) : (
-
-                  <PieChart
-
-                    title="% de ordenes no finalizadas"
-
-                    data={dashboardData?.closingCodeDistribution || []}
-
-                    height={300}
-
-                  />
-
-                )}
-
-              </div>
+                </div>
+              )}
 
             </div>
 
@@ -1020,48 +1010,28 @@ export default function SupervisorKPI() {
 
                   </div>
 
-                  <div className="grid grid-cols-2 gap-1 p-2 bg-white dark:bg-slate-900/50">
-
+                  <div className="grid grid-cols-2 gap-3 p-4 bg-white dark:bg-slate-900/50">
                     <KpiCard
-
                       value={supervisor.technicianCount || 0}
-
                       label="Técnicos Operativos"
-
                       variant="default"
-
-                      className="h-20"
-
+                      className="p-4 shadow-none border-slate-100 dark:border-slate-800 h-[100px]"
                     />
-
                     <KpiCard
-
                       value={supervisor.px0Count || 0}
-
                       label="Q tecnicos PX0"
-
                       variant="danger"
-
-                      className="h-20"
-
+                      className="p-4 shadow-none border-slate-100 dark:border-slate-800 h-[100px]"
                     />
-
                   </div>
 
-                  <div className="p-2 flex justify-center items-center bg-white dark:bg-slate-900 text-slate-900 dark:text-white min-h-[160px]">
-
+                  <div className="p-4 flex justify-center items-center bg-white dark:bg-slate-900 text-slate-900 dark:text-white min-h-[160px]">
                     <GaugeChart
-
                       value={supervisor.completionRate || 0}
-
-                      label="% de ordenes finalizadas"
-
-                      size={150}
-
+                      label="Eficiencia"
+                      size={140}
                       color="#3b82f6"
-
                     />
-
                   </div>
 
                 </div>
@@ -1104,44 +1074,30 @@ export default function SupervisorKPI() {
 
                     return (
 
-                      <div key={supervisor} className="h-[624px]">
-
-                        <StackedBarChart
-
-                          title={supervisor}
-
-                          data={data}
-
-                          xAxisKey="name"
-
-                          legendFontSize={12}
-
-                          yAxisWidth={120}
-
-                          yAxisFontSize={10}
-
-                          bars={[
-
-                            { key: "Cancelado", name: "Cancelado", color: "#000000" },
-
-                            { key: "Iniciado", name: "Iniciado", color: "#f97316" },
-
-                            { key: "No Realizada", name: "No Realizada", color: "#ef4444" },
-
-                            { key: "Pendiente", name: "Pendiente", color: "#eab308" },
-
-                            { key: "Completado", name: "Completado", color: "#22c55e" },
-
-                            { key: "En ruta", name: "En ruta", color: "#94a3b8" },
-
-                            { key: "Suspendido", name: "Suspendido", color: "#3b82f6" }
-
-                          ]}
-
-                          height={562}
-
-                        />
-
+                      <div key={supervisor} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm h-[624px] flex flex-col">
+                        <h3 className="text-sm font-bold text-slate-800 dark:text-white mb-4 uppercase tracking-wider text-center border-b border-slate-100 dark:border-slate-700 pb-2">
+                          {supervisor}
+                        </h3>
+                        <div className="flex-1">
+                          <StackedBarChart
+                            title=""
+                            data={data}
+                            xAxisKey="name"
+                            legendFontSize={12}
+                            yAxisWidth={120}
+                            yAxisFontSize={10}
+                            bars={[
+                              { key: "Cancelado", name: "Cancelado", color: "#000000" },
+                              { key: "Iniciado", name: "Iniciado", color: "#f97316" },
+                              { key: "No Realizada", name: "No Realizada", color: "#ef4444" },
+                              { key: "Pendiente", name: "Pendiente", color: "#eab308" },
+                              { key: "Completado", name: "Completado", color: "#22c55e" },
+                              { key: "En ruta", name: "En ruta", color: "#94a3b8" },
+                              { key: "Suspendido", name: "Suspendido", color: "#3b82f6" }
+                            ]}
+                            height={542}
+                          />
+                        </div>
                       </div>
 
                     );
@@ -1188,66 +1144,41 @@ export default function SupervisorKPI() {
 
                     return (
 
-                      <div key={supervisor} className="h-[480px]">
-
-                        <StackedBarChart
-
-                          title={supervisor}
-
-                          data={data}
-
-                          xAxisKey="name"
-
-                          xAxisTickFormatter={formatDecimalToTime}
-
-                          valueFormatter={formatDecimalToTime}
-
-                          yAxisWidth={120}
-
-                          yAxisFontSize={10}
-
-                          showBarLabels={true}
-
-                          domain={['auto', 'auto']}
-
-                          customLegend={[
-
-                            { label: "Hasta 10:00", color: "#22c55e" },
-
-                            { label: "10:01 - 10:15", color: "#eab308" },
-
-                            { label: "Posterior", color: "#ef4444" }
-
-                          ]}
-
-                          bars={[
-
-                            {
-
-                              key: "horaDecimal",
-
-                              name: "Hora de Inicio",
-
-                              color: "#8b5cf6",
-
-                              getColor: (val) => {
-
-                                if (val <= 10.0) return "#22c55e"; // Verde hasta las 10:00
-
-                                if (val <= 10.25) return "#eab308"; // Amarillo hasta las 10:15
-
-                                return "#ef4444"; // Rojo después
-
+                      <div key={supervisor} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm h-[524px] flex flex-col">
+                        <h3 className="text-sm font-bold text-slate-800 dark:text-white mb-4 uppercase tracking-wider text-center border-b border-slate-100 dark:border-slate-700 pb-2">
+                          {supervisor}
+                        </h3>
+                        <div className="flex-1">
+                          <StackedBarChart
+                            title=""
+                            data={data}
+                            xAxisKey="name"
+                            xAxisTickFormatter={formatDecimalToTime}
+                            valueFormatter={formatDecimalToTime}
+                            yAxisWidth={120}
+                            yAxisFontSize={10}
+                            showBarLabels={true}
+                            domain={['auto', 'auto']}
+                            customLegend={[
+                              { label: "Hasta 10:00", color: "#22c55e" },
+                              { label: "10:01 - 10:15", color: "#eab308" },
+                              { label: "Posterior", color: "#ef4444" }
+                            ]}
+                            bars={[
+                              {
+                                key: "horaDecimal",
+                                name: "Hora de Inicio",
+                                color: "#8b5cf6",
+                                getColor: (val) => {
+                                  if (val <= 10.0) return "#22c55e"; // Verde hasta las 10:00
+                                  if (val <= 10.25) return "#eab308"; // Amarillo hasta las 10:15
+                                  return "#ef4444"; // Rojo después
+                                }
                               }
-
-                            }
-
-                          ]}
-
-                          height={360}
-
-                        />
-
+                            ]}
+                            height={440}
+                          />
+                        </div>
                       </div>
 
                     );
@@ -1294,40 +1225,28 @@ export default function SupervisorKPI() {
 
                     return (
 
-                      <div key={supervisor} className="h-[460px]">
-
-                        <StackedBarChart
-
-                          title={supervisor}
-
-                          data={data}
-
-                          xAxisKey="name"
-
-                          yAxisWidth={120}
-
-                          yAxisFontSize={10}
-
-                          showBarLabels={true}
-
-                          bars={[
-
-                            {
-
-                              key: "recordCount",
-
-                              name: "Cantidad de Registros",
-
-                              color: "#10b981"
-
-                            }
-
-                          ]}
-
-                          height={414}
-
-                        />
-
+                      <div key={supervisor} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm h-[460px] flex flex-col">
+                        <h3 className="text-sm font-bold text-slate-800 dark:text-white mb-4 uppercase tracking-wider text-center border-b border-slate-100 dark:border-slate-700 pb-2">
+                          {supervisor}
+                        </h3>
+                        <div className="flex-1">
+                          <StackedBarChart
+                            title=""
+                            data={data}
+                            xAxisKey="name"
+                            yAxisWidth={120}
+                            yAxisFontSize={10}
+                            showBarLabels={true}
+                            bars={[
+                              {
+                                key: "recordCount",
+                                name: "Cantidad de Registros",
+                                color: "#10b981"
+                              }
+                            ]}
+                            height={380}
+                          />
+                        </div>
                       </div>
 
                     );
@@ -1465,65 +1384,40 @@ export default function SupervisorKPI() {
             {/* Top 10 Commissions Chart */}
 
             {periodo && kpiData.length > 0 && (
-
-              <div className="mb-6 h-[500px]">
-
-                <StackedBarChart
-
-                  title="Top 10 Técnicos por Comisión FTTH (Ponderada vs Real)"
-
-                  data={[...kpiData]
-
-                    .map(item => ({
-
-                      ...item,
-
-                      parsedFtth: parseValue(item.Comision_FTTH) as number || 0,
-
-                      parsedFtthPond: parseValue(item.Comision_FTTH_Ponderada) as number || 0
-
-                    }))
-
-                    .filter(item => item.parsedFtth > 0 || item.parsedFtthPond > 0)
-
-                    .sort((a, b) => b.parsedFtthPond - a.parsedFtthPond)
-
-                    .slice(0, 10)
-
-                    .map(item => ({
-
-                      name: item.NombreTecnico || "Sin Nombre",
-
-                      ftth: item.parsedFtth,
-
-                      ftthPond: item.parsedFtthPond
-
-                    }))}
-
-                  xAxisKey="name"
-
-                  stacked={false}
-
-                  bars={[
-
-                    { key: "ftth", name: "Comisión FTTH", color: "#3b82f6" },
-
-                    { key: "ftthPond", name: "Comisión FTTH Ponderada", color: "#8b5cf6" }
-
-                  ]}
-
-                  height={420}
-
-                  yAxisWidth={180}
-
-                  showBarLabels={true}
-
-                  valueFormatter={(val) => `$${formatDecimal(val)}`}
-
-                />
-
+              <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm mb-6 flex flex-col h-[500px]">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">
+                  Top 10 Técnicos por Comisión FTTH (Ponderada vs Real)
+                </h3>
+                <div className="flex-1">
+                  <StackedBarChart
+                    title=""
+                    data={[...kpiData]
+                      .map(item => ({
+                        ...item,
+                        parsedFtth: parseValue(item.Comision_FTTH) as number || 0,
+                        parsedFtthPond: parseValue(item.Comision_FTTH_Ponderada) as number || 0
+                      }))
+                      .filter(item => item.parsedFtth > 0 || item.parsedFtthPond > 0)
+                      .sort((a, b) => b.parsedFtthPond - a.parsedFtthPond)
+                      .slice(0, 10)
+                      .map(item => ({
+                        name: item.NombreTecnico || "Sin Nombre",
+                        ftth: item.parsedFtth,
+                        ftthPond: item.parsedFtthPond
+                      }))}
+                    xAxisKey="name"
+                    stacked={false}
+                    bars={[
+                      { key: "ftth", name: "Comisión FTTH", color: "#3b82f6" },
+                      { key: "ftthPond", name: "Comisión FTTH Ponderada", color: "#8b5cf6" }
+                    ]}
+                    height={380}
+                    yAxisWidth={180}
+                    showBarLabels={true}
+                    valueFormatter={(val) => `$${formatDecimal(val)}`}
+                  />
+                </div>
               </div>
-
             )}
 
 
@@ -1948,37 +1842,299 @@ export default function SupervisorKPI() {
 
 
         {activeTab === 'mes' && (
-          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-12 text-center min-h-[500px] flex flex-col items-center justify-center overflow-hidden relative animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-400 via-violet-400 to-purple-400" />
-            <div className="max-w-md mx-auto space-y-6">
-              <div className="relative group">
-                <div className="absolute -inset-1 bg-gradient-to-r from-purple-400 to-violet-400 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
-                <img
-                  src="/under-construction.png"
-                  alt="En construcción"
-                  className="relative rounded-2xl shadow-2xl w-full max-w-[320px] mx-auto transform transition duration-500 hover:scale-105"
-                />
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Cabecera y Filtros */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Análisis de Operación Mensual</h2>
+                <p className="text-slate-500">Métricas acumuladas del mes actual en tiempo real</p>
               </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-center gap-2 text-purple-500 dark:text-purple-400 mb-2">
-                  <Construction className="w-5 h-5 animate-bounce" />
-                  <span className="text-sm font-bold uppercase tracking-widest">Próximamente</span>
-                </div>
-                <h2 className="text-3xl font-bold text-slate-900 dark:text-white capitalize">Mes Actual</h2>
-                <p className="text-slate-500 dark:text-slate-400 text-lg leading-relaxed">
-                  El tablero de control mensual detallado está siendo optimizado para una carga más rápida.
-                </p>
-              </div>
-              <div className="pt-4">
-                <div className="inline-flex items-center px-4 py-2 rounded-full bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-500/20 text-sm font-medium">
-                  <span className="relative flex h-2 w-2 mr-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
-                  </span>
-                  En construcción
-                </div>
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium text-slate-500">Tipo de Equipo:</span>
+                <Select value={mesActualEquipmentType} onValueChange={setMesActualEquipmentType}>
+                  <SelectTrigger className="w-[180px] bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                    <SelectValue placeholder="Seleccionar tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="TODOS">Todos</SelectItem>
+                    <SelectItem value="RESIDENCIAL">Residencial</SelectItem>
+                    <SelectItem value="SME">SME</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
+
+            {isMesActualLoading ? (
+              <div className="space-y-8">
+                {/* Skeleton de Tarjetas */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="space-y-3">
+                          <Skeleton className="h-4 w-32" />
+                          <Skeleton className="h-10 w-24" />
+                        </div>
+                        <Skeleton className="h-10 w-10 rounded-xl" />
+                      </div>
+                      <Skeleton className="h-4 w-full" />
+                    </div>
+                  ))}
+                </div>
+
+                {/* Skeleton de Gráficos */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div className="lg:col-span-2 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm h-[420px]">
+                    <div className="flex items-center justify-between mb-8">
+                      <div className="space-y-2">
+                        <Skeleton className="h-6 w-48" />
+                        <Skeleton className="h-4 w-32" />
+                      </div>
+                      <Skeleton className="h-10 w-10 rounded-lg" />
+                    </div>
+                    <Skeleton className="h-[280px] w-full" />
+                  </div>
+                  <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm h-[420px]">
+                    <div className="flex items-center justify-between mb-8">
+                      <Skeleton className="h-6 w-40" />
+                      <Skeleton className="h-10 w-10 rounded-lg" />
+                    </div>
+                    <div className="flex items-center justify-center pt-10">
+                      <Skeleton className="h-56 w-56 rounded-full" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Skeleton de Tablas/Gráficos Inferiores */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm h-[450px]">
+                    <Skeleton className="h-6 w-56 mb-8" />
+                    <Skeleton className="h-[320px] w-full" />
+                  </div>
+                  <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm h-[450px]">
+                    <Skeleton className="h-6 w-48 mb-6" />
+                    <div className="space-y-4">
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <div key={i} className="flex gap-4 items-center border-b pb-4">
+                          <Skeleton className="h-8 w-8 rounded-full" />
+                          <Skeleton className="h-5 flex-1" />
+                          <Skeleton className="h-5 w-16" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (mesActualData && mesActualData.summary) ? (
+              <>
+                {/* Resumen Ejecutivo */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <KpiCard
+                    title="Total RGU Mensual"
+                    value={mesActualData.summary.totalRGU.toLocaleString()}
+                    icon={<Zap className="w-5 h-5" />}
+                    trend={{ value: mesActualData.summary.rguPerActivity, label: "RGU/Actividad", isPositive: true }}
+                    variant="indigo"
+                  />
+                  <KpiCard
+                    title="Eficiencia Global"
+                    value={`${mesActualData.summary.avgCompletionRate}%`}
+                    icon={<CheckCircle2 className="w-5 h-5" />}
+                    trend={{
+                      value: mesActualData.summary.totalActivities.toLocaleString(),
+                      label: "Actividades Totales",
+                      isPositive: true
+                    }}
+                    description={`${mesActualData.summary.completedActivities.toLocaleString()} Completadas | ${mesActualData.summary.notCompletedActivities.toLocaleString()} No Realizadas`}
+                    variant="emerald"
+                  />
+                  <KpiCard
+                    title="Técnicos Activos"
+                    value={mesActualData.summary.activeTechnicians.toString()}
+                    icon={<Users className="w-5 h-5" />}
+                    trend={{ value: mesActualData.summary.workingDays, label: "Días Operativos", isPositive: true }}
+                    description={`Residencial: ${mesActualData.summary.techResidencial} | SME: ${mesActualData.summary.techSme}`}
+                    variant="blue"
+                  />
+                </div>
+
+                {/* Gráficos de Tendencia y Distribución */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div className="lg:col-span-2 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
+                    <div className="flex items-center justify-between mb-6">
+                      <div>
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white">Tendencia de Producción RGU</h3>
+                        <p className="text-sm text-slate-500">Evolución diaria del mes en curso</p>
+                      </div>
+                      <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                        <TrendingUp className="w-5 h-5 text-blue-600" />
+                      </div>
+                    </div>
+                    <div className="h-[280px] w-full mt-2">
+                      <BarChart
+                        title="Producción Diaria"
+                        data={mesActualData.dailyTrend.map((d: any) => ({
+                          name: new Date(d.date).getDate().toString(),
+                          rgu: d.rgu,
+                          technicians: d.technicians
+                        }))}
+                        bars={[
+                          { key: 'rgu', name: 'Producción RGU', color: '#6366f1' },
+                          { key: 'technicians', name: 'Técnicos Activos', color: '#10b981' }
+                        ]}
+                        height={280}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
+                    <div className="flex items-center justify-between mb-6">
+                      <h3 className="text-lg font-bold text-slate-900 dark:text-white">Distribución Actividades</h3>
+                      <div className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                        <PieChartIcon className="w-5 h-5 text-purple-600" />
+                      </div>
+                    </div>
+                    <div className="h-[280px] flex items-center justify-center">
+                      <PieChart
+                        title="Distribución"
+                        data={[
+                          { name: 'Completadas', value: mesActualData.activitiesDistribution.completed, color: '#10b981' },
+                          { name: 'No Realizadas', value: mesActualData.activitiesDistribution.notCompleted, color: '#f43f5e' }
+                        ]}
+                        height={280}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Comparativa Supervisores y Tipos de Equipo */}
+                {/* Rendimiento por Supervisor */}
+                <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">Rendimiento por Supervisor</h3>
+                  <div className="h-[350px] w-full mt-2">
+                    <StackedBarChart
+                      title=""
+                      data={mesActualData.supervisorPerformance.map((s: any) => ({
+                        name: s.supervisor,
+                        rgu: s.totalRGU,
+                        actividades: s.completedActivities
+                      }))}
+                      bars={[
+                        { key: 'rgu', name: 'Total RGU', color: '#8b5cf6' },
+                        { key: 'actividades', name: 'Actividades Realizadas', color: '#3b82f6' }
+                      ]}
+                      showBarLabels={true}
+                      height={350}
+                    />
+                  </div>
+                </div>
+
+                {/* Comparativa Técnicos: Mejores vs Peores */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Top 10 Técnicos (RGU) */}
+                  <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm overflow-hidden">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
+                      <Award className="w-5 h-5 text-amber-500" />
+                      Top 10 Técnicos (Mejor RGU)
+                    </h3>
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-[50px] text-xs font-bold">Rank</TableHead>
+                            <TableHead className="text-xs font-bold">Técnico</TableHead>
+                            <TableHead className="text-right text-xs font-bold">Días</TableHead>
+                            <TableHead className="text-right text-xs font-bold">RGU/Día</TableHead>
+                            <TableHead className="text-right text-xs font-bold">Total RGU</TableHead>
+                            <TableHead className="text-right text-xs font-bold">Eficiencia</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {mesActualData.topPerformers.map((t: any) => (
+                            <TableRow key={t.rut} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                              <TableCell className="font-bold text-purple-600 text-xs">#{t.rank || mesActualData.topPerformers.indexOf(t) + 1}</TableCell>
+                              <TableCell>
+                                <div className="space-y-0.5">
+                                  <div className="font-medium text-slate-900 dark:text-white text-xs">{t.name}</div>
+                                  <div className="text-xs text-slate-500 uppercase">{t.supervisor}</div>
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-right font-medium text-xs">{t.daysWorked}</TableCell>
+                              <TableCell className="text-right font-medium text-xs">{t.rguPerDay}</TableCell>
+                              <TableCell className="text-right font-bold text-slate-900 dark:text-white text-xs">{t.totalRGU}</TableCell>
+                              <TableCell className="text-right">
+                                <span className={cn(
+                                  "px-2.5 py-1 rounded-full text-xs font-bold",
+                                  t.completionRate >= 90 ? "bg-emerald-100 text-emerald-700" :
+                                    t.completionRate >= 70 ? "bg-amber-100 text-amber-700" :
+                                      "bg-rose-100 text-rose-700"
+                                )}>
+                                  {t.completionRate}%
+                                </span>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+
+                  {/* Top 10 Técnicos (Menor RGU) */}
+                  <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm overflow-hidden">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
+                      <AlertCircle className="w-5 h-5 text-rose-500" />
+                      Top 10 Técnicos (Menor RGU)
+                    </h3>
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-[50px] text-xs font-bold">Rank</TableHead>
+                            <TableHead className="text-xs font-bold">Técnico</TableHead>
+                            <TableHead className="text-right text-xs font-bold">Días</TableHead>
+                            <TableHead className="text-right text-xs font-bold">RGU/Día</TableHead>
+                            <TableHead className="text-right text-xs font-bold">Total RGU</TableHead>
+                            <TableHead className="text-right text-xs font-bold">Eficiencia</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {mesActualData.lowPerformers.slice(0, 10).map((t: any, index: number) => (
+                            <TableRow key={t.rut} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                              <TableCell className="font-bold text-slate-400 text-xs">#{index + 1}</TableCell>
+                              <TableCell>
+                                <div className="space-y-0.5">
+                                  <div className="font-medium text-slate-900 dark:text-white text-xs">{t.name}</div>
+                                  <div className="text-xs text-slate-500 uppercase">{t.supervisor}</div>
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-right font-medium text-xs">{t.daysWorked}</TableCell>
+                              <TableCell className="text-right font-medium text-xs">{t.rguPerDay}</TableCell>
+                              <TableCell className="text-right font-bold text-slate-900 dark:text-white text-xs">{t.totalRGU}</TableCell>
+                              <TableCell className="text-right">
+                                <span className={cn(
+                                  "px-2.5 py-1 rounded-full text-xs font-bold",
+                                  t.completionRate >= 90 ? "bg-emerald-100 text-emerald-700" :
+                                    t.completionRate >= 70 ? "bg-amber-100 text-amber-700" :
+                                      "bg-rose-100 text-rose-700"
+                                )}>
+                                  {t.completionRate}%
+                                </span>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-col items-center justify-center p-12 text-center bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700">
+                <AlertCircle className="w-12 h-12 text-amber-500 mb-4" />
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white">Sin datos disponibles</h3>
+                <p className="text-slate-500">No se encontraron registros de KPI para el mes actual.</p>
+              </div>
+            )}
           </div>
         )}
 

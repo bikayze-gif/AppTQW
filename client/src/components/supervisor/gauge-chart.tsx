@@ -8,6 +8,7 @@ interface GaugeChartProps {
     min?: number;
     max?: number;
     showPercentage?: boolean;
+    strokeWidth?: number;
 }
 
 export function GaugeChart({
@@ -17,13 +18,14 @@ export function GaugeChart({
     color = "#3b82f6",
     min = 0,
     max = 100,
+    strokeWidth: customStrokeWidth,
 }: GaugeChartProps) {
     // Constrain value between min and max
     const clampedValue = Math.min(Math.max(value, min), max);
     const percentage = (clampedValue - min) / (max - min);
 
     // SVG properties
-    const strokeWidth = size * 0.15;
+    const strokeWidth = customStrokeWidth || size * 0.15;
     const radius = (size - strokeWidth) / 2;
     const centerX = size / 2;
     const centerY = size / 2;

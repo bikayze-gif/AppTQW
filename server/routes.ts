@@ -6,6 +6,7 @@ import { storage } from "./storage";
 import { insertBillingSchema, loginSchema, materialSolicitudRequestSchema } from "@shared/schema";
 import { z } from "zod";
 import { broadcast } from "./websocket";
+import { emailService } from "./services/email";
 
 
 // Middleware para verificar autenticación
@@ -199,12 +200,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const ip = req.ip || req.socket.remoteAddress || "unknown";
       const userAgent = req.headers["user-agent"] || "unknown";
 
+      // Check rate limit (3 requests per 15 minutes)
+      const rateLimitExceeded = await storage.checkPasswordResetRateLimit(email);
+      if (rateLimitExceeded) {
+        await storage.logPasswordResetAttempt(email, 'request_code', false, ip, 'Rate limit exceeded');
+        return res.status(429).json({
+          error: "Demasiados intentos. Por favor, espera 15 minutos antes de intentar nuevamente.",
+          code: "RATE_LIMIT_EXCEEDED"
+        });
+      }
+
       // Check if user exists
       const userExists = await storage.getUserEmailExists(email);
 
       // Always return success to prevent email enumeration
       if (!userExists) {
         console.log(`[PASSWORD RESET] Email not found: ${email}`);
+        await storage.logPasswordResetAttempt(email, 'request_code', false, ip, 'Email not found');
         return res.json({
           success: true,
           message: "Si el correo existe, recibirás un código de verificación"
@@ -218,7 +230,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Save token to database
       await storage.createPasswordResetToken(email, code, expiresAt, ip, userAgent);
 
-      // Log the code to console (for testing - replace with email service later)
+      // Send actual email
+      try {
+        await emailService.sendPasswordResetCode(email, code);
+        console.log(`[PASSWORD RESET] Email enviado exitosamente a: ${email}`);
+        await storage.logPasswordResetAttempt(email, 'request_code', true, ip, 'Email sent successfully');
+      } catch (mailError) {
+        console.error(`[PASSWORD RESET] Error enviando email a ${email}:`, mailError);
+        await storage.logPasswordResetAttempt(email, 'request_code', false, ip, `Email send failed: ${mailError}`);
+        // We continue because the code is still in the DB,
+        // but the user won't receive it unless we log it or handle it.
+      }
+
+      // Log the code to console (for testing)
       console.log(`\n========================================`);
       console.log(`[PASSWORD RESET] Código para ${email}: ${code}`);
       console.log(`[PASSWORD RESET] Expira en: 15 minutos`);
@@ -226,9 +250,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({
         success: true,
-        message: "Si el correo existe, recibirás un código de verificación",
-        // For testing only - remove in production
-        ...(process.env.NODE_ENV === 'development' && { testCode: code })
+        message: "Si el correo existe, recibirás un código de verificación"
       });
     } catch (error) {
       console.error("Forgot password error:", error);
@@ -245,14 +267,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Email y código son requeridos" });
       }
 
+      const ip = req.ip || req.socket.remoteAddress || "unknown";
+
+      // Check current attempts before validation
+      const currentAttempts = await storage.getResetCodeAttempts(email, code);
+
+      // Check if max attempts exceeded
+      if (currentAttempts >= 5) {
+        await storage.invalidateAllPasswordResetTokens(email);
+        await storage.logPasswordResetAttempt(email, 'verify_code', false, ip, 'Max attempts exceeded');
+        return res.status(400).json({
+          error: "Demasiados intentos fallidos. El código ha sido invalidado. Solicita uno nuevo.",
+          valid: false,
+          code: "MAX_ATTEMPTS_EXCEEDED"
+        });
+      }
+
       const isValid = await storage.validatePasswordResetCode(email, code);
 
       if (!isValid) {
+        // Increment attempts on failed validation
+        const newAttempts = await storage.incrementResetCodeAttempts(email, code);
+        await storage.logPasswordResetAttempt(email, 'verify_code', false, ip, `Invalid code attempt ${newAttempts}/5`);
+
+        const remainingAttempts = 5 - newAttempts;
         return res.status(400).json({
-          error: "Código inválido o expirado",
-          valid: false
+          error: remainingAttempts > 0
+            ? `Código inválido o expirado. Te quedan ${remainingAttempts} intentos.`
+            : "Código inválido o expirado",
+          valid: false,
+          remainingAttempts
         });
       }
+
+      // Success - log it
+      await storage.logPasswordResetAttempt(email, 'verify_code', true, ip, 'Code verified successfully');
 
       res.json({
         success: true,
@@ -280,10 +329,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "La contraseña debe tener al menos 6 caracteres" });
       }
 
+      // Validate password strength (medium level)
+      if (newPassword.length < 8) {
+        return res.status(400).json({
+          error: "La contraseña debe tener al menos 8 caracteres",
+          requirements: {
+            minLength: false,
+            hasUpperCase: /[A-Z]/.test(newPassword),
+            hasLowerCase: /[a-z]/.test(newPassword),
+            hasNumber: /[0-9]/.test(newPassword)
+          }
+        });
+      }
+
+      const passwordRequirements = {
+        minLength: newPassword.length >= 8,
+        hasUpperCase: /[A-Z]/.test(newPassword),
+        hasLowerCase: /[a-z]/.test(newPassword),
+        hasNumber: /[0-9]/.test(newPassword)
+      };
+
+      const allRequirementsMet = Object.values(passwordRequirements).every(req => req);
+
+      if (!allRequirementsMet) {
+        return res.status(400).json({
+          error: "La contraseña no cumple con los requisitos de seguridad",
+          requirements: passwordRequirements
+        });
+      }
+
       // Verify code is still valid
       const isValid = await storage.validatePasswordResetCode(email, code);
 
       if (!isValid) {
+        await storage.logPasswordResetAttempt(email, 'reset_password', false, ip, 'Invalid or expired code');
         return res.status(400).json({ error: "Código inválido o expirado" });
       }
 
@@ -294,6 +373,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updated = await storage.updateUserPassword(email, hashedPassword);
 
       if (!updated) {
+        await storage.logPasswordResetAttempt(email, 'reset_password', false, ip, 'Failed to update password');
         return res.status(400).json({ error: "No se pudo actualizar la contraseña" });
       }
 
@@ -302,6 +382,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Invalidate all other reset tokens for this email
       await storage.invalidateAllPasswordResetTokens(email);
+
+      // Log successful password reset
+      await storage.logPasswordResetAttempt(email, 'reset_password', true, ip, 'Password reset successfully');
 
       console.log(`[PASSWORD RESET] Contraseña actualizada exitosamente para: ${email}`);
 
@@ -450,6 +533,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("[Monitor Refresh API] Error:", error);
       res.status(500).json({ error: "Failed to broadcast refresh" });
+    }
+  });
+
+  // KPI Mes Actual Dashboard API route
+  app.get("/api/supervisor/kpi-mes-actual", async (req, res) => {
+    try {
+      const { year, month, equipmentType } = req.query;
+      console.log(`[KPI Mes Actual API] Request received for ${year}-${month}, filter: ${equipmentType}`);
+
+      const data = await storage.getKpiMesActualDashboard(
+        year ? parseInt(year as string) : undefined,
+        month ? parseInt(month as string) : undefined,
+        equipmentType as string
+      );
+
+      console.log("[KPI Mes Actual API] Sending dashboard data");
+      res.json(data);
+    } catch (error) {
+      console.error("[KPI Mes Actual API] Error:", error);
+      res.status(500).json({ error: "Failed to fetch monthly KPI dashboard data" });
     }
   });
 
@@ -679,8 +782,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/supervisor/logistica/materiales", async (req, res) => {
     try {
-      console.log('Fetching supervisor logistics materials...');
-      const materials = await storage.getSupervisorLogisticsMaterials();
+      const { startDate, endDate } = req.query;
+      console.log(`Fetching supervisor logistics materials for range: ${startDate} - ${endDate}...`);
+      const materials = await storage.getSupervisorLogisticsMaterials(
+        startDate as string,
+        endDate as string
+      );
       console.log(`Returning ${materials.length} grouped tickets`);
       res.json(materials);
     } catch (error) {

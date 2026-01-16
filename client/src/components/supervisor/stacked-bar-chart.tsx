@@ -84,126 +84,117 @@ export function StackedBarChart({
     const tooltipColor = isDark ? "#f3f4f6" : "#1e293b";
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
-            {title && (
-                <div className="bg-slate-50 dark:bg-slate-900/50 py-2 px-4 border-b border-slate-200 dark:border-slate-700">
-                    <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider truncate" title={title}>
-                        {title}
-                    </h3>
-                </div>
-            )}
-            <div className="flex-1 p-2 w-full" style={{ height: height }}>
-                <ResponsiveContainer width="100%" height="100%">
-                    <RechartsBarChart
-                        layout="vertical"
-                        data={data}
-                        margin={{
-                            top: 5,
-                            right: 30,
-                            left: 10,
-                            bottom: customLegend ? 20 : 5,
+        <div className="w-full h-full" style={{ height }}>
+            <ResponsiveContainer width="100%" height="100%">
+                <RechartsBarChart
+                    layout="vertical"
+                    data={data}
+                    margin={{
+                        top: 5,
+                        right: 30,
+                        left: 10,
+                        bottom: customLegend ? 20 : 5,
+                    }}
+                >
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} vertical={true} stroke={gridColor} />
+                    <XAxis
+                        type="number"
+                        stroke={axisColor}
+                        fontSize={12}
+                        tickLine={true}
+                        axisLine={false}
+                        tickFormatter={xAxisTickFormatter}
+                        domain={domain}
+                        ticks={ticks}
+                    />
+                    <YAxis
+                        dataKey={xAxisKey}
+                        type="category"
+                        stroke={axisColor}
+                        fontSize={yAxisFontSize + 2}
+                        tickLine={false}
+                        axisLine={false}
+                        width={yAxisWidth}
+                    />
+                    <Tooltip
+                        contentStyle={{
+                            backgroundColor: tooltipBg,
+                            borderColor: tooltipBorder,
+                            color: tooltipColor,
+                            borderRadius: '8px',
+                            boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
                         }}
-                    >
-                        <CartesianGrid strokeDasharray="3 3" horizontal={false} vertical={true} stroke={gridColor} />
-                        <XAxis
-                            type="number"
-                            stroke={axisColor}
-                            fontSize={12}
-                            tickLine={true}
-                            axisLine={false}
-                            tickFormatter={xAxisTickFormatter}
-                            domain={domain}
-                            ticks={ticks}
+                        itemStyle={{ color: tooltipColor }}
+                        cursor={{ fill: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)' }}
+                        formatter={valueFormatter}
+                    />
+                    {customLegend ? (
+                        <Legend
+                            content={() => (
+                                <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-2">
+                                    {customLegend.map((item, i) => (
+                                        <div key={i} className="flex items-center gap-1.5">
+                                            <div
+                                                className="w-3 h-3 rounded-full"
+                                                style={{ backgroundColor: item.color }}
+                                            />
+                                            <span
+                                                style={{
+                                                    fontSize: `${legendFontSize}px`,
+                                                    color: isDark ? '#f3f4f6' : '#1e293b'
+                                                }}
+                                            >
+                                                {item.label}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         />
-                        <YAxis
-                            dataKey={xAxisKey}
-                            type="category"
-                            stroke={axisColor}
-                            fontSize={yAxisFontSize + 2}
-                            tickLine={false}
-                            axisLine={false}
-                            width={yAxisWidth}
-                        />
-                        <Tooltip
-                            contentStyle={{
-                                backgroundColor: tooltipBg,
-                                borderColor: tooltipBorder,
-                                color: tooltipColor,
-                                borderRadius: '8px',
-                                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                    ) : (
+                        <Legend
+                            wrapperStyle={{
+                                paddingTop: '10px',
+                                fontSize: `${legendFontSize}px`,
+                                color: isDark ? '#f3f4f6' : '#1e293b'
                             }}
-                            itemStyle={{ color: tooltipColor }}
-                            cursor={{ fill: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)' }}
-                            formatter={valueFormatter}
                         />
-                        {customLegend ? (
-                            <Legend
-                                content={() => (
-                                    <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-2">
-                                        {customLegend.map((item, i) => (
-                                            <div key={i} className="flex items-center gap-1.5">
-                                                <div
-                                                    className="w-3 h-3 rounded-full"
-                                                    style={{ backgroundColor: item.color }}
-                                                />
-                                                <span
-                                                    style={{
-                                                        fontSize: `${legendFontSize}px`,
-                                                        color: isDark ? '#f3f4f6' : '#1e293b'
-                                                    }}
-                                                >
-                                                    {item.label}
-                                                </span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            />
-                        ) : (
-                            <Legend
-                                wrapperStyle={{
-                                    paddingTop: '10px',
-                                    fontSize: `${legendFontSize}px`,
-                                    color: isDark ? '#f3f4f6' : '#1e293b'
-                                }}
-                            />
-                        )}
-                        {bars.map((bar) => (
-                            <Bar
-                                key={bar.key}
-                                dataKey={bar.key}
-                                stackId={stacked ? "a" : undefined}
-                                fill={bar.color}
-                                name={bar.name}
-                                radius={stacked ? [0, 4, 4, 0] : [0, 2, 2, 0]}
-                                barSize={stacked ? 12 : 8}
-                            >
-                                {showBarLabels && (
-                                    <LabelList
-                                        dataKey={bar.key}
-                                        position="right"
-                                        style={{
-                                            fill: isDark ? '#f3f4f6' : '#1e293b',
-                                            fontSize: '10px',
-                                            fontWeight: 'bold'
-                                        }}
-                                        formatter={(val: any) => {
-                                            if (val === undefined || val === null || val === 0) return '';
-                                            return valueFormatter(val);
-                                        }}
-                                    />
-                                )}
-                                {bar.getColor && data.map((entry, index) => (
-                                    <Cell
-                                        key={`cell-${index}`}
-                                        fill={bar.getColor!(entry[bar.key], entry)}
-                                    />
-                                ))}
-                            </Bar>
-                        ))}
-                    </RechartsBarChart>
-                </ResponsiveContainer>
-            </div>
+                    )}
+                    {bars.map((bar) => (
+                        <Bar
+                            key={bar.key}
+                            dataKey={bar.key}
+                            stackId={stacked ? "a" : undefined}
+                            fill={bar.color}
+                            name={bar.name}
+                            radius={stacked ? [0, 4, 4, 0] : [0, 2, 2, 0]}
+                            barSize={stacked ? 12 : 8}
+                        >
+                            {showBarLabels && (
+                                <LabelList
+                                    dataKey={bar.key}
+                                    position="right"
+                                    style={{
+                                        fill: isDark ? '#f3f4f6' : '#1e293b',
+                                        fontSize: '10px',
+                                        fontWeight: 'bold'
+                                    }}
+                                    formatter={(val: any) => {
+                                        if (val === undefined || val === null || val === 0) return '';
+                                        return valueFormatter(val);
+                                    }}
+                                />
+                            )}
+                            {bar.getColor && data.map((entry, index) => (
+                                <Cell
+                                    key={`cell-${index}`}
+                                    fill={bar.getColor!(entry[bar.key], entry)}
+                                />
+                            ))}
+                        </Bar>
+                    ))}
+                </RechartsBarChart>
+            </ResponsiveContainer>
         </div>
     );
 }

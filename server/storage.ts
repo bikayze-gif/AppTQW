@@ -87,6 +87,7 @@ export interface IStorage {
   getKpiData(periodo: string): Promise<schema.TqwComisionRenew[]>;
   getKpiPeriods(): Promise<string[]>;
   getMonitorDiarioDashboard(): Promise<MonitorDiarioDashboardData>;
+  getKpiMesActualDashboard(year?: number, month?: number, equipmentType?: string): Promise<any>;
 
   // Materials operations
   getMaterialTipos(): Promise<string[]>;
@@ -146,7 +147,7 @@ export interface IStorage {
   updateSidebarPermissions(profile: string, allowedItems: string[]): Promise<schema.SidebarPermission>;
 
   // Logistics Operations
-  getSupervisorLogisticsMaterials(): Promise<any[]>;
+  getSupervisorLogisticsMaterials(startDate?: string, endDate?: string): Promise<any[]>;
   updateLogisticsMaterialStatus(id: number, status: 'approved' | 'rejected'): Promise<boolean>;
 
   // SME Operations
@@ -852,9 +853,24 @@ export class MySQLStorage implements IStorage {
     }
   }
 
-  async getSupervisorLogisticsMaterials(): Promise<any[]> {
+  async getSupervisorLogisticsMaterials(startDate?: string, endDate?: string): Promise<any[]> {
     try {
-      console.log('[Supervisor Logistics] Starting query for grouped tickets...');
+      console.log(`[Supervisor Logistics] Starting query for grouped tickets... Range: ${startDate} to ${endDate}`);
+
+      let whereClause = '';
+      const queryParams: any[] = [];
+
+      if (startDate && endDate) {
+        whereClause = 'WHERE tlts.fecha BETWEEN ? AND ?';
+        queryParams.push(startDate + ' 00:00:00');
+        queryParams.push(endDate + ' 23:59:59');
+      } else if (startDate) {
+        whereClause = 'WHERE tlts.fecha >= ?';
+        queryParams.push(startDate + ' 00:00:00');
+      } else if (endDate) {
+        whereClause = 'WHERE tlts.fecha <= ?';
+        queryParams.push(endDate + ' 23:59:59');
+      }
 
       // Fetch all individual items
       const [allItems] = await pool.execute(`
@@ -876,13 +892,14 @@ export class MySQLStorage implements IStorage {
         FROM tb_logis_tecnico_solicitud tlts
         LEFT JOIN tb_user_tqw tut ON tut.id = tlts.tecnico
         LEFT JOIN tb_user_tqw tut2 ON tut2.id = tlts.id_tecnico_traspaso
+        ${whereClause}
         GROUP BY 
           tlts.id, tlts.TICKET, tlts.material, tlts.cantidad, tlts.campo_item, 
           tlts.fecha, tlts.tecnico, tlts.id_tecnico_traspaso, tlts.flag_regiones, 
           tlts.flag_gestion_supervisor, tlts.flag_gestion_bodega, tlts.FLAG_BODEGA
         ORDER BY tlts.fecha DESC, tlts.TICKET, tlts.id
         LIMIT 5000
-      `);
+      `, queryParams);
 
       // Group items by TICKET in JavaScript
       const ticketMap = new Map<string, any>();
@@ -1409,7 +1426,7 @@ export class MySQLStorage implements IStorage {
 
   async getUserEmailExists(email: string): Promise<boolean> {
     const [rows] = await pool.execute<RowDataPacket[]>(
-      `SELECT 1 FROM tb_user_tqw WHERE email = ? LIMIT 1`,
+      `SELECT 1 FROM tb_user_tqw WHERE email = ? AND Vigente = 'Si' LIMIT 1`,
       [email]
     );
     return rows.length > 0;
@@ -1485,6 +1502,60 @@ export class MySQLStorage implements IStorage {
     await pool.execute(
       `UPDATE password_reset_tokens SET used = TRUE, used_at = ? WHERE email = ? AND used = FALSE`,
       [new Date(), email]
+    );
+  }
+
+  // Enhanced password reset methods
+  async checkPasswordResetRateLimit(email: string): Promise<boolean> {
+    const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      `SELECT COUNT(*) as count FROM password_reset_tokens 
+       WHERE email = ? AND created_at > ?`,
+      [email, fifteenMinutesAgo]
+    );
+    const count = rows[0]?.count || 0;
+    return count >= 3; // Return true if rate limit exceeded
+  }
+
+  async incrementResetCodeAttempts(email: string, code: string): Promise<number> {
+    await pool.execute(
+      `UPDATE password_reset_tokens 
+       SET attempts = attempts + 1 
+       WHERE email = ? AND reset_code = ? AND used = FALSE`,
+      [email, code]
+    );
+
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      `SELECT attempts FROM password_reset_tokens 
+       WHERE email = ? AND reset_code = ? AND used = FALSE 
+       ORDER BY created_at DESC LIMIT 1`,
+      [email, code]
+    );
+
+    return rows[0]?.attempts || 0;
+  }
+
+  async getResetCodeAttempts(email: string, code: string): Promise<number> {
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      `SELECT attempts FROM password_reset_tokens 
+       WHERE email = ? AND reset_code = ? AND used = FALSE 
+       ORDER BY created_at DESC LIMIT 1`,
+      [email, code]
+    );
+    return rows[0]?.attempts || 0;
+  }
+
+  async logPasswordResetAttempt(
+    email: string,
+    action: string,
+    success: boolean,
+    ip: string,
+    details?: string
+  ): Promise<void> {
+    await pool.execute(
+      `INSERT INTO tb_password_reset_audit (email, action, success, ip_address, details) 
+       VALUES (?, ?, ?, ?, ?)`,
+      [email, action, success, ip, details || null]
     );
   }
 
@@ -1757,6 +1828,235 @@ export class MySQLStorage implements IStorage {
     } catch (error) {
       console.error("Error fetching localidades by zona:", error);
       return [];
+    }
+  }
+
+  async getKpiMesActualDashboard(year?: number, month?: number, equipmentType?: string): Promise<any> {
+    try {
+      const now = new Date();
+      const targetYear = year || now.getFullYear();
+      const targetMonth = month || (now.getMonth() + 1);
+
+      console.log(`[KPI Mes Actual] Fetching data for ${targetYear}-${targetMonth}${equipmentType ? ` filter: ${equipmentType}` : ''}`);
+
+      let equipmentFilter = '';
+      const params: any[] = [targetYear, targetMonth];
+
+      if (equipmentType) {
+        if (equipmentType.toUpperCase() === 'RESIDENCIAL') {
+          equipmentFilter = " AND Tipo_equipo IN ('RESIDENCIAL', 'Masivos')";
+        } else if (equipmentType.toUpperCase() === 'SME') {
+          equipmentFilter = " AND Tipo_equipo = 'SME'";
+        } else {
+          equipmentFilter = " AND Tipo_equipo = ?";
+          params.push(equipmentType);
+        }
+      }
+
+      // 1. Summary Metrics
+      const [summaryRows] = await pool.execute<RowDataPacket[]>(
+        `SELECT 
+            SUM(Completado_RGU) as totalRGU,
+            ROUND(AVG(CASE WHEN Completado_Count > 0 THEN Porcentaje_Completado END), 2) as avgCompletionRate,
+            COUNT(DISTINCT RUT_FORMAT) as activeTechnicians,
+            COUNT(DISTINCT CASE WHEN Tipo_equipo IN ('RESIDENCIAL', 'Masivos') THEN RUT_FORMAT END) as techResidencial,
+            COUNT(DISTINCT CASE WHEN Tipo_equipo = 'SME' THEN RUT_FORMAT END) as techSme,
+            SUM(Completado_Count + No_Realizada_Count) as totalActivities,
+            ROUND(SUM(Completado_RGU) * 1.0 / NULLIF(SUM(Completado_Count), 0), 2) as rguPerActivity,
+            COUNT(DISTINCT fecha_format) as workingDays,
+            SUM(Completado_Count) as completedActivities,
+            SUM(No_Realizada_Count) as notCompletedActivities
+        FROM tb_kpi_gerencia_rgu_tecnicos
+        WHERE YEAR(fecha_format) = ? AND MONTH(fecha_format) = ?${equipmentFilter}`,
+        params
+      );
+
+      const summary = summaryRows[0] || {
+        totalRGU: 0,
+        avgCompletionRate: 0,
+        activeTechnicians: 0,
+        techResidencial: 0,
+        techSme: 0,
+        totalActivities: 0,
+        rguPerActivity: 0,
+        workingDays: 0,
+        completedActivities: 0,
+        notCompletedActivities: 0,
+      };
+
+      // 2. Daily Trend
+      const [dailyRows] = await pool.execute<RowDataPacket[]>(
+        `SELECT 
+            fecha_format as date,
+            SUM(Completado_RGU) as rgu,
+            COUNT(DISTINCT RUT_FORMAT) as technicians,
+            ROUND(AVG(Porcentaje_Completado), 2) as completionRate,
+            SUM(Completado_Count) as completedActivities,
+            SUM(No_Realizada_Count) as notCompletedActivities
+        FROM tb_kpi_gerencia_rgu_tecnicos
+        WHERE YEAR(fecha_format) = ? AND MONTH(fecha_format) = ?${equipmentFilter}
+        GROUP BY fecha_format
+        ORDER BY fecha_format ASC`,
+        params
+      );
+
+      // 3. Supervisor Performance
+      const [supervisorRows] = await pool.execute<RowDataPacket[]>(
+        `SELECT 
+            supervisor,
+            COUNT(DISTINCT RUT_FORMAT) as technicians,
+            SUM(Completado_RGU) as totalRGU,
+            SUM(Completado_Count) as completedActivities,
+            SUM(No_Realizada_Count) as notCompletedActivities,
+            ROUND(AVG(Porcentaje_Completado), 2) as avgCompletionRate,
+            ROUND(SUM(Completado_RGU) * 1.0 / NULLIF(SUM(Completado_Count), 0), 2) as rguPerActivity
+        FROM tb_kpi_gerencia_rgu_tecnicos
+        WHERE YEAR(fecha_format) = ? AND MONTH(fecha_format) = ?${equipmentFilter}
+        GROUP BY supervisor
+        ORDER BY totalRGU DESC`,
+        params
+      );
+
+      // 4. Equipment Type Comparison (Always show breakdown regardless of filter, or filter it too?)
+      // User said "modificar todo el contenido de los elementos", so let's filter this too.
+      const [equipmentRows] = await pool.execute<RowDataPacket[]>(
+        `SELECT 
+            Tipo_equipo as equipmentType,
+            COUNT(DISTINCT RUT_FORMAT) as technicians,
+            SUM(Completado_RGU) as totalRGU,
+            SUM(Completado_Count) as completedActivities,
+            SUM(No_Realizada_Count) as notCompletedActivities,
+            ROUND(AVG(Porcentaje_Completado), 2) as completionRate,
+            ROUND(SUM(Completado_RGU) * 1.0 / NULLIF(SUM(Completado_Count), 0), 2) as rguPerActivity
+        FROM tb_kpi_gerencia_rgu_tecnicos
+        WHERE YEAR(fecha_format) = ? AND MONTH(fecha_format) = ?${equipmentFilter}
+        GROUP BY Tipo_equipo
+        ORDER BY totalRGU DESC`,
+        params
+      );
+
+      const equipmentTypeComparison: any = {};
+      equipmentRows.forEach((row: any) => {
+        equipmentTypeComparison[row.equipmentType] = {
+          technicians: Number(row.technicians),
+          totalRGU: Number(row.totalRGU),
+          completedActivities: Number(row.completedActivities),
+          notCompletedActivities: Number(row.notCompletedActivities),
+          completionRate: Number(row.completionRate),
+          rguPerActivity: Number(row.rguPerActivity),
+        };
+      });
+
+      // 5. Top Performers
+      const [topPerformersRows] = await pool.execute<RowDataPacket[]>(
+        `SELECT 
+            ROW_NUMBER() OVER (ORDER BY SUM(Completado_RGU) DESC, AVG(Porcentaje_Completado) DESC) as \`rank\`,
+            Nombre_short as name,
+            RUT_FORMAT as rut,
+            supervisor,
+            Tipo_equipo as equipmentType,
+            SUM(Completado_RGU) as totalRGU,
+            ROUND(AVG(Porcentaje_Completado), 2) as completionRate,
+            ROUND(SUM(Completado_RGU) * 1.0 / NULLIF(COUNT(DISTINCT fecha_format), 0), 2) as rguPerDay,
+            COUNT(DISTINCT fecha_format) as daysWorked,
+            SUM(Completado_Count) as completedActivities,
+            SUM(No_Realizada_Count) as notCompletedActivities
+        FROM tb_kpi_gerencia_rgu_tecnicos
+        WHERE YEAR(fecha_format) = ? AND MONTH(fecha_format) = ?${equipmentFilter}
+        GROUP BY Nombre_short, RUT_FORMAT, supervisor, Tipo_equipo
+        ORDER BY totalRGU DESC, completionRate DESC
+        LIMIT 10`,
+        params
+      );
+
+      // 6. Low Performers (Bottom 10 by Total RGU)
+      const [lowPerformersRows] = await pool.execute<RowDataPacket[]>(
+        `SELECT 
+            Nombre_short as name,
+            RUT_FORMAT as rut,
+            supervisor,
+            Tipo_equipo as equipmentType,
+            SUM(Completado_RGU) as totalRGU,
+            ROUND(AVG(Porcentaje_Completado), 2) as completionRate,
+            ROUND(SUM(Completado_RGU) * 1.0 / NULLIF(COUNT(DISTINCT fecha_format), 0), 2) as rguPerDay,
+            COUNT(DISTINCT fecha_format) as daysWorked,
+            SUM(Completado_Count) as completedActivities,
+            SUM(No_Realizada_Count) as notCompleted
+        FROM tb_kpi_gerencia_rgu_tecnicos
+        WHERE YEAR(fecha_format) = ? AND MONTH(fecha_format) = ?${equipmentFilter}
+        GROUP BY Nombre_short, RUT_FORMAT, supervisor, Tipo_equipo
+        ORDER BY totalRGU ASC, completionRate ASC
+        LIMIT 10`,
+        params
+      );
+
+      const response = {
+        summary: {
+          totalRGU: Number(summary.totalRGU),
+          avgCompletionRate: Number(summary.avgCompletionRate),
+          activeTechnicians: Number(summary.activeTechnicians),
+          techResidencial: Number(summary.techResidencial),
+          techSme: Number(summary.techSme),
+          totalActivities: Number(summary.totalActivities),
+          completedActivities: Number(summary.completedActivities),
+          notCompletedActivities: Number(summary.notCompletedActivities),
+          rguPerActivity: Number(summary.rguPerActivity),
+          workingDays: Number(summary.workingDays),
+        },
+        dailyTrend: dailyRows.map((row: any) => ({
+          date: row.date,
+          rgu: Number(row.rgu),
+          technicians: Number(row.technicians),
+          completionRate: Number(row.completionRate),
+          completedActivities: Number(row.completedActivities),
+          notCompletedActivities: Number(row.notCompletedActivities),
+        })),
+        supervisorPerformance: supervisorRows.map((row: any) => ({
+          supervisor: row.supervisor,
+          technicians: Number(row.technicians),
+          totalRGU: Number(row.totalRGU),
+          completedActivities: Number(row.completedActivities),
+          notCompletedActivities: Number(row.notCompletedActivities),
+          avgCompletionRate: Number(row.avgCompletionRate),
+          rguPerActivity: Number(row.rguPerActivity),
+        })),
+        equipmentTypeComparison,
+        topPerformers: topPerformersRows.map((row: any) => ({
+          rank: Number(row.rank),
+          name: row.name,
+          rut: row.rut,
+          supervisor: row.supervisor,
+          equipmentType: row.equipmentType,
+          totalRGU: Number(row.totalRGU),
+          completionRate: Number(row.completionRate),
+          rguPerDay: Number(row.rguPerDay),
+          daysWorked: Number(row.daysWorked),
+          completedActivities: Number(row.completedActivities),
+          notCompletedActivities: Number(row.notCompletedActivities),
+        })),
+        lowPerformers: lowPerformersRows.map((row: any) => ({
+          name: row.name,
+          rut: row.rut,
+          supervisor: row.supervisor,
+          equipmentType: row.equipmentType,
+          completionRate: Number(row.completionRate),
+          totalRGU: Number(row.totalRGU),
+          rguPerDay: Number(row.rguPerDay),
+          daysWorked: Number(row.daysWorked),
+          completedActivities: Number(row.completedActivities),
+          notCompleted: Number(row.notCompleted),
+        })),
+        activitiesDistribution: {
+          completed: Number(summary.completedActivities),
+          notCompleted: Number(summary.notCompletedActivities),
+        },
+      };
+
+      console.log(`[KPI Mes Actual] Successfully aggregated data for  ${targetYear}-${targetMonth}`);
+      return response;
+    } catch (error) {
+      console.error("[KPI Mes Actual] Error fetching dashboard data:", error);
+      throw error;
     }
   }
 }

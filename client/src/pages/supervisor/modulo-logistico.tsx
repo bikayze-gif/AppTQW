@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Loader2, AlertCircle, X, Package, ChevronRight, Check, X as XIcon } from "lucide-react";
+import { Loader2, AlertCircle, X, Package, ChevronRight, Check, X as XIcon, RotateCcw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
     Table,
@@ -17,6 +17,7 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
 
 interface MaterialItem {
     id: number;
@@ -46,9 +47,26 @@ export default function SupervisorModuloLogistico() {
     const queryClient = useQueryClient();
     const [selectedTicket, setSelectedTicket] = useState<SolicitudLogistica | null>(null);
 
+    const todayStr = new Date().toISOString().split("T")[0];
+    const twoDaysAgo = new Date();
+    twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+    const twoDaysAgoStr = twoDaysAgo.toISOString().split("T")[0];
+
+    const [startDate, setStartDate] = useState<string>(twoDaysAgoStr);
+    const [endDate, setEndDate] = useState<string>(todayStr);
+
     const { data: solicitudes, isLoading, error } = useQuery<SolicitudLogistica[]>({
-        queryKey: ["/api/supervisor/logistica/materiales"],
-        refetchInterval: 5000, // Poll every 5 seconds
+        queryKey: ["/api/supervisor/logistica/materiales", startDate, endDate],
+        queryFn: async () => {
+            const params = new URLSearchParams();
+            if (startDate) params.append("startDate", startDate);
+            if (endDate) params.append("endDate", endDate);
+
+            const response = await fetch(`/api/supervisor/logistica/materiales?${params.toString()}`);
+            if (!response.ok) throw new Error("Failed to fetch logistics materials");
+            return response.json();
+        },
+        refetchInterval: 5000,
     });
 
     const updateStatusMutation = useMutation({
@@ -114,6 +132,39 @@ export default function SupervisorModuloLogistico() {
                                 <p className="text-slate-500 dark:text-slate-400">
                                     Solicitudes y Asignación de Material - Agrupadas por Ticket
                                 </p>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-4 bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs font-bold text-slate-500 uppercase tracking-tight">Desde:</span>
+                                    <Input
+                                        type="date"
+                                        value={startDate}
+                                        onChange={(e) => setStartDate(e.target.value)}
+                                        className="h-9 text-xs w-[160px] bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+                                    />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs font-bold text-slate-500 uppercase tracking-tight">Hasta:</span>
+                                    <Input
+                                        type="date"
+                                        value={endDate}
+                                        onChange={(e) => setEndDate(e.target.value)}
+                                        className="h-9 text-xs w-[160px] bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+                                    />
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                        setStartDate(twoDaysAgoStr);
+                                        setEndDate(todayStr);
+                                    }}
+                                    className="h-9 text-xs gap-2 ml-auto"
+                                >
+                                    <RotateCcw className="h-3.5 w-3.5" />
+                                    Restablecer
+                                </Button>
                             </div>
 
                             <Card>
