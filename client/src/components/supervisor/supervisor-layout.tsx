@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useAuth } from "@/lib/auth-context";
@@ -7,9 +7,12 @@ import {
   HelpCircle, Mail, FileText, Trello, CheckSquare,
   User, Bell, Settings, Menu, ChevronRight,
   LogOut, NotebookPen, BarChart3, Receipt, Sun, Moon,
-  AlertCircle, CheckCircle2, Package, Briefcase, Truck
+  AlertCircle, CheckCircle2, Package, Briefcase, Truck, Maximize, Minimize, Check
 } from "lucide-react";
 import { useTheme } from "next-themes";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+import { useNotifications } from "@/hooks/use-notifications";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,6 +43,29 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
   const { theme, setTheme } = useTheme();
   const { user } = useAuth();
   const profile = user?.perfil || "user";
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    };
+  }, []);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+  };
 
   const { data: allowedItems } = useQuery<string[]>({
     queryKey: ["/api/sidebar-permissions", profile],
@@ -184,29 +210,105 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
               <SheetTrigger asChild>
                 <button className="p-2 text-slate-400 hover:text-slate-600 relative">
                   <Bell size={20} />
+                  {unreadCount > 0 && (
+                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white dark:ring-[#1e293b]" />
+                  )}
                 </button>
               </SheetTrigger>
               <SheetContent className="w-full sm:max-w-md">
                 <SheetHeader className="mb-4">
                   <SheetTitle className="flex items-center justify-between">
-                    Notificaciones
+                    <span>Notificaciones</span>
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={() => markAllAsRead()}
+                        className="text-xs font-normal text-blue-600 hover:text-blue-700 dark:text-blue-400 flex items-center gap-1"
+                      >
+                        <CheckSquare size={14} />
+                        Marcar todo como leído
+                      </button>
+                    )}
                   </SheetTitle>
                   <SheetDescription>
                     Mantente al día con las últimas actividades del equipo.
                   </SheetDescription>
                 </SheetHeader>
                 <ScrollArea className="h-[calc(100vh-8rem)]">
-                  <div className="flex flex-col items-center justify-center h-48 text-center px-6">
-                    <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-full mb-3">
-                      <Bell className="w-8 h-8 text-slate-300 dark:text-slate-600" />
+                  {notifications.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-48 text-center px-6">
+                      <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-full mb-3">
+                        <Bell className="w-8 h-8 text-slate-300 dark:text-slate-600" />
+                      </div>
+                      <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
+                        No tienes notificaciones
+                      </p>
                     </div>
-                    <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
-                      No tienes notificaciones nuevas
-                    </p>
-                  </div>
+                  ) : (
+                    <div className="space-y-3 pr-4">
+                      {notifications.map((notification: any) => (
+                        <div
+                          key={notification.id}
+                          className={`
+                            relative p-4 rounded-lg border transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50
+                            ${!notification.isRead
+                              ? "bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800"
+                              : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700"
+                            }
+                          `}
+                        >
+                          <div className="flex gap-3">
+                            <div className={`
+                              mt-1 w-2 h-2 rounded-full shrink-0
+                              ${notification.priority === 'error' ? 'bg-red-500' :
+                                notification.priority === 'warning' ? 'bg-amber-500' :
+                                  notification.priority === 'success' ? 'bg-emerald-500' : 'bg-blue-500'}
+                            `} />
+
+                            <div className="flex-1 space-y-1">
+                              <div className="flex items-start justify-between gap-2">
+                                <h5 className="text-sm font-medium leading-none text-slate-900 dark:text-slate-100">
+                                  {notification.title}
+                                </h5>
+                                {!notification.isRead && (
+                                  <button
+                                    onClick={() => markAsRead(notification.id)}
+                                    title="Marcar como leída"
+                                    className="text-blue-600 hover:text-blue-700 dark:text-blue-400 transition-colors"
+                                  >
+                                    <Check size={14} />
+                                  </button>
+                                )}
+                              </div>
+                              <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-3">
+                                {notification.content}
+                              </p>
+                              <div className="flex flex-col gap-0.5 pt-1">
+                                {notification.createdByName && (
+                                  <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                                    {notification.createdByName}
+                                  </span>
+                                )}
+                                <span className="text-xs text-slate-400">
+                                  {format(new Date(notification.createdAt), "d 'de' MMMM, HH:mm", { locale: es })}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </ScrollArea>
               </SheetContent>
             </Sheet>
+
+            <button
+              onClick={toggleFullscreen}
+              className="p-2 text-slate-400 hover:text-slate-600 transition-colors"
+              title={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
+            >
+              {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
+            </button>
 
             <button
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}

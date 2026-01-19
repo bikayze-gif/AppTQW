@@ -314,3 +314,47 @@ export const sidebarPermissions = mysqlTable("tb_sidebar_permissions", {
 export const insertSidebarPermissionSchema = createInsertSchema(sidebarPermissions);
 export type InsertSidebarPermission = z.infer<typeof insertSidebarPermissionSchema>;
 export type SidebarPermission = typeof sidebarPermissions.$inferSelect;
+
+// ============================================
+// NOTIFICATIONS SYSTEM
+// ============================================
+
+export const notifications = mysqlTable("tb_notifications", {
+  id: int("id").primaryKey().autoincrement(),
+  title: varchar("title", { length: 255 }).notNull(),
+  content: text("content").notNull(),
+  priority: varchar("priority", { length: 20 }).notNull().default("info"), // 'info', 'success', 'warning', 'error'
+  createdAt: datetime("created_at").notNull(),
+  expiresAt: datetime("expires_at"),
+  createdBy: int("created_by").notNull(),
+  isActive: tinyint("is_active").notNull().default(1),
+});
+
+export type Notification = typeof notifications.$inferSelect;
+
+export const insertNotificationSchema = createInsertSchema(notifications, {
+  title: z.string().min(1, "El título es requerido").max(255),
+  content: z.string().min(1, "El contenido es requerido"),
+  priority: z.enum(["info", "success", "warning", "error"]).default("info"),
+  expiresAt: z.string().nullable().optional(),
+  isActive: z.number().min(0).max(1).default(1),
+}).omit({ id: true, createdAt: true });
+
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+
+export const notificationProfiles = mysqlTable("tb_notification_profiles", {
+  id: int("id").primaryKey().autoincrement(),
+  notificationId: int("notification_id").notNull(),
+  profile: varchar("profile", { length: 100 }).notNull(),
+});
+
+export type NotificationProfile = typeof notificationProfiles.$inferSelect;
+
+export const notificationReadStatus = mysqlTable("tb_notification_read_status", {
+  id: int("id").primaryKey().autoincrement(),
+  notificationId: int("notification_id").notNull(),
+  userId: int("user_id").notNull(),
+  readAt: datetime("read_at").notNull(),
+});
+
+export type NotificationReadStatus = typeof notificationReadStatus.$inferSelect;

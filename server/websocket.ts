@@ -93,3 +93,30 @@ export function broadcast(message: any) {
         log(`[Broadcast] Sent refresh signal to ${clientCount} client(s)`, "ws");
     }
 }
+
+/**
+ * Broadcast a new notification to all connected clients
+ * Clients will filter based on their profile on the client-side
+ */
+export function broadcastNotification(notification: any, targetProfiles: string[]) {
+    if (!wss) return;
+
+    const payload = JSON.stringify({
+        type: "notification",
+        target: "user-notifications",
+        notification,
+        profiles: targetProfiles,
+    });
+
+    let clientCount = 0;
+    wss.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(payload);
+            clientCount++;
+        }
+    });
+
+    if (clientCount > 0) {
+        log(`[Broadcast] Sent notification to ${clientCount} client(s) for profiles: ${targetProfiles.join(", ")}`, "ws");
+    }
+}

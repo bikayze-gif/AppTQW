@@ -13,6 +13,7 @@ export default function SettingsLayout({ children }: SettingsLayoutProps) {
     const settingsMenu = [
         { label: "Parametrico Puntaje", path: "/supervisor/settings/parametros" },
         { label: "Permisos de Menú", path: "/supervisor/settings/permissions" },
+        { label: "Notificaciones", path: "/supervisor/settings/notifications" },
     ];
 
     return (

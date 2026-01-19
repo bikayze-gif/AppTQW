@@ -155,6 +155,29 @@ export interface IStorage {
   getSmeTechnicians(): Promise<Array<{ id: number, name: string, rut: string }>>;
   createSmeActivity(data: any): Promise<void>;
   getLocalidadesByZona(zona: string): Promise<any[]>;
+
+  // Notification Operations
+  createNotification(data: {
+    title: string;
+    content: string;
+    priority: 'info' | 'success' | 'warning' | 'error';
+    profiles: string[];
+    expiresAt?: string;
+    createdBy: number;
+  }): Promise<number>;
+  getNotifications(includeInactive?: boolean): Promise<any[]>;
+  getNotificationsByProfile(profile: string, userId: number): Promise<any[]>;
+  getUnreadCount(userId: number): Promise<number>;
+  markNotificationAsRead(notificationId: number, userId: number): Promise<void>;
+  markAllAsRead(userId: number): Promise<void>;
+  deleteNotification(id: number): Promise<boolean>;
+  updateNotification(id: number, data: Partial<{
+    title: string;
+    content: string;
+    priority: string;
+    expiresAt: string | null;
+    isActive: boolean;
+  }>): Promise<boolean>;
 }
 
 export class MySQLStorage implements IStorage {
@@ -2079,6 +2102,279 @@ export class MySQLStorage implements IStorage {
     } catch (error) {
       console.error("[KPI Mes Actual] Error fetching dashboard data:", error);
       throw error;
+    }
+  }
+
+  // ============================================
+  // NOTIFICATION OPERATIONS
+  // ============================================
+
+  async createNotification(data: {
+    title: string;
+    content: string;
+    priority: 'info' | 'success' | 'warning' | 'error';
+    profiles: string[];
+    expiresAt?: string;
+    createdBy: number;
+  }): Promise<number> {
+    try {
+      // Insert notification
+      const result = await db.insert(schema.notifications).values({
+        title: data.title,
+        content: data.content,
+        priority: data.priority,
+        createdAt: new Date(),
+        expiresAt: data.expiresAt ? new Date(data.expiresAt) : null,
+        createdBy: data.createdBy,
+        isActive: 1,
+      });
+
+      const notificationId = result[0].insertId;
+
+      // Insert profile associations
+      if (data.profiles && data.profiles.length > 0) {
+        const profileValues = data.profiles.map(profile => ({
+          notificationId,
+          profile,
+        }));
+        await db.insert(schema.notificationProfiles).values(profileValues);
+      }
+
+      console.log(`[Notifications] Created notification ${notificationId} for profiles:`, data.profiles);
+      return notificationId;
+    } catch (error) {
+      console.error("[Notifications] Error creating notification:", error);
+      throw error;
+    }
+  }
+
+  async getNotifications(includeInactive = false): Promise<any[]> {
+    try {
+      const query = `
+        SELECT 
+          n.id,
+          n.title,
+          n.content,
+          n.priority,
+          n.created_at,
+          n.expires_at,
+          n.created_by,
+          n.is_active,
+          u.nombre as created_by_name,
+          GROUP_CONCAT(np.profile) as profiles
+        FROM tb_notifications n
+        LEFT JOIN tb_user_tqw u ON n.created_by = u.id
+        LEFT JOIN tb_notification_profiles np ON n.id = np.notification_id
+        WHERE ${includeInactive ? '1=1' : 'n.is_active = 1'}
+        GROUP BY n.id, n.title, n.content, n.priority, n.created_at, n.expires_at, n.created_by, n.is_active, u.nombre
+        ORDER BY n.created_at DESC
+      `;
+
+      const [rows] = await pool.execute<RowDataPacket[]>(query);
+
+      return rows.map((row: any) => ({
+        id: row.id,
+        title: row.title,
+        content: row.content,
+        priority: row.priority,
+        createdAt: row.created_at,
+        expiresAt: row.expires_at,
+        createdBy: row.created_by,
+        createdByName: row.created_by_name,
+        isActive: Boolean(row.is_active),
+        profiles: row.profiles ? row.profiles.split(',') : [],
+      }));
+    } catch (error) {
+      console.error("[Notifications] Error fetching notifications:", error);
+      throw error;
+    }
+  }
+
+  async getNotificationsByProfile(profile: string, userId: number): Promise<any[]> {
+    try {
+      const query = `
+        SELECT 
+          n.id,
+          n.title,
+          n.content,
+          n.priority,
+          n.created_at,
+          n.expires_at,
+          CASE WHEN nrs.id IS NOT NULL THEN 1 ELSE 0 END as is_read,
+          nrs.read_at,
+          u.nombre as created_by_name
+        FROM tb_notifications n
+        INNER JOIN tb_notification_profiles np ON n.id = np.notification_id
+        LEFT JOIN tb_notification_read_status nrs ON n.id = nrs.notification_id AND nrs.user_id = ?
+        LEFT JOIN tb_user_tqw u ON n.created_by = u.id
+        WHERE np.profile = ?
+          AND n.is_active = 1
+          AND (n.expires_at IS NULL OR n.expires_at > NOW())
+        ORDER BY n.created_at DESC
+      `;
+
+      const [rows] = await pool.execute<RowDataPacket[]>(query, [userId, profile]);
+
+      return rows.map((row: any) => ({
+        id: row.id,
+        title: row.title,
+        content: row.content,
+        priority: row.priority,
+        createdAt: row.created_at,
+        expiresAt: row.expires_at,
+        isRead: Boolean(row.is_read),
+        readAt: row.read_at,
+        createdByName: row.created_by_name,
+      }));
+    } catch (error) {
+      console.error("[Notifications] Error fetching notifications by profile:", error);
+      throw error;
+    }
+  }
+
+  async getUnreadCount(userId: number): Promise<number> {
+    try {
+      // First, get user profile
+      const [userRows] = await pool.execute<RowDataPacket[]>(
+        'SELECT PERFIL FROM tb_user_tqw WHERE id = ?',
+        [userId]
+      );
+
+      if (!userRows || userRows.length === 0) {
+        return 0;
+      }
+
+      const profile = userRows[0].PERFIL;
+
+      const query = `
+        SELECT COUNT(*) as count
+        FROM tb_notifications n
+        INNER JOIN tb_notification_profiles np ON n.id = np.notification_id
+        LEFT JOIN tb_notification_read_status nrs ON n.id = nrs.notification_id AND nrs.user_id = ?
+        WHERE np.profile = ?
+          AND n.is_active = 1
+          AND (n.expires_at IS NULL OR n.expires_at > NOW())
+          AND nrs.id IS NULL
+      `;
+
+      const [rows] = await pool.execute<RowDataPacket[]>(query, [userId, profile]);
+      return rows[0]?.count || 0;
+    } catch (error) {
+      console.error("[Notifications] Error fetching unread count:", error);
+      return 0;
+    }
+  }
+
+  async markNotificationAsRead(notificationId: number, userId: number): Promise<void> {
+    try {
+      await pool.execute(
+        `INSERT INTO tb_notification_read_status (notification_id, user_id, read_at) 
+         VALUES (?, ?, NOW())
+         ON DUPLICATE KEY UPDATE read_at = NOW()`,
+        [notificationId, userId]
+      );
+      console.log(`[Notifications] Marked notification ${notificationId} as read for user ${userId}`);
+    } catch (error) {
+      console.error("[Notifications] Error marking notification as read:", error);
+      throw error;
+    }
+  }
+
+  async markAllAsRead(userId: number): Promise<void> {
+    try {
+      // First, get user profile
+      const [userRows] = await pool.execute<RowDataPacket[]>(
+        'SELECT PERFIL FROM tb_user_tqw WHERE id = ?',
+        [userId]
+      );
+
+      if (!userRows || userRows.length === 0) {
+        return;
+      }
+
+      const profile = userRows[0].PERFIL;
+
+      // Get all unread notification IDs for this user's profile
+      const [notificationRows] = await pool.execute<RowDataPacket[]>(
+        `SELECT DISTINCT n.id
+         FROM tb_notifications n
+         INNER JOIN tb_notification_profiles np ON n.id = np.notification_id
+         LEFT JOIN tb_notification_read_status nrs ON n.id = nrs.notification_id AND nrs.user_id = ?
+         WHERE np.profile = ?
+           AND n.is_active = 1
+           AND (n.expires_at IS NULL OR n.expires_at > NOW())
+           AND nrs.id IS NULL`,
+        [userId, profile]
+      );
+
+      // Mark all as read
+      for (const row of notificationRows) {
+        await this.markNotificationAsRead(row.id, userId);
+      }
+
+      console.log(`[Notifications] Marked ${notificationRows.length} notifications as read for user ${userId}`);
+    } catch (error) {
+      console.error("[Notifications] Error marking all notifications as read:", error);
+      throw error;
+    }
+  }
+
+  async deleteNotification(id: number): Promise<boolean> {
+    try {
+      await pool.execute('DELETE FROM tb_notifications WHERE id = ?', [id]);
+      console.log(`[Notifications] Deleted notification ${id}`);
+      return true;
+    } catch (error) {
+      console.error("[Notifications] Error deleting notification:", error);
+      return false;
+    }
+  }
+
+  async updateNotification(id: number, data: Partial<{
+    title: string;
+    content: string;
+    priority: string;
+    expiresAt: string | null;
+    isActive: boolean;
+  }>): Promise<boolean> {
+    try {
+      const updates: string[] = [];
+      const values: any[] = [];
+
+      if (data.title !== undefined) {
+        updates.push('title = ?');
+        values.push(data.title);
+      }
+      if (data.content !== undefined) {
+        updates.push('content = ?');
+        values.push(data.content);
+      }
+      if (data.priority !== undefined) {
+        updates.push('priority = ?');
+        values.push(data.priority);
+      }
+      if (data.expiresAt !== undefined) {
+        updates.push('expires_at = ?');
+        values.push(data.expiresAt ? new Date(data.expiresAt) : null);
+      }
+      if (data.isActive !== undefined) {
+        updates.push('is_active = ?');
+        values.push(data.isActive ? 1 : 0);
+      }
+
+      if (updates.length === 0) {
+        return false;
+      }
+
+      values.push(id);
+      const query = `UPDATE tb_notifications SET ${updates.join(', ')} WHERE id = ?`;
+
+      await pool.execute(query, values);
+      console.log(`[Notifications] Updated notification ${id}`);
+      return true;
+    } catch (error) {
+      console.error("[Notifications] Error updating notification:", error);
+      return false;
     }
   }
 }

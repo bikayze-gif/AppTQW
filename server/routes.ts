@@ -1390,6 +1390,185 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ============================================
+  // NOTIFICATION ROUTES
+  // ============================================
+
+  // GET all notifications (admin view)
+  app.get("/api/notifications", requireRole("admin", "gerencia"), async (req, res) => {
+    try {
+      const includeInactive = req.query.includeInactive === "true";
+      const notifications = await storage.getNotifications(includeInactive);
+      res.json(notifications);
+    } catch (error) {
+      console.error("[Notifications API] Error fetching notifications:", error);
+      res.status(500).json({ error: "Failed to fetch notifications" });
+    }
+  });
+
+  // GET notifications for current user
+  app.get("/api/notifications/user", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.user?.id;
+      const profile = req.session.user?.perfil;
+
+      if (!userId || !profile) {
+        return res.status(401).json({ error: "No autenticado" });
+      }
+
+      const notifications = await storage.getNotificationsByProfile(profile, userId);
+      res.json(notifications);
+    } catch (error) {
+      console.error("[Notifications API] Error fetching user notifications:", error);
+      res.status(500).json({ error: "Failed to fetch user notifications" });
+    }
+  });
+
+  // GET unread count for current user
+  app.get("/api/notifications/unread-count", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({ error: "No autenticado" });
+      }
+
+      const count = await storage.getUnreadCount(userId);
+      res.json({ count });
+    } catch (error) {
+      console.error("[Notifications API] Error fetching unread count:", error);
+      res.status(500).json({ error: "Failed to fetch unread count" });
+    }
+  });
+
+  // POST create new notification
+  app.post("/api/notifications", requireRole("admin", "gerencia"), async (req, res) => {
+    try {
+      const { title, content, priority, profiles, expiresAt } = req.body;
+      const createdBy = req.session.user?.id;
+
+      if (!createdBy) {
+        return res.status(401).json({ error: "No autenticado" });
+      }
+
+      if (!title || !content || !profiles || !Array.isArray(profiles)) {
+        return res.status(400).json({ error: "Datos inválidos. title, content y profiles son requeridos." });
+      }
+
+      const notificationId = await storage.createNotification({
+        title,
+        content,
+        priority: priority || "info",
+        profiles,
+        expiresAt,
+        createdBy,
+      });
+
+      // Broadcast notification to all connected clients
+      const { broadcastNotification } = await import("./websocket");
+      broadcastNotification({
+        id: notificationId,
+        title,
+        content,
+        priority: priority || "info",
+        createdAt: new Date().toISOString(),
+      }, profiles);
+
+      res.status(201).json({ success: true, id: notificationId });
+    } catch (error) {
+      console.error("[Notifications API] Error creating notification:", error);
+      res.status(500).json({ error: "Failed to create notification" });
+    }
+  });
+
+  // PUT update notification
+  app.put("/api/notifications/:id", requireRole("admin", "gerencia"), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "ID inválido" });
+      }
+
+      const { title, content, priority, expiresAt, isActive } = req.body;
+
+      const updated = await storage.updateNotification(id, {
+        title,
+        content,
+        priority,
+        expiresAt,
+        isActive,
+      });
+
+      if (!updated) {
+        return res.status(404).json({ error: "Notificación no encontrada" });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("[Notifications API] Error updating notification:", error);
+      res.status(500).json({ error: "Failed to update notification" });
+    }
+  });
+
+  // DELETE notification
+  app.delete("/api/notifications/:id", requireRole("admin", "gerencia"), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "ID inválido" });
+      }
+
+      const deleted = await storage.deleteNotification(id);
+      if (!deleted) {
+        return res.status(404).json({ error: "Notificación no encontrada" });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("[Notifications API] Error deleting notification:", error);
+      res.status(500).json({ error: "Failed to delete notification" });
+    }
+  });
+
+  // POST mark notification as read
+  app.post("/api/notifications/:id/read", requireAuth, async (req, res) => {
+    try {
+      const notificationId = parseInt(req.params.id);
+      const userId = req.session.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({ error: "No autenticado" });
+      }
+
+      if (isNaN(notificationId)) {
+        return res.status(400).json({ error: "ID inválido" });
+      }
+
+      await storage.markNotificationAsRead(notificationId, userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("[Notifications API] Error marking notification as read:", error);
+      res.status(500).json({ error: "Failed to mark notification as read" });
+    }
+  });
+
+  // POST mark all notifications as read
+  app.post("/api/notifications/read-all", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({ error: "No autenticado" });
+      }
+
+      await storage.markAllAsRead(userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("[Notifications API] Error marking all notifications as read:", error);
+      res.status(500).json({ error: "Failed to mark all notifications as read" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

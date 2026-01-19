@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowUpDown, Filter, LayoutDashboard, Search, Eye, EyeOff } from "lucide-react";
+import { ArrowUpDown, Filter, LayoutDashboard, Search, Eye, EyeOff, Trophy } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -68,7 +68,21 @@ export function TechnicianDailyMatrix({ data }: TechnicianDailyMatrixProps) {
             tech.average = tech.daysWorked > 0 ? Number((tech.total / tech.daysWorked).toFixed(1)) : 0;
         });
 
-        return Object.values(techMap) as any[];
+        const result = Object.values(techMap) as any[];
+
+        // Add absolute rank based on total RGU descending
+        // This ranking persists regardless of search/filter/sort in the table UI
+        const sortedForRank = [...result].sort((a, b) => b.total - a.total);
+        const rankMap = new Map();
+        sortedForRank.forEach((tech, index) => {
+            rankMap.set(tech.rut, index + 1);
+        });
+
+        result.forEach(tech => {
+            tech.rank = rankMap.get(tech.rut);
+        });
+
+        return result;
     }, [data]);
 
     // Filter and Sort
@@ -240,7 +254,10 @@ export function TechnicianDailyMatrix({ data }: TechnicianDailyMatrixProps) {
                             processedData.map((t: any) => (
                                 <TableRow key={t.rut} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors border-b border-slate-100 dark:border-slate-800 last:border-0 group">
                                     <TableCell className="font-medium text-xs sticky left-0 bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-700/50 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] py-2 border-r border-slate-100 dark:border-slate-800">
-                                        <div className="flex flex-col">
+                                        <div className="flex items-center gap-2">
+                                            {t.rank === 1 && <Trophy className="w-4 h-4 text-yellow-500 shrink-0 drop-shadow-sm" />}
+                                            {t.rank === 2 && <Trophy className="w-4 h-4 text-slate-400 shrink-0 drop-shadow-sm" />}
+                                            {t.rank === 3 && <Trophy className="w-4 h-4 text-amber-600 shrink-0 drop-shadow-sm" />}
                                             <span className="line-clamp-1 text-slate-900 dark:text-white" title={t.name}>{t.name}</span>
                                         </div>
                                     </TableCell>

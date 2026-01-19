@@ -34,7 +34,7 @@ const MENU_ITEMS = [
     "Configuración" // Always visible usually, but let's include it
 ];
 
-const PROFILES = [
+export const PROFILES = [
     "SME",
     "Supervisor Tecnico",
     "Generico Bodega",
