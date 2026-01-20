@@ -89,6 +89,17 @@ app.use(cors({
   maxAge: 86400 // 24 horas
 }));
 
+// Debug middleware to check headers
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/auth')) {
+    console.log(`[Headers Debug] ${req.method} ${req.path}`);
+    console.log(`[Headers Debug] X-Forwarded-Proto: ${req.headers['x-forwarded-proto']}`);
+    console.log(`[Headers Debug] Host: ${req.headers['host']}`);
+    console.log(`[Headers Debug] Secure: ${req.secure}`);
+  }
+  next();
+});
+
 app.set('trust proxy', 1);
 
 app.use(
@@ -99,8 +110,10 @@ app.use(
     name: sessionConfig.cookieName,
     cookie: {
       httpOnly: true,
-      secure: appConfig.isProduction,
-      sameSite: appConfig.isProduction ? "none" : "lax", // Use 'none' for cross-site with HTTPS
+      // If behind a proxy interacting via HTTP internally, secure might need to be false unless trust proxy is perfect
+      // Let's try lax and secure: false temporarily to isolate the issue if it's HTTPS related
+      secure: appConfig.isProduction ? true : false,
+      sameSite: "lax", // 'lax' is safer/easier than 'none' for now unless we need cross-site
       maxAge: sessionConfig.maxAge,
     },
     store: sessionStore,
