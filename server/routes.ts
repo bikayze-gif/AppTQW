@@ -180,27 +180,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         req.session.lastActivity = Date.now();
         req.session.connectionId = connectionId;
 
-        // Determinar redirección basada en perfil
-        let redirectTo = "/supervisor"; // Por defecto, redirigir a supervisor
-        const perfil = user.perfil?.toLowerCase() || "";
+        req.session.save((saveErr) => {
+          if (saveErr) {
+            console.error("Error saving session:", saveErr);
+          }
+          console.log(`[AUTH] Session saved for ${user.email}, ID: ${req.sessionID}`);
 
-        // Solo los técnicos residenciales van a period-info
-        if (perfil.includes("tecnico") && perfil.includes("residencial")) {
-          redirectTo = "/";
-        }
+          // Determinar redirección basada en perfil
+          let redirectTo = "/supervisor"; // Por defecto, redirigir a supervisor
+          const perfil = user.perfil?.toLowerCase() || "";
 
-        res.json({
-          success: true,
-          user: {
-            id: user.id,
-            email: user.email,
-            rut: user.rut,
-            nombre: user.nombre,
-            perfil: user.perfil,
-            area: user.area,
-            zona: user.zona,
-          },
-          redirectTo,
+          // Solo los técnicos residenciales van a period-info
+          if (perfil.includes("tecnico") && perfil.includes("residencial")) {
+            redirectTo = "/";
+          }
+
+          res.json({
+            success: true,
+            user: {
+              id: user.id,
+              email: user.email,
+              rut: user.rut,
+              nombre: user.nombre,
+              perfil: user.perfil,
+              area: user.area,
+              zona: user.zona,
+            },
+            redirectTo,
+          });
         });
       });
     } catch (error) {

@@ -89,7 +89,7 @@ app.use(cors({
   maxAge: 86400 // 24 horas
 }));
 
-log(`CORS enabled for origins: ${allowedOrigins.join(', ')}`);
+app.set('trust proxy', 1);
 
 app.use(
   session({
@@ -100,7 +100,7 @@ app.use(
     cookie: {
       httpOnly: true,
       secure: appConfig.isProduction,
-      sameSite: "strict",
+      sameSite: appConfig.isProduction ? "none" : "lax", // Use 'none' for cross-site with HTTPS
       maxAge: sessionConfig.maxAge,
     },
     store: sessionStore,

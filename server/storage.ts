@@ -1721,14 +1721,18 @@ export class MySQLStorage implements IStorage {
   // Sidebar Permissions
   async getSidebarPermissions(profile: string): Promise<string[]> {
     try {
+      console.log(`[Permissions] Fetching for profile: "${profile}"`);
       const [rows] = await pool.execute(
         `SELECT allowed_menu_items FROM tb_sidebar_permissions WHERE profile = ?`,
         [profile]
       );
       const result = rows as any[];
       if (result.length > 0) {
-        return result[0].allowed_menu_items;
+        const items = result[0].allowed_menu_items;
+        console.log(`[Permissions] Found for "${profile}":`, Array.isArray(items) ? items.join(', ') : typeof items);
+        return items;
       }
+      console.log(`[Permissions] No permissions found for profile: "${profile}"`);
       return []; // Return empty if no permissions defined (or could default to all)
     } catch (error) {
       console.error(`Error fetching sidebar permissions for ${profile}:`, error);
