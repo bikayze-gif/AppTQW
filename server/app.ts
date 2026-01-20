@@ -110,9 +110,9 @@ app.use(
     name: sessionConfig.cookieName,
     cookie: {
       httpOnly: true,
-      // If behind a proxy interacting via HTTP internally, secure might need to be false unless trust proxy is perfect
-      // Let's try lax and secure: false temporarily to isolate the issue if it's HTTPS related
-      secure: appConfig.isProduction ? true : false,
+      // TEMPORARY: Forcing secure:false because Nginx proxy sends X-Forwarded-Proto:http
+      // TODO: Fix Nginx to send X-Forwarded-Proto:https, then change this back to true
+      secure: false,
       sameSite: "lax", // 'lax' is safer/easier than 'none' for now unless we need cross-site
       maxAge: sessionConfig.maxAge,
     },
