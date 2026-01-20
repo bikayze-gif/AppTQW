@@ -149,6 +149,14 @@ export interface IStorage {
   // Logistics Operations
   getSupervisorLogisticsMaterials(startDate?: string, endDate?: string): Promise<any[]>;
   updateLogisticsMaterialStatus(id: number, status: 'approved' | 'rejected'): Promise<boolean>;
+  getMaestroToaPaso(
+    page?: number,
+    limit?: number,
+    search?: string,
+    sortBy?: string,
+    sortOrder?: 'asc' | 'desc'
+  ): Promise<{ data: schema.MaestroToaPaso[], total: number }>;
+
 
   // SME Operations
   getSmeActivities(startDate?: string, endDate?: string): Promise<any[]>;
@@ -178,6 +186,9 @@ export interface IStorage {
     expiresAt: string | null;
     isActive: boolean;
   }>): Promise<boolean>;
+
+  // User TQW operations
+  getUsersTQW(): Promise<User[]>;
 }
 
 export class MySQLStorage implements IStorage {
@@ -2375,6 +2386,81 @@ export class MySQLStorage implements IStorage {
     } catch (error) {
       console.error("[Notifications] Error updating notification:", error);
       return false;
+    }
+  }
+
+  async getUsersTQW(): Promise<User[]> {
+    try {
+      return await db.select().from(schema.users);
+    } catch (error) {
+      console.error("Error fetching users TQW:", error);
+      throw error;
+    }
+  }
+
+  async getMaestroToaPaso(
+    page: number = 1,
+    limit: number = 50,
+    search: string = "",
+    sortBy: string = "id",
+    sortOrder: 'asc' | 'desc' = "desc"
+  ): Promise<{ data: schema.MaestroToaPaso[], total: number }> {
+    try {
+      const offset = (page - 1) * limit;
+
+      // Construir cláusula WHERE
+      let whereClause = "";
+      const params: any[] = [];
+
+      if (search) {
+        whereClause = `
+          WHERE 
+            sistema_legado LIKE ? OR 
+            rut_tecnico LIKE ? OR 
+            nombre_tecnico LIKE ? OR 
+            material LIKE ? OR 
+            numero_de_serie LIKE ? OR 
+            n_orden LIKE ? OR 
+            rut_cliente LIKE ?
+        `;
+        const searchParam = `%${search}%`;
+        params.push(searchParam, searchParam, searchParam, searchParam, searchParam, searchParam, searchParam);
+      }
+
+      // Validar columna de ordenamiento
+      const allowedColumns = [
+        "id", "sistema_legado", "sociedad", "rut_tecnico", "centro", "almacen",
+        "material", "numero_de_serie", "cantidad", "fecha_entrega", "nombre_tecnico",
+        "fecha_instalacion", "n_orden", "rut_cliente", "familia_material",
+        "resultado_carga_en_sap", "fecha_carga"
+      ];
+
+      const safeSortBy = allowedColumns.includes(sortBy) ? sortBy : "id";
+      const safeSortOrder = sortOrder === "asc" ? "ASC" : "DESC";
+
+      // Query para contar total
+      const [countResult] = await pool.execute(
+        `SELECT COUNT(*) as total FROM tb_maestro_toa_paso ${whereClause}`,
+        params
+      );
+      const total = (countResult as any)[0].total;
+
+      // Query para obtener datos
+      const [rows] = await pool.execute(
+        `SELECT * FROM tb_maestro_toa_paso 
+         ${whereClause} 
+         ORDER BY ${safeSortBy} ${safeSortOrder} 
+         LIMIT ${limit} OFFSET ${offset}`,
+        params
+      );
+
+      return {
+        data: rows as schema.MaestroToaPaso[],
+        total
+      };
+    } catch (error) {
+      console.error("Error fetching Maestro Toa Paso data:", error);
+      throw error;
     }
   }
 }

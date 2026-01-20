@@ -3,6 +3,7 @@ import { type Server } from "node:http";
 import express, { type Express, type Request, Response, NextFunction } from "express";
 import session from "express-session";
 import MySQLStore from "express-mysql-session";
+import cors from "cors";
 import { registerRoutes } from "./routes";
 import type { AuthenticatedUser } from "./storage";
 import { sessionConfig, appConfig, validateConfig, logConfig, dbConfig } from "./config";
@@ -18,6 +19,7 @@ declare module "express-session" {
     user: AuthenticatedUser | null;
     loginTime: number;
     lastActivity: number;
+    lastRotation: number;
     connectionId: number;
   }
 }
@@ -62,6 +64,33 @@ sessionStore = new MySQLStoreSession({
 
 log("Session store: MySQL");
 
+// CORS Configuration
+const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
+  'https://appoperaciones.telqway.cl',
+  appConfig.isProduction ? '' : 'http://localhost:5173' // Dev only
+].filter(Boolean);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Permitir requests sin origin (mobile apps, curl, Postman, etc.)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      log(`CORS blocked request from origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['X-Total-Count'],
+  maxAge: 86400 // 24 horas
+}));
+
+log(`CORS enabled for origins: ${allowedOrigins.join(', ')}`);
+
 app.use(
   session({
     secret: sessionConfig.secret,
@@ -78,12 +107,37 @@ app.use(
   })
 );
 
-// Security headers middleware
+// Enhanced Security Headers Middleware
 app.use((req, res, next) => {
+  // Existing headers
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.setHeader("X-Frame-Options", "DENY");
   res.setHeader("X-XSS-Protection", "1; mode=block");
   res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+
+  // Content Security Policy
+  const cspDirectives = [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // React needs unsafe-inline/eval
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: https:",
+    "font-src 'self' data:",
+    "connect-src 'self' ws://localhost:5173 wss://appoperaciones.telqway.cl",
+    "frame-ancestors 'none'",
+    "base-uri 'self'",
+    "form-action 'self'"
+  ].join('; ');
+
+  res.setHeader("Content-Security-Policy", cspDirectives);
+
+  // HSTS (solo en producción con HTTPS)
+  if (appConfig.isProduction) {
+    res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
+  }
+
+  // Permissions Policy
+  res.setHeader("Permissions-Policy", "geolocation=(), microphone=(), camera=()");
+
   next();
 });
 
@@ -92,12 +146,21 @@ declare module 'http' {
     rawBody: unknown
   }
 }
+
+// Request size limits to prevent DoS attacks
 app.use(express.json({
+  limit: '1mb',
+  strict: true,
   verify: (req, _res, buf) => {
     req.rawBody = buf;
   }
 }));
-app.use(express.urlencoded({ extended: false }));
+
+app.use(express.urlencoded({
+  extended: false,
+  limit: '1mb',
+  parameterLimit: 1000
+}));
 
 app.use((req, res, next) => {
   const start = Date.now();

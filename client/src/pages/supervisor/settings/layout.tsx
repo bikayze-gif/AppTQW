@@ -14,6 +14,7 @@ export default function SettingsLayout({ children }: SettingsLayoutProps) {
         { label: "Parametrico Puntaje", path: "/supervisor/settings/parametros" },
         { label: "Permisos de Menú", path: "/supervisor/settings/permissions" },
         { label: "Notificaciones", path: "/supervisor/settings/notifications" },
+        { label: "Usuarios TQW", path: "/supervisor/settings/users" },
     ];
 
     return (

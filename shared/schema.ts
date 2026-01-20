@@ -1,4 +1,4 @@
-import { mysqlTable, varchar, text, int, decimal, date, datetime, tinyint, json, bigint } from "drizzle-orm/mysql-core";
+import { mysqlTable, varchar, text, int, decimal, date, datetime, tinyint, json, bigint, timestamp } from "drizzle-orm/mysql-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -8,20 +8,20 @@ import { z } from "zod";
 
 // Tabla de usuarios principales (tb_user_tqw)
 export const users = mysqlTable("tb_user_tqw", {
-  id: int("id").primaryKey().autoincrement(),
+  id: int("ID").primaryKey().autoincrement(),
   email: text("email"),
-  pass: text("pass"),
-  reg_date: datetime("reg_date"),
-  nombre: text("nombre"),
+  pass: text("PASS"),
+  reg_date: text("reg_Date"), // Using text because it's varchar(255) in DB
+  nombre: text("Nombre"),
   area: text("area"),
-  supervisor: text("supervisor"),
-  rut: text("rut"),
+  supervisor: text("SUPERVISOR"),
+  rut: text("Rut"),
   correo_super: text("correo_super"),
-  iden_user: text("iden_user"),
-  vigente: text("vigente"),
+  iden_user: text("IDEN_USER"),
+  vigente: text("Vigente"),
   ZONA_GEO: text("ZONA_GEO"),
   nombre_ndc: text("nombre_ndc"),
-  Nombre_short: text("Nombre_short"),
+  nombre_short: text("nombre_short"),
   PERFIL: text("PERFIL"),
   perfil2: varchar("perfil2", { length: 50 }),
 });
@@ -358,3 +358,29 @@ export const notificationReadStatus = mysqlTable("tb_notification_read_status", 
 });
 
 export type NotificationReadStatus = typeof notificationReadStatus.$inferSelect;
+
+// ============================================
+// TABLA MAESTRO TOA PASO
+// ============================================
+
+export const maestroToaPaso = mysqlTable("tb_maestro_toa_paso", {
+  id: int("id").primaryKey().autoincrement(),
+  sistemaLegado: varchar("sistema_legado", { length: 50 }),
+  sociedad: varchar("sociedad", { length: 20 }),
+  rutTecnico: varchar("rut_tecnico", { length: 20 }),
+  centro: varchar("centro", { length: 20 }),
+  almacen: varchar("almacen", { length: 20 }),
+  material: varchar("material", { length: 50 }),
+  numeroDeSerie: varchar("numero_de_serie", { length: 100 }),
+  cantidad: int("cantidad"),
+  fechaEntrega: varchar("fecha_entrega", { length: 50 }),
+  nombreTecnico: varchar("nombre_tecnico", { length: 255 }),
+  fechaInstalacion: varchar("fecha_instalacion", { length: 50 }),
+  nOrden: varchar("n_orden", { length: 50 }),
+  rutCliente: varchar("rut_cliente", { length: 50 }),
+  familiaMaterial: varchar("familia_material", { length: 255 }),
+  resultadoCargaEnSap: varchar("resultado_carga_en_sap", { length: 255 }),
+  fechaCarga: timestamp("fecha_carga").defaultNow(),
+});
+
+export type MaestroToaPaso = typeof maestroToaPaso.$inferSelect;

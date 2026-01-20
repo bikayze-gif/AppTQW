@@ -1,4 +1,5 @@
 import "dotenv/config";
+import crypto from "crypto";
 /**
  * Configuración centralizada del servidor
  * 
@@ -47,19 +48,27 @@ export const securityConfig = {
 // NOTA: En producción, SIEMPRE configura SESSION_SECRET
 function generateDefaultSecret(): string {
   if (appConfig.isProduction) {
-    console.warn("⚠️  WARNING: SESSION_SECRET no está configurado. Esto es inseguro en producción.");
+    console.error("❌ CRITICAL: SESSION_SECRET no está configurado en producción");
+    throw new Error("SESSION_SECRET es obligatorio en producción");
   }
-  // Use global crypto which is available in Node.js 19+
-  return globalThis.crypto.randomUUID();
+  // Generar secreto de 256 bits (64 caracteres hex) - mucho más seguro que UUID
+  const secret = crypto.randomBytes(32).toString('hex');
+  console.warn("⚠️  WARNING: Usando SESSION_SECRET generado automáticamente. Configura uno permanente en .env");
+  return secret;
 }
 
 // Configuración de sesiones
 export const sessionConfig = {
-  secret: process.env.SESSION_SECRET || generateDefaultSecret(),
+  secret: (() => {
+    const secret = process.env.SESSION_SECRET || generateDefaultSecret();
+    if (secret.length < 32) {
+      console.warn("⚠️  WARNING: SESSION_SECRET es demasiado corto (mínimo 32 caracteres recomendado)");
+    }
+    return secret;
+  })(),
   maxAge: 6 * 60 * 60 * 1000, // 6 horas en milisegundos
   cookieName: "tqw_session",
 };
-
 
 // Validación de configuración crítica
 export function validateConfig(): void {

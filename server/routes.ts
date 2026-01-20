@@ -66,9 +66,40 @@ export function validateSessionTimeout(req: Request, res: Response, next: NextFu
   next();
 }
 
+// Middleware para rotar sesión periódicamente (cada hora)
+export function rotateSessionIfNeeded(req: Request, res: Response, next: NextFunction) {
+  if (!req.session.user) {
+    return next();
+  }
+
+  const now = Date.now();
+  const lastRotation = req.session.lastRotation || req.session.loginTime || now;
+  const rotationInterval = 60 * 60 * 1000; // 1 hora
+
+  if (now - lastRotation > rotationInterval) {
+    const oldSessionData = { ...req.session };
+
+    req.session.regenerate((err) => {
+      if (err) {
+        console.error("Error rotating session:", err);
+        return next();
+      }
+
+      // Restaurar datos de sesión
+      Object.assign(req.session, oldSessionData);
+      req.session.lastRotation = now;
+
+      console.log(`[SESSION] Rotated session for user: ${req.session.user?.email || 'unknown'}`);
+      next();
+    });
+  } else {
+    next();
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Aplicar validación de timeout a todas las rutas API
-  app.use('/api/*', validateSessionTimeout);
+  // Aplicar validación de timeout y rotación de sesión a todas las rutas API
+  app.use('/api/*', validateSessionTimeout, rotateSessionIfNeeded);
 
   // ============================================
   // AUTHENTICATION ROUTES
@@ -1566,6 +1597,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("[Notifications API] Error marking all notifications as read:", error);
       res.status(500).json({ error: "Failed to mark all notifications as read" });
+    }
+  });
+
+  // ============================================
+  // USER MANAGEMENT ROUTES
+  // ============================================
+
+  app.get("/api/users-tqw", requireRole("admin", "gerencia", "supervisor"), async (req, res) => {
+    try {
+      const users = await storage.getUsersTQW();
+      res.json(users);
+    } catch (error) {
+      console.error("[Users TQW API] Error fetching users:", error);
+      res.status(500).json({ error: "Failed to fetch users" });
+    }
+  });
+
+  // ============================================
+  // LOGISTICS ROUTES
+  // ============================================
+
+  app.get("/api/supervisor/logistica/maestro-toa-paso", requireRole("supervisor", "admin", "gerencia", "logistica"), async (req, res) => {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 50;
+      const search = (req.query.search as string) || "";
+      const sortBy = (req.query.sortBy as string) || "id";
+      const sortOrder = (req.query.sortOrder as "asc" | "desc") || "desc";
+
+      const result = await storage.getMaestroToaPaso(page, limit, search, sortBy, sortOrder);
+      res.json(result);
+    } catch (error) {
+      console.error("[Maestro Toa Paso API] Error:", error);
+      res.status(500).json({ error: "Failed to fetch Maestro Toa Paso data" });
     }
   });
 

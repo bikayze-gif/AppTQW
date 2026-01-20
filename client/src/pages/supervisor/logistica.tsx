@@ -4,6 +4,8 @@ import { cn } from "@/lib/utils";
 import { LayoutDashboard, TrendingUp, Award, Zap, Package, Truck, RotateCcw, ClipboardList, Construction } from "lucide-react";
 import { RequestDashboard } from "@/components/supervisor/logistica/solicitudes/request-dashboard";
 
+import { ManualAssignmentTable } from "@/components/supervisor/logistica/manual-assignment/manual-assignment-table";
+
 export default function SupervisorLogistica() {
     const [activeTab, setActiveTab] = useState<'inventario' | 'despachos' | 'devoluciones' | 'solicitudes'>('solicitudes');
 
@@ -47,7 +49,7 @@ export default function SupervisorLogistica() {
                             )}
                         >
                             <Truck className="w-4 h-4 inline-block mr-2" />
-                            Despachos
+                            Asignación manual
                         </button>
                         <button
                             onClick={() => setActiveTab('devoluciones')}
@@ -80,6 +82,16 @@ export default function SupervisorLogistica() {
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                     {activeTab === 'solicitudes' ? (
                         <RequestDashboard />
+                    ) : activeTab === 'despachos' ? (
+                        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6">
+                            <div className="mb-6">
+                                <h2 className="text-xl font-bold text-slate-900 dark:text-white">Asignación Manual</h2>
+                                <p className="text-slate-500 dark:text-slate-400 text-sm">
+                                    Visualización completa del maestro TOA paso
+                                </p>
+                            </div>
+                            <ManualAssignmentTable />
+                        </div>
                     ) : (
                         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-12 text-center min-h-[500px] flex flex-col items-center justify-center overflow-hidden relative">
                             {/* Decorative background elements */}

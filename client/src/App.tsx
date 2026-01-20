@@ -37,6 +37,7 @@ import SupervisorModuloLogistico from "@/pages/supervisor/modulo-logistico";
 import ParametricoPuntaje from "@/pages/supervisor/settings/parametrico-puntaje";
 import SidebarPermissions from "@/pages/supervisor/settings/permissions";
 import NotificationsSettings from "@/pages/supervisor/settings/notifications";
+import UserManagement from "@/pages/supervisor/settings/users";
 
 function Router() {
   return (
@@ -115,6 +116,13 @@ function Router() {
         <ProtectedRoute>
           <PermissionProtectedRoute requiredMenuItem="Notifications">
             <NotificationsSettings />
+          </PermissionProtectedRoute>
+        </ProtectedRoute>
+      </Route>
+      <Route path="/supervisor/settings/users">
+        <ProtectedRoute>
+          <PermissionProtectedRoute requiredMenuItem="Configuración">
+            <UserManagement />
           </PermissionProtectedRoute>
         </ProtectedRoute>
       </Route>

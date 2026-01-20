@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowUpDown, Filter, LayoutDashboard, Search, Eye, EyeOff, Trophy } from "lucide-react";
+import { ArrowUpDown, Filter, LayoutDashboard, Search, Eye, EyeOff, Trophy, Download, Copy } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,6 +11,8 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import * as XLSX from "xlsx";
+import { useToast } from "@/hooks/use-toast";
 import {
     Popover,
     PopoverContent,
@@ -31,6 +33,7 @@ interface TechnicianDailyMatrixProps {
 }
 
 export function TechnicianDailyMatrix({ data }: TechnicianDailyMatrixProps) {
+    const { toast } = useToast();
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedDay, setSelectedDay] = useState<string>("ALL");
     const [sortConfig, setSortConfig] = useState<{
@@ -137,6 +140,58 @@ export function TechnicianDailyMatrix({ data }: TechnicianDailyMatrixProps) {
         }));
     };
 
+    const handleExportExcel = () => {
+        const rows = processedData.map((t: any) => {
+            const row: any = {
+                'Técnico': t.name,
+                'Supervisor': t.supervisor || '-'
+            };
+
+            uniqueDays.forEach(day => {
+                row[`Día ${day}`] = t.daily[day] || 0;
+            });
+
+            row['Total'] = t.total;
+            row['Promedio'] = t.average;
+            return row;
+        });
+
+        const ws = XLSX.utils.json_to_sheet(rows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Detalle Diario");
+        XLSX.writeFile(wb, `Detalle_Diario_Tecnico_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    };
+
+    const handleCopyToClipboard = () => {
+        const headers = ['Técnico', 'Supervisor', ...uniqueDays.map(d => `Día ${d}`), 'Total', 'Promedio'];
+
+        const rows = processedData.map((t: any) => {
+            return [
+                t.name,
+                t.supervisor || '-',
+                ...uniqueDays.map(day => t.daily[day] || 0),
+                t.total,
+                t.average
+            ].join('\t');
+        });
+
+        const content = [headers.join('\t'), ...rows].join('\n');
+
+        navigator.clipboard.writeText(content).then(() => {
+            toast({
+                title: "Copiado",
+                description: "Tabla copiada al portapapeles",
+            });
+        }).catch(err => {
+            console.error('Error al copiar: ', err);
+            toast({
+                title: "Error",
+                description: "No se pudo copiar al portapapeles",
+                variant: "destructive"
+            });
+        });
+    };
+
     // Logic to determine invisible columns
     const visibleDays = uniqueDays.filter(day => selectedDay === 'ALL' || selectedDay === day.toString());
 
@@ -158,6 +213,27 @@ export function TechnicianDailyMatrix({ data }: TechnicianDailyMatrixProps) {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="flex gap-2">
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-9 w-9"
+                            onClick={handleExportExcel}
+                            title="Descargar Excel"
+                        >
+                            <Download className="h-4 w-4 text-slate-500" />
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-9 w-9"
+                            onClick={handleCopyToClipboard}
+                            title="Copiar al portapapeles"
+                        >
+                            <Copy className="h-4 w-4 text-slate-500" />
+                        </Button>
+                    </div>
+
                     {/* Day Filter */}
                     <div className="w-[140px]">
                         <Select value={selectedDay} onValueChange={setSelectedDay}>
