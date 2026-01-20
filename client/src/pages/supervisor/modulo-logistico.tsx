@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Loader2, AlertCircle, X, Package, ChevronRight, Check, X as XIcon, RotateCcw } from "lucide-react";
+import { Loader2, AlertCircle, X, Package, ChevronRight, Check, X as XIcon, RotateCcw, Search, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
     Table,
@@ -54,6 +54,11 @@ export default function SupervisorModuloLogistico() {
 
     const [startDate, setStartDate] = useState<string>(twoDaysAgoStr);
     const [endDate, setEndDate] = useState<string>(todayStr);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [sortConfig, setSortConfig] = useState<{
+        key: keyof SolicitudLogistica | null;
+        direction: "asc" | "desc";
+    }>({ key: "fecha", direction: "desc" });
 
     const { data: solicitudes, isLoading, error } = useQuery<SolicitudLogistica[]>({
         queryKey: ["/api/supervisor/logistica/materiales", startDate, endDate],
@@ -75,13 +80,6 @@ export default function SupervisorModuloLogistico() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["/api/supervisor/logistica/materiales"] });
-            // Refresh selected ticket if consistent
-            if (selectedTicket) {
-                // We rely on the parent query invalidation to update the data, 
-                // but setting selectedTicket to null might be jarring. 
-                // Ideal would be to refetch data and find the updated ticket to update local state.
-                // For now, let's keep it simple.
-            }
             toast({
                 title: "Éxito",
                 description: "Estado actualizado correctamente",
@@ -96,6 +94,50 @@ export default function SupervisorModuloLogistico() {
             });
         }
     });
+
+    const handleSort = (key: keyof SolicitudLogistica) => {
+        let direction: "asc" | "desc" = "asc";
+        if (sortConfig.key === key && sortConfig.direction === "asc") {
+            direction = "desc";
+        }
+        setSortConfig({ key, direction });
+    };
+
+    const getSortIcon = (key: keyof SolicitudLogistica) => {
+        if (sortConfig.key !== key) return <ArrowUpDown className="ml-2 h-4 w-4" />;
+        return sortConfig.direction === "asc" ? (
+            <ArrowUp className="ml-2 h-4 w-4" />
+        ) : (
+            <ArrowDown className="ml-2 h-4 w-4" />
+        );
+    };
+
+    const filteredAndSortedSolicitudes = solicitudes
+        ? solicitudes
+            .filter((s) => {
+                const searchStr = searchTerm.toLowerCase();
+                return (
+                    s.TICKET.toLowerCase().includes(searchStr) ||
+                    (s.tecnicoOrigen?.toLowerCase() || "").includes(searchStr) ||
+                    (s.tecnicoDestino?.toLowerCase() || "").includes(searchStr) ||
+                    s.ESTADO_BODEGA.toLowerCase().includes(searchStr) ||
+                    (s.flag_regiones?.toLowerCase() || "").includes(searchStr)
+                );
+            })
+            .sort((a, b) => {
+                if (!sortConfig.key) return 0;
+                const { key, direction } = sortConfig;
+                let aValue = a[key];
+                let bValue = b[key];
+
+                if (aValue === null) aValue = "";
+                if (bValue === null) bValue = "";
+
+                if (aValue < bValue) return direction === "asc" ? -1 : 1;
+                if (aValue > bValue) return direction === "asc" ? 1 : -1;
+                return 0;
+            })
+        : [];
 
     const handleRowClick = (solicitud: SolicitudLogistica) => {
         setSelectedTicket(solicitud);
@@ -153,12 +195,24 @@ export default function SupervisorModuloLogistico() {
                                         className="h-9 text-xs w-[160px] bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700"
                                     />
                                 </div>
+                                <div className="flex items-center gap-2 ml-4 flex-1 max-w-sm">
+                                    <div className="relative w-full">
+                                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
+                                        <Input
+                                            placeholder="Buscar ticket, técnico..."
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            className="h-9 pl-9 text-xs bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+                                        />
+                                    </div>
+                                </div>
                                 <Button
                                     variant="outline"
                                     size="sm"
                                     onClick={() => {
                                         setStartDate(twoDaysAgoStr);
                                         setEndDate(todayStr);
+                                        setSearchTerm("");
                                     }}
                                     className="h-9 text-xs gap-2 ml-auto"
                                 >
@@ -193,20 +247,52 @@ export default function SupervisorModuloLogistico() {
                                             <Table>
                                                 <TableHeader>
                                                     <TableRow className="bg-slate-50 dark:bg-slate-900/50">
-                                                        <TableHead className="w-[120px]">Ticket</TableHead>
-                                                        <TableHead>Fecha</TableHead>
-                                                        <TableHead>Origen</TableHead>
-                                                        <TableHead>Destino</TableHead>
-                                                        <TableHead>Región</TableHead>
-                                                        <TableHead className="text-center">Items</TableHead>
-                                                        <TableHead className="text-center">Cant. Total</TableHead>
+                                                        <TableHead className="w-[120px] cursor-pointer hover:text-slate-900 dark:hover:text-white" onClick={() => handleSort("TICKET")}>
+                                                            <div className="flex items-center">
+                                                                Ticket {getSortIcon("TICKET")}
+                                                            </div>
+                                                        </TableHead>
+                                                        <TableHead className="cursor-pointer hover:text-slate-900 dark:hover:text-white" onClick={() => handleSort("fecha")}>
+                                                            <div className="flex items-center">
+                                                                Fecha {getSortIcon("fecha")}
+                                                            </div>
+                                                        </TableHead>
+                                                        <TableHead className="cursor-pointer hover:text-slate-900 dark:hover:text-white" onClick={() => handleSort("tecnicoOrigen")}>
+                                                            <div className="flex items-center">
+                                                                Origen {getSortIcon("tecnicoOrigen")}
+                                                            </div>
+                                                        </TableHead>
+                                                        <TableHead className="cursor-pointer hover:text-slate-900 dark:hover:text-white" onClick={() => handleSort("tecnicoDestino")}>
+                                                            <div className="flex items-center">
+                                                                Destino {getSortIcon("tecnicoDestino")}
+                                                            </div>
+                                                        </TableHead>
+                                                        <TableHead className="cursor-pointer hover:text-slate-900 dark:hover:text-white" onClick={() => handleSort("flag_regiones")}>
+                                                            <div className="flex items-center">
+                                                                Región {getSortIcon("flag_regiones")}
+                                                            </div>
+                                                        </TableHead>
+                                                        <TableHead className="text-center cursor-pointer hover:text-slate-900 dark:hover:text-white" onClick={() => handleSort("total_items")}>
+                                                            <div className="flex items-center justify-center">
+                                                                Items {getSortIcon("total_items")}
+                                                            </div>
+                                                        </TableHead>
+                                                        <TableHead className="text-center cursor-pointer hover:text-slate-900 dark:hover:text-white" onClick={() => handleSort("total_cantidad")}>
+                                                            <div className="flex items-center justify-center">
+                                                                Cant. Total {getSortIcon("total_cantidad")}
+                                                            </div>
+                                                        </TableHead>
                                                         <TableHead>Gest. Sup</TableHead>
-                                                        <TableHead className="text-right">Estado</TableHead>
+                                                        <TableHead className="text-right cursor-pointer hover:text-slate-900 dark:hover:text-white" onClick={() => handleSort("ESTADO_BODEGA")}>
+                                                            <div className="flex items-center justify-end">
+                                                                Estado {getSortIcon("ESTADO_BODEGA")}
+                                                            </div>
+                                                        </TableHead>
                                                         <TableHead className="w-[50px]"></TableHead>
                                                     </TableRow>
                                                 </TableHeader>
                                                 <TableBody>
-                                                    {solicitudes.map((solicitud) => (
+                                                    {filteredAndSortedSolicitudes.map((solicitud) => (
                                                         <TableRow
                                                             key={solicitud.TICKET}
                                                             onClick={() => handleRowClick(solicitud)}

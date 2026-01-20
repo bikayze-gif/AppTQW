@@ -2431,15 +2431,29 @@ export class MySQLStorage implements IStorage {
         params.push(searchParam, searchParam, searchParam, searchParam, searchParam, searchParam, searchParam);
       }
 
-      // Validar columna de ordenamiento
-      const allowedColumns = [
-        "id", "sistema_legado", "sociedad", "rut_tecnico", "centro", "almacen",
-        "material", "numero_de_serie", "cantidad", "fecha_entrega", "nombre_tecnico",
-        "fecha_instalacion", "n_orden", "rut_cliente", "familia_material",
-        "resultado_carga_en_sap", "fecha_carga"
-      ];
+      // Validar columna de ordenamiento y mapear camelCase a snake_case
+      const sortMapping: Record<string, string> = {
+        id: "id",
+        sistemaLegado: "sistema_legado",
+        sociedad: "sociedad",
+        rutTecnico: "rut_tecnico",
+        centro: "centro",
+        almacen: "almacen",
+        material: "material",
+        numeroDeSerie: "numero_de_serie",
+        cantidad: "cantidad",
+        fechaEntrega: "fecha_entrega",
+        nombreTecnico: "nombre_tecnico",
+        fechaInstalacion: "fecha_instalacion",
+        nOrden: "n_orden",
+        rutCliente: "rut_cliente",
+        familiaMaterial: "familia_material",
+        resultadoCargaEnSap: "resultado_carga_en_sap",
+        fechaCarga: "fecha_carga"
+      };
 
-      const safeSortBy = allowedColumns.includes(sortBy) ? sortBy : "id";
+      const dbSortColumn = sortMapping[sortBy] || "id";
+      const safeSortBy = dbSortColumn; // Ya mapeado a columna válida de DB
       const safeSortOrder = sortOrder === "asc" ? "ASC" : "DESC";
 
       // Query para contar total
@@ -2458,8 +2472,28 @@ export class MySQLStorage implements IStorage {
         params
       );
 
+      const mappedData = (rows as any[]).map(row => ({
+        id: row.id,
+        sistemaLegado: row.sistema_legado,
+        sociedad: row.sociedad,
+        rutTecnico: row.rut_tecnico,
+        centro: row.centro,
+        almacen: row.almacen,
+        material: row.material,
+        numeroDeSerie: row.numero_de_serie,
+        cantidad: row.cantidad,
+        fechaEntrega: row.fecha_entrega,
+        nombreTecnico: row.nombre_tecnico,
+        fechaInstalacion: row.fecha_instalacion,
+        nOrden: row.n_orden,
+        rutCliente: row.rut_cliente,
+        familiaMaterial: row.familia_material,
+        resultadoCargaEnSap: row.resultado_carga_en_sap,
+        fechaCarga: row.fecha_carga
+      }));
+
       return {
-        data: rows as schema.MaestroToaPaso[],
+        data: mappedData as schema.MaestroToaPaso[],
         total
       };
     } catch (error) {
