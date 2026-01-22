@@ -113,6 +113,7 @@ export interface IStorage {
 
   // Authentication operations
   getUserByEmail(email: string): Promise<User | undefined>;
+  getUserStatusForReset(email: string): Promise<{ exists: boolean, vigente: string | null, canReset: boolean }>;
   validateCredentials(email: string, password: string): Promise<AuthenticatedUser | null>;
   recordLoginAttempt(data: InsertLoginAttempt): Promise<void>;
   getRecentLoginAttempts(email: string, ip: string): Promise<number>;
@@ -1459,11 +1460,31 @@ export class MySQLStorage implements IStorage {
   // ============================================
 
   async getUserEmailExists(email: string): Promise<boolean> {
-    const [rows] = await pool.execute<RowDataPacket[]>(
-      `SELECT 1 FROM tb_user_tqw WHERE email = ? AND Vigente = 'Si' LIMIT 1`,
-      [email]
-    );
-    return rows.length > 0;
+    // Mantener compatibilidad hacia atrás
+    const status = await this.getUserStatusForReset(email);
+    return status.canReset;
+  }
+
+  async getUserStatusForReset(email: string): Promise<{ exists: boolean, vigente: string | null, canReset: boolean }> {
+    try {
+      const [rows] = await pool.execute<RowDataPacket[]>(
+        `SELECT Vigente FROM tb_user_tqw WHERE email = ? LIMIT 1`,
+        [email]
+      );
+
+      if (rows.length === 0) {
+        return { exists: false, vigente: null, canReset: false };
+      }
+
+      const vigente = rows[0].Vigente;
+      // Permitir reset si es 'Si'. Si hay otros estados permitidos (ej: 'Restringido'), agregarlos aquí.
+      const canReset = vigente === 'Si';
+
+      return { exists: true, vigente, canReset };
+    } catch (error) {
+      console.error("Error getting user status for reset:", error);
+      return { exists: false, vigente: null, canReset: false };
+    }
   }
 
   async createPasswordResetToken(email: string, code: string, expiresAt: Date, ip: string, userAgent: string): Promise<number> {

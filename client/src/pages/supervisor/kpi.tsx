@@ -1385,7 +1385,7 @@ export default function SupervisorKPI() {
             {/* Top 10 Commissions Chart */}
 
             {periodo && kpiData.length > 0 && (
-              <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm mb-6 flex flex-col h-[500px]">
+              <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm mb-6 flex flex-col h-[500px] w-full lg:w-1/2">
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">
                   Top 10 Técnicos por Comisión FTTH (Ponderada vs Real)
                 </h3>
@@ -1463,6 +1463,30 @@ export default function SupervisorKPI() {
 
                     </TableHead>
 
+                    <TableHead className="whitespace-nowrap text-slate-700 dark:text-slate-300 font-semibold text-right cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-600" onClick={() => handleSort('Comision_HFC')}>
+
+                      <div className="flex items-center justify-end gap-2">Comisión HFC <ArrowUpDown className="h-4 w-4" /></div>
+
+                    </TableHead>
+
+                    <TableHead className="whitespace-nowrap text-slate-700 dark:text-slate-300 font-semibold text-right cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-600" onClick={() => handleSort('Comision_FTTH')}>
+
+                      <div className="flex items-center justify-end gap-2">Comisión FTTH <ArrowUpDown className="h-4 w-4" /></div>
+
+                    </TableHead>
+
+                    <TableHead className="whitespace-nowrap text-slate-700 dark:text-slate-300 font-semibold text-right cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-600" onClick={() => handleSort('Comision_HFC_Ponderada')}>
+
+                      <div className="flex items-center justify-end gap-2">Comisión HFC Pond. <ArrowUpDown className="h-4 w-4" /></div>
+
+                    </TableHead>
+
+                    <TableHead className="whitespace-nowrap text-slate-700 dark:text-slate-300 font-semibold text-right cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-600" onClick={() => handleSort('Comision_FTTH_Ponderada')}>
+
+                      <div className="flex items-center justify-end gap-2">Comisión FTTH Pond. <ArrowUpDown className="h-4 w-4" /></div>
+
+                    </TableHead>
+
                     <TableHead className="whitespace-nowrap text-slate-700 dark:text-slate-300 font-semibold cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-600" onClick={() => handleSort('modelo_turno')}>
 
                       <div className="flex items-center gap-2">Modelo Turno <ArrowUpDown className="h-4 w-4" /></div>
@@ -1477,7 +1501,7 @@ export default function SupervisorKPI() {
 
                     <TableHead className="whitespace-nowrap text-slate-700 dark:text-slate-300 font-semibold cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-600" onClick={() => handleSort('Original_RUT_TECNICO')}>
 
-                      <div className="flex items-center gap-2">RUT Original <ArrowUpDown className="h-4 w-4" /></div>
+                      <div className="flex items-center gap-2">RUT Técnico <ArrowUpDown className="h-4 w-4" /></div>
 
                     </TableHead>
 
@@ -1490,30 +1514,6 @@ export default function SupervisorKPI() {
                     <TableHead className="whitespace-nowrap text-slate-700 dark:text-slate-300 font-semibold text-right cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-600" onClick={() => handleSort('SUM_OPERATIVO')}>
 
                       <div className="flex items-center justify-end gap-2">Sum Operativo <ArrowUpDown className="h-4 w-4" /></div>
-
-                    </TableHead>
-
-                    <TableHead className="whitespace-nowrap text-slate-700 dark:text-slate-300 font-semibold text-right cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-600" onClick={() => handleSort('Comision_HFC')}>
-
-                      <div className="flex items-center justify-end gap-2">Com. HFC <ArrowUpDown className="h-4 w-4" /></div>
-
-                    </TableHead>
-
-                    <TableHead className="whitespace-nowrap text-slate-700 dark:text-slate-300 font-semibold text-right cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-600" onClick={() => handleSort('Comision_FTTH')}>
-
-                      <div className="flex items-center justify-end gap-2">Com. FTTH <ArrowUpDown className="h-4 w-4" /></div>
-
-                    </TableHead>
-
-                    <TableHead className="whitespace-nowrap text-slate-700 dark:text-slate-300 font-semibold text-right cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-600" onClick={() => handleSort('Comision_HFC_Ponderada')}>
-
-                      <div className="flex items-center justify-end gap-2">Total HFC Pond. <ArrowUpDown className="h-4 w-4" /></div>
-
-                    </TableHead>
-
-                    <TableHead className="whitespace-nowrap text-slate-700 dark:text-slate-300 font-semibold text-right cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-600" onClick={() => handleSort('Comision_FTTH_Ponderada')}>
-
-                      <div className="flex items-center justify-end gap-2">Total FTTH Pond. <ArrowUpDown className="h-4 w-4" /></div>
 
                     </TableHead>
 
@@ -1605,6 +1605,14 @@ export default function SupervisorKPI() {
 
                         <TableCell className="whitespace-nowrap text-slate-700 dark:text-slate-300">{row.Zona_Factura23}</TableCell>
 
+                        <TableCell className="whitespace-nowrap text-right text-slate-700 dark:text-slate-300">{formatDecimal(row.Comision_HFC)}</TableCell>
+
+                        <TableCell className="whitespace-nowrap text-right text-slate-700 dark:text-slate-300">{formatDecimal(row.Comision_FTTH)}</TableCell>
+
+                        <TableCell className="whitespace-nowrap text-right text-slate-700 dark:text-slate-300">{formatDecimal(row.Comision_HFC_Ponderada)}</TableCell>
+
+                        <TableCell className="whitespace-nowrap text-right text-slate-700 dark:text-slate-300">{formatDecimal(row.Comision_FTTH_Ponderada)}</TableCell>
+
                         <TableCell className="whitespace-nowrap text-slate-700 dark:text-slate-300">{row.modelo_turno}</TableCell>
 
                         <TableCell className="whitespace-nowrap text-slate-700 dark:text-slate-300">{row.categoria}</TableCell>
@@ -1614,14 +1622,6 @@ export default function SupervisorKPI() {
                         <TableCell className="whitespace-nowrap text-right text-slate-700 dark:text-slate-300">{formatDecimal(row.DIAS_BASE_DRIVE)}</TableCell>
 
                         <TableCell className="whitespace-nowrap text-right text-slate-700 dark:text-slate-300">{formatDecimal(row.SUM_OPERATIVO)}</TableCell>
-
-                        <TableCell className="whitespace-nowrap text-right text-slate-700 dark:text-slate-300">{formatDecimal(row.Comision_HFC)}</TableCell>
-
-                        <TableCell className="whitespace-nowrap text-right text-slate-700 dark:text-slate-300">{formatDecimal(row.Comision_FTTH)}</TableCell>
-
-                        <TableCell className="whitespace-nowrap text-right text-slate-700 dark:text-slate-300">{formatDecimal(row.Comision_HFC_Ponderada)}</TableCell>
-
-                        <TableCell className="whitespace-nowrap text-right text-slate-700 dark:text-slate-300">{formatDecimal(row.Comision_FTTH_Ponderada)}</TableCell>
 
                         <TableCell className="whitespace-nowrap text-right text-slate-700 dark:text-slate-300">{formatDecimal(row.Puntos)}</TableCell>
 

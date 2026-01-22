@@ -248,13 +248,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Check if user exists
-      const userExists = await storage.getUserEmailExists(email);
+      // Check user status
+      const userStatus = await storage.getUserStatusForReset(email);
 
       // Always return success to prevent email enumeration
-      if (!userExists) {
-        console.log(`[PASSWORD RESET] Email not found: ${email}`);
-        await storage.logPasswordResetAttempt(email, 'request_code', false, ip, 'Email not found');
+      if (!userStatus.canReset) {
+        const reason = !userStatus.exists
+          ? 'Email not found'
+          : `User not active (Vigente: ${userStatus.vigente})`;
+
+        console.log(`[PASSWORD RESET] Failed for ${email}: ${reason}`);
+
+        await storage.logPasswordResetAttempt(email, 'request_code', false, ip, reason);
         return res.json({
           success: true,
           message: "Si el correo existe, recibirás un código de verificación"

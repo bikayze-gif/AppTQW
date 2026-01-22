@@ -4,12 +4,12 @@
 
 | Parámetro | Valor |
 |-----------|-------|
-| **Alias SSH** | `telqway` |
+| **Alias SSH** | `tqw-prod` |
 | **Hostname** | gestarservicios-dev.cl |
-| **IP** | 45.236.128.91 |
+| **IP** | 170.239.85.233 |
 | **Puerto SSH** | 35988 |
 | **Usuario** | root |
-| **Directorio del Proyecto** | `/var/www/AppTQW` |
+| **Directorio del Proyecto** | `/var/www/apptqw` |
 | **Rama de Producción** | `main` |
 | **Proceso PM2** | `apptqw` |
 
@@ -42,14 +42,14 @@ git push origin main
 
 ```bash
 # Conectarse al servidor usando el alias SSH configurado
-ssh telqway
+ssh tqw-prod
 ```
 
 ### 3. Actualizar Código desde GitHub
 
 ```bash
 # Navegar al directorio del proyecto
-cd /var/www/AppTQW
+cd /var/www/apptqw
 
 # Verificar rama actual
 git status
@@ -168,7 +168,7 @@ uptime
 Para un despliegue rápido, puedes ejecutar todos los comandos en una sola línea desde tu máquina local:
 
 ```bash
-ssh telqway "cd /var/www/AppTQW && git pull origin main && npm install && export NODE_OPTIONS=--max-old-space-size=1536 && npm run build && pm2 restart apptqw && pm2 status"
+ssh tqw-prod "cd /var/www/apptqw && git pull origin main && npm install && export NODE_OPTIONS=--max-old-space-size=1536 && npm run build && pm2 restart apptqw && pm2 status"
 ```
 
 ---
@@ -239,7 +239,7 @@ pm2 restart apptqw
 ## 📝 Checklist de Despliegue
 
 - [ ] Cambios locales comprometidos y pusheados a GitHub
-- [ ] Conectado al servidor correcto (`telqway`)
+- [ ] Conectado al servidor correcto (`tqw-prod`)
 - [ ] Pull exitoso desde `origin/main`
 - [ ] Dependencias instaladas (`npm install`)
 - [ ] Build completado sin errores
@@ -255,8 +255,8 @@ pm2 restart apptqw
 El archivo de configuración SSH está en: `C:\Users\pc\.ssh\config`
 
 ```ssh-config
-Host telqway
-    HostName 45.236.128.91
+Host tqw-prod
+    HostName 170.239.85.233
     User root
     Port 35988
     IdentityFile ~/.ssh/gestar_ssh
@@ -270,7 +270,7 @@ Host telqway
 - **Proyecto:** AppTQW
 - **Repositorio:** https://github.com/bikayze-gif/AppTQW
 - **Rama Principal:** `main`
-- **Servidor:** gestarservicios-dev.cl (45.236.128.91)
+- **Servidor:** gestarservicios-dev.cl (170.239.85.233)
 
 ---
 
