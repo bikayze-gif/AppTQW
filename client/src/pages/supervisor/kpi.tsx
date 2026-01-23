@@ -297,7 +297,7 @@ export default function SupervisorKPI() {
 
     },
 
-    // refetchInterval: 30 * 1000, // DESHABILITADO - Solo actualiza via WebSocket
+    refetchInterval: 5 * 60 * 1000, // Actualizar cada 5 minutos
 
     enabled: activeTab === 'monitor',
 
@@ -305,9 +305,11 @@ export default function SupervisorKPI() {
 
     retryDelay: 1000, // Esperar 1 segundo entre reintentos
 
-    staleTime: Infinity, // Los datos nunca se consideran obsoletos automáticamente
+    staleTime: 0, // Datos siempre considerados obsoletos, permitiendo refetch automático
 
-    refetchOnWindowFocus: false, // No refrescar al enfocar ventana para evitar errores
+    refetchOnWindowFocus: true, // Refrescar al volver a la pestaña
+
+    refetchOnReconnect: true, // Refrescar al reconectar internet
 
   });
 
