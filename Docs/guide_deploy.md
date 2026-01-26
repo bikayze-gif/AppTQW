@@ -301,7 +301,7 @@ Host tqw-prod
 
 | Fecha | Versión/Commit | Cambios Principales | Estado |
 |-------|----------------|---------------------|--------|
-| 2026-01-14 | PENDING | Módulo Logístico, Polling, Seguridad Sesiones | ⏳ Pendiente |
+| 2026-01-26 | d851f58 | Módulo Logístico, Polling, Seguridad Sesiones | ✅ Exitoso |
 | 2026-01-08 | 7bd2d6f | Workflow updates, UI improvements | ✅ Exitoso |
 
 ---
