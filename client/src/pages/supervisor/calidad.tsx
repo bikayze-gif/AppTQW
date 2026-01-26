@@ -731,238 +731,19 @@ export default function SupervisorCalidad() {
 
                     {/* Telqway View (Full Dashboard) */}
                     {activeTab === "telqway" && (
-                        <div className="space-y-6">
-                            {/* KPI Cards */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center">
-                                            <Activity className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total OT</p>
-                                            <h4 className="text-2xl font-bold text-slate-900 dark:text-white">
-                                                {isLoading ? <Skeleton className="h-8 w-16" /> : telqwayStats?.total.toLocaleString()}
-                                            </h4>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 bg-green-50 dark:bg-green-900/20 rounded-xl flex items-center justify-center">
-                                            <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Cumple Calidad</p>
-                                            <h4 className="text-2xl font-bold text-slate-900 dark:text-white">
-                                                {isLoading ? <Skeleton className="h-8 w-16" /> : telqwayStats?.complies.toLocaleString()}
-                                            </h4>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 bg-red-50 dark:bg-red-900/20 rounded-xl flex items-center justify-center">
-                                            <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400" />
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">No Cumple</p>
-                                            <h4 className="text-2xl font-bold text-slate-900 dark:text-white">
-                                                {isLoading ? <Skeleton className="h-8 w-16" /> : telqwayStats?.nonComplies.toLocaleString()}
-                                            </h4>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 bg-orange-50 dark:bg-orange-900/20 rounded-xl flex items-center justify-center">
-                                            <TrendingUp className="w-6 h-6 text-orange-600 dark:text-orange-400" />
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">% Calidad Global</p>
-                                            <h4 className="text-2xl font-bold text-slate-900 dark:text-white">
-                                                {isLoading ? <Skeleton className="h-8 w-16" /> : `${formatDecimal(telqwayStats?.complianceRate.toFixed(1))}%`}
-                                            </h4>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                {/* Evolución Diaria */}
-                                <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
-                                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">Evolución Diaria de Calidad</h3>
-                                    {isLoading ? (
-                                        <ChartSkeleton height={300} type="line" />
-                                    ) : (
-                                        <ResponsiveContainer width="100%" height={300}>
-                                            <LineChart data={telqwayStats?.dailyStats}>
-                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.5} />
-                                                <XAxis
-                                                    dataKey="displayDate"
-                                                    stroke="#94a3b8"
-                                                    fontSize={12}
-                                                    tickLine={false}
-                                                    axisLine={false}
-                                                />
-                                                <YAxis
-                                                    stroke="#94a3b8"
-                                                    fontSize={12}
-                                                    tickLine={false}
-                                                    axisLine={false}
-                                                    tickFormatter={(val) => `${val}%`}
-                                                    domain={[0, 100]}
-                                                />
-                                                <Tooltip
-                                                    contentStyle={{
-                                                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                                                        border: 'none',
-                                                        borderRadius: '8px',
-                                                        color: '#fff',
-                                                        fontSize: '12px'
-                                                    }}
-                                                    formatter={(val: number) => [`${val.toFixed(1)}%`, 'Calidad (%)']}
-                                                />
-                                                <Line
-                                                    type="monotone"
-                                                    dataKey="ratio"
-                                                    stroke="#3b82f6"
-                                                    strokeWidth={3}
-                                                    dot={{ r: 4, fill: '#3b82f6', strokeWidth: 0 }}
-                                                    activeDot={{ r: 6 }}
-                                                />
-                                            </LineChart>
-                                        </ResponsiveContainer>
-                                    )}
-                                </div>
-
-                                {/* Calidad por Supervisor (Quick View) */}
-                                <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
-                                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">Top Supervisores (Volumen)</h3>
-                                    {isLoading ? (
-                                        <div className="space-y-4">
-                                            {[...Array(5)].map((_, i) => (
-                                                <div key={i} className="flex items-center gap-3">
-                                                    <Skeleton className="h-8 w-8 rounded-full" />
-                                                    <div className="flex-1 space-y-2">
-                                                        <Skeleton className="h-3 w-full" />
-                                                        <Skeleton className="h-2 w-2/3" />
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-4">
-                                            {telqwayStats?.supervisorStats.slice(0, 6).map((sup, idx) => (
-                                                <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/40 rounded-full flex items-center justify-center text-blue-700 dark:text-blue-300 font-bold text-xs">
-                                                            {idx + 1}
-                                                        </div>
-                                                        <div className="overflow-hidden">
-                                                            <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 truncate w-[120px]" title={sup.name}>
-                                                                {sup.name}
-                                                            </p>
-                                                            <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                                                                {sup.total} OTs • {sup.complies} Cumplen
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <div className={cn(
-                                                            "text-sm font-bold",
-                                                            sup.ratio >= 90 ? "text-green-600 dark:text-green-400" :
-                                                                sup.ratio >= 80 ? "text-blue-600 dark:text-blue-400" :
-                                                                    "text-red-600 dark:text-red-400"
-                                                        )}>
-                                                            {sup.ratio.toFixed(1)}%
-                                                        </div>
-                                                        <div className="w-20 h-1 bg-slate-200 dark:bg-slate-700 rounded-full mt-1 overflow-hidden">
-                                                            <div
-                                                                className={cn(
-                                                                    "h-full transition-all duration-1000",
-                                                                    sup.ratio >= 90 ? "bg-green-500" :
-                                                                        sup.ratio >= 80 ? "bg-blue-500" :
-                                                                            "bg-red-500"
-                                                                )}
-                                                                style={{ width: `${sup.ratio}%` }}
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Full Supervisor Segmentation Bar Chart */}
-                            <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
-                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-                                    <div>
-                                        <h3 className="text-lg font-bold text-slate-900 dark:text-white">Calidad Reactiva por Supervisor</h3>
-                                        <p className="text-sm text-slate-500 dark:text-slate-400">Ranking detallado de cumplimiento por equipo</p>
-                                    </div>
-                                    <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 rounded-lg text-xs font-bold">
-                                        <Users className="w-3.5 h-3.5" />
-                                        Total {telqwayStats?.supervisorStats.length || 0} Supervisores
-                                    </div>
-                                </div>
-                                {isLoading ? (
-                                    <ChartSkeleton height={400} type="bar" />
-                                ) : (
-                                    <div className="overflow-y-auto max-h-[600px] pr-2 custom-scrollbar">
-                                        <ResponsiveContainer width="100%" height={Math.max(400, (telqwayStats?.supervisorStats.length || 0) * 45)}>
-                                            <BarChart
-                                                data={telqwayStats?.supervisorStats}
-                                                layout="vertical"
-                                                margin={{ left: 120, right: 30, top: 0, bottom: 0 }}
-                                            >
-                                                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e2e8f0" opacity={0.5} />
-                                                <XAxis
-                                                    type="number"
-                                                    domain={[0, 100]}
-                                                    stroke="#94a3b8"
-                                                    fontSize={12}
-                                                    tickFormatter={(v) => `${v}%`}
-                                                />
-                                                <YAxis
-                                                    dataKey="name"
-                                                    type="category"
-                                                    stroke="#94a3b8"
-                                                    fontSize={10}
-                                                    width={110}
-                                                    tickLine={false}
-                                                    axisLine={false}
-                                                />
-                                                <Tooltip
-                                                    contentStyle={{
-                                                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                                                        border: 'none',
-                                                        borderRadius: '8px',
-                                                        color: '#fff',
-                                                        fontSize: '12px'
-                                                    }}
-                                                    formatter={(val: number) => [`${val.toFixed(1)}%`, 'Calidad (%)']}
-                                                />
-                                                <Bar dataKey="ratio" radius={[0, 4, 4, 0]} barSize={25}>
-                                                    {telqwayStats?.supervisorStats.map((entry, index) => (
-                                                        <Cell
-                                                            key={`cell-${index}`}
-                                                            fill={entry.ratio >= 90 ? "#22c55e" : entry.ratio >= 80 ? "#3b82f6" : "#ef4444"}
-                                                        />
-                                                    ))}
-                                                </Bar>
-                                            </BarChart>
-                                        </ResponsiveContainer>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
+                        <TelqwayView
+                            telqwayStats={telqwayStats}
+                            isLoading={isLoading}
+                            selectedPeriod={selectedPeriod}
+                            setSelectedPeriod={setSelectedPeriod}
+                            periods={periods}
+                        />
                     )}
+
+
+
+
+
 
                     {/* Benchmark Tab */}
                     {activeTab === "benchmark" && (
@@ -1616,7 +1397,794 @@ export default function SupervisorCalidad() {
                         </div>
                     )}
                 </div>
+            </div >
+        </SupervisorLayout >
+    );
+}
+
+function TelqwayView({
+    telqwayStats,
+    isLoading,
+    selectedPeriod,
+    setSelectedPeriod,
+    periods
+}: {
+    telqwayStats: any,
+    isLoading: boolean,
+    selectedPeriod: string,
+    setSelectedPeriod: (val: string) => void,
+    periods: string[] | undefined
+}) {
+    // Search state for evolution table
+    const [searchTerm, setSearchTerm] = useState("");
+
+    // Fetch evolution data
+    const { data: evolutionData = [], isLoading: evolutionLoading } = useQuery<any[]>({
+        queryKey: ["/api/calidad-tqw/evolution"],
+    });
+
+    // Process evolution data for table
+    const evolutionTableData = useMemo(() => {
+        if (!evolutionData.length) return { months: [], technicians: [], matrix: {} };
+
+        // Get unique months and sort them
+        const monthsSet = new Set<string>();
+        evolutionData.forEach(item => {
+            if (item.mes) monthsSet.add(item.mes);
+        });
+        const months = Array.from(monthsSet).sort().reverse(); // Decending order
+
+        // Group data by technician
+        const techniciansMap = new Map<string, any>();
+
+        evolutionData.forEach(item => {
+            const key = item.rut; // Use RUT as unique key
+            if (!techniciansMap.has(key)) {
+                techniciansMap.set(key, {
+                    rut: item.rut,
+                    name: item.nombre_tecnico,
+                    supervisor: item.supervisor_normalized
+                });
+            }
+        });
+
+        const technicians = Array.from(techniciansMap.values()).sort((a, b) =>
+            (a.supervisor || "").localeCompare(b.supervisor || "") || (a.name || "").localeCompare(b.name || "")
+        );
+
+        // Build matrix [technician_rut][month] = { total: number, cumple: number, percent: number }
+        const matrix: Record<string, Record<string, { total: number, cumple: number, percent: number }>> = {};
+
+        evolutionData.forEach(item => {
+            if (!matrix[item.rut]) matrix[item.rut] = {};
+
+            const total = Number(item.total_ots);
+            const cumple = Number(item.cumple_calidad);
+            const percent = total > 0 ? (cumple / total) * 100 : 0;
+
+            matrix[item.rut][item.mes] = { total, cumple, percent };
+        });
+
+        return { months, technicians, matrix };
+    }, [evolutionData]);
+
+    // Export to Excel function
+    const exportToExcel = () => {
+        // Prepare data for Excel
+        const excelData = evolutionTableData.technicians.map(tech => {
+            const row: any = {
+                'Supervisor': tech.supervisor || '',
+                'Técnico': tech.name || '',
+                'RUT': tech.rut || ''
+            };
+
+            // Add month columns
+            evolutionTableData.months.forEach(month => {
+                const data = evolutionTableData.matrix[tech.rut]?.[month];
+                row[month] = data ? `${data.percent.toFixed(0)}% (${data.cumple}/${data.total})` : '-';
+            });
+
+            // Calculate and add average
+            let totalSum = 0;
+            let cumpleSum = 0;
+            evolutionTableData.months.forEach(month => {
+                const data = evolutionTableData.matrix[tech.rut]?.[month];
+                if (data) {
+                    totalSum += data.total;
+                    cumpleSum += data.cumple;
+                }
+            });
+            const avgPercent = totalSum > 0 ? (cumpleSum / totalSum) * 100 : 0;
+            row['Promedio'] = `${avgPercent.toFixed(1)}%`;
+
+            return row;
+        });
+
+        // Create workbook and worksheet
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(excelData);
+
+        // Add worksheet to workbook
+        XLSX.utils.book_append_sheet(wb, ws, 'Evolución Mensual');
+
+        // Generate filename with current date
+        const date = new Date().toISOString().split('T')[0];
+        const filename = `Evolucion_Mensual_Tecnicos_${date}.xlsx`;
+
+        // Download file
+        XLSX.writeFile(wb, filename);
+    };
+
+    // Filter technicians based on search term
+    const filteredTechnicians = useMemo(() => {
+        if (!searchTerm.trim()) return evolutionTableData.technicians;
+
+        const term = searchTerm.toLowerCase();
+        return evolutionTableData.technicians.filter(tech =>
+            (tech.name || '').toLowerCase().includes(term) ||
+            (tech.rut || '').toLowerCase().includes(term) ||
+            (tech.supervisor || '').toLowerCase().includes(term)
+        );
+    }, [evolutionTableData.technicians, searchTerm]);
+
+    return (
+        <div className="space-y-6">
+            {/* Period Selection Header */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                <div>
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white">Estadísticas del Periodo</h3>
+                    <p className="text-slate-500 dark:text-slate-400">
+                        {selectedPeriod ? formatPeriod(selectedPeriod) : "Seleccione un periodo"}
+                    </p>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Calendar className="w-5 h-5 text-slate-400" />
+                    <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+                        <SelectTrigger className="w-[180px] bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700">
+                            <SelectValue placeholder="Periodo" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {periods?.map((p) => (
+                                <SelectItem key={p} value={p}>
+                                    {formatPeriod(p)}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
             </div>
-        </SupervisorLayout>
+
+            {/* KPI Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center">
+                            <Activity className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total OT</p>
+                            <h4 className="text-2xl font-bold text-slate-900 dark:text-white">
+                                {isLoading ? <Skeleton className="h-8 w-16" /> : telqwayStats?.total.toLocaleString()}
+                            </h4>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-green-50 dark:bg-green-900/20 rounded-xl flex items-center justify-center">
+                            <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Cumple Calidad</p>
+                            <h4 className="text-2xl font-bold text-slate-900 dark:text-white">
+                                {isLoading ? <Skeleton className="h-8 w-16" /> : telqwayStats?.complies.toLocaleString()}
+                            </h4>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-red-50 dark:bg-red-900/20 rounded-xl flex items-center justify-center">
+                            <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">No Cumple</p>
+                            <h4 className="text-2xl font-bold text-slate-900 dark:text-white">
+                                {isLoading ? <Skeleton className="h-8 w-16" /> : telqwayStats?.nonComplies.toLocaleString()}
+                            </h4>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-orange-50 dark:bg-orange-900/20 rounded-xl flex items-center justify-center">
+                            <TrendingUp className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">% Calidad Global</p>
+                            <h4 className="text-2xl font-bold text-slate-900 dark:text-white">
+                                {isLoading ? <Skeleton className="h-8 w-16" /> : `${formatDecimal(telqwayStats?.complianceRate.toFixed(1))}%`}
+                            </h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Evolución Diaria */}
+                <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">Evolución Diaria de Calidad</h3>
+                    {isLoading ? (
+                        <ChartSkeleton height={300} type="line" />
+                    ) : (
+                        <ResponsiveContainer width="100%" height={300}>
+                            <LineChart data={telqwayStats?.dailyStats}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.5} />
+                                <XAxis
+                                    dataKey="displayDate"
+                                    stroke="#94a3b8"
+                                    fontSize={12}
+                                    tickLine={false}
+                                    axisLine={false}
+                                />
+                                <YAxis
+                                    stroke="#94a3b8"
+                                    fontSize={12}
+                                    tickLine={false}
+                                    axisLine={false}
+                                    tickFormatter={(val) => `${val}%`}
+                                    domain={[0, 100]}
+                                />
+                                <Tooltip
+                                    contentStyle={{
+                                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                                        border: 'none',
+                                        borderRadius: '8px',
+                                        color: '#fff',
+                                        fontSize: '12px'
+                                    }}
+                                    formatter={(val: number) => [`${val.toFixed(1)}%`, 'Calidad (%)']}
+                                />
+                                <Line
+                                    type="monotone"
+                                    dataKey="ratio"
+                                    stroke="#3b82f6"
+                                    strokeWidth={3}
+                                    dot={{ r: 4, fill: '#3b82f6', strokeWidth: 0 }}
+                                    activeDot={{ r: 6 }}
+                                    label={{
+                                        position: 'top',
+                                        formatter: (val: number) => `${val.toFixed(1)}%`,
+                                        fontSize: 10,
+                                        fill: '#64748b',
+                                        offset: 10
+                                    }}
+                                />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    )}
+                </div>
+
+                {/* Calidad por Supervisor (Quick View) */}
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">Top Supervisores (Volumen)</h3>
+                    {isLoading ? (
+                        <div className="space-y-4">
+                            {[...Array(5)].map((_, i) => (
+                                <div key={i} className="flex items-center gap-3">
+                                    <Skeleton className="h-8 w-8 rounded-full" />
+                                    <div className="flex-1 space-y-2">
+                                        <Skeleton className="h-3 w-full" />
+                                        <Skeleton className="h-2 w-2/3" />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            {telqwayStats?.supervisorStats.sort((a: any, b: any) => b.ratio - a.ratio).slice(0, 6).map((sup: any, idx: number) => (
+                                <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/40 rounded-full flex items-center justify-center text-blue-700 dark:text-blue-300 font-bold text-xs">
+                                            {idx + 1}
+                                        </div>
+                                        <div className="overflow-hidden">
+                                            <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 truncate w-[120px]" title={sup.name}>
+                                                {sup.name}
+                                            </p>
+                                            <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                                                {sup.total} OTs • {sup.complies} Cumplen
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className={cn(
+                                            "text-sm font-bold",
+                                            sup.ratio >= 90 ? "text-green-600 dark:text-green-400" :
+                                                sup.ratio >= 80 ? "text-blue-600 dark:text-blue-400" :
+                                                    "text-red-600 dark:text-red-400"
+                                        )}>
+                                            {sup.ratio.toFixed(1)}%
+                                        </div>
+                                        <div className="w-20 h-1 bg-slate-200 dark:bg-slate-700 rounded-full mt-1 overflow-hidden">
+                                            <div
+                                                className={cn(
+                                                    "h-full transition-all duration-1000",
+                                                    sup.ratio >= 90 ? "bg-green-500" :
+                                                        sup.ratio >= 80 ? "bg-blue-500" :
+                                                            "bg-red-500"
+                                                )}
+                                                style={{ width: `${sup.ratio}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
+
+
+            {/* Top 10 y Bottom 10 Técnicos */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Top 10 Mejores Técnicos */}
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                    <div className="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 className="text-lg font-bold text-slate-900 dark:text-white">🏆 Top 10 Mejores Técnicos</h3>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">
+                                {evolutionTableData.months.includes(selectedPeriod?.substring(0, 7))
+                                    ? `Ranking ${formatPeriod(selectedPeriod)}`
+                                    : "Ranking Promedio Histórico"}
+                            </p>
+                        </div>
+                        <div className="flex items-center gap-2 px-3 py-1 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-lg text-xs font-bold">
+                            <Award className="w-3.5 h-3.5" />
+                            Excelencia
+                        </div>
+                    </div>
+                    {evolutionLoading ? (
+                        <div className="space-y-3">
+                            {[...Array(10)].map((_, i) => (
+                                <Skeleton key={i} className="h-16 w-full" />
+                            ))}
+                        </div>
+                    ) : (() => {
+                        // Determine months logic
+                        const selectedMonth = selectedPeriod ? selectedPeriod.substring(0, 7) : "";
+                        const isFiltered = evolutionTableData.months.includes(selectedMonth);
+
+                        let monthsToDisplay: string[] = [];
+                        if (isFiltered) {
+                            const currentIndex = evolutionTableData.months.indexOf(selectedMonth);
+                            // Get up to 2 previous months relative to selected
+                            // Slice indices: start at current, end at current+3 (exclusive) to get 3 items
+                            // Then reverse to show chronological order (Oldest -> Newest)
+                            monthsToDisplay = evolutionTableData.months.slice(currentIndex, currentIndex + 3).reverse();
+                        } else {
+                            monthsToDisplay = [];
+                        }
+
+                        // Calculate stats for each technician
+                        const techStats = evolutionTableData.technicians.map(tech => {
+                            let comparisonBasis = 0;
+                            if (isFiltered) {
+                                // Specific month score
+                                const data = evolutionTableData.matrix[tech.rut]?.[selectedMonth];
+                                comparisonBasis = data?.total ? data.percent : (data?.cumple === 0 && data?.total > 0 ? 0 : -1);
+                            } else {
+                                // Historical avg
+                                let totalSum = 0;
+                                let cumpleSum = 0;
+                                evolutionTableData.months.forEach(month => {
+                                    const data = evolutionTableData.matrix[tech.rut]?.[month];
+                                    if (data) {
+                                        totalSum += data.total;
+                                        cumpleSum += data.cumple;
+                                    }
+                                });
+                                comparisonBasis = totalSum > 0 ? (cumpleSum / totalSum) * 100 : 0;
+                            }
+
+                            // Get history valid values
+                            const history = monthsToDisplay.map(m => {
+                                const data = evolutionTableData.matrix[tech.rut]?.[m];
+                                return {
+                                    month: m,
+                                    percent: data && data.total > 0 ? data.percent : null
+                                };
+                            });
+
+                            return { ...tech, rankingScore: comparisonBasis, history };
+                        }).filter(t => {
+                            if (isFiltered) {
+                                const data = evolutionTableData.matrix[t.rut]?.[selectedMonth];
+                                return data && data.total > 0;
+                            } else {
+                                return evolutionTableData.months.some(m => evolutionTableData.matrix[t.rut]?.[m]?.total > 0);
+                            }
+                        });
+
+
+                        const top10 = techStats.sort((a, b) => b.rankingScore - a.rankingScore).slice(0, 10);
+
+                        if (top10.length === 0) {
+                            return (
+                                <div className="text-center py-8 text-slate-500">
+                                    No hay datos registrados para este periodo.
+                                </div>
+                            );
+                        }
+
+                        return (
+                            <div className="space-y-2">
+                                {isFiltered && (
+                                    <div className="flex justify-end px-3 mb-2 text-xs font-semibold text-slate-400 gap-4">
+                                        {monthsToDisplay.map(m => (
+                                            <div key={m} className="w-12 text-center">{m.split('-')[1]}</div>
+                                        ))}
+                                    </div>
+                                )}
+                                {top10.map((tech, idx) => (
+                                    <div key={tech.rut} className="flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-green-50 to-transparent dark:from-green-900/10 dark:to-transparent border border-green-100 dark:border-green-900/30 hover:shadow-md transition-all">
+                                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                                            <div className={cn(
+                                                "w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0",
+                                                idx === 0 ? "bg-yellow-400 text-yellow-900" :
+                                                    idx === 1 ? "bg-gray-300 text-gray-700" :
+                                                        idx === 2 ? "bg-orange-400 text-orange-900" :
+                                                            "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300"
+                                            )}>
+                                                {idx + 1}
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                                                    {tech.name || tech.rut || 'Sin identificación'}
+                                                </p>
+                                                <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                                                    {tech.supervisor || 'Sin supervisor'}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-2">
+                                            {isFiltered ? (
+                                                <div className="flex gap-4">
+                                                    {tech.history.map((h: any, hIdx: number) => {
+                                                        const isLast = hIdx === tech.history.length - 1;
+                                                        const prevVal = hIdx > 0 ? tech.history[hIdx - 1].percent : null;
+                                                        const trend = (h.percent !== null && prevVal !== null) ? (h.percent >= prevVal ? 'up' : 'down') : 'flat';
+
+                                                        return (
+                                                            <div key={h.month} className={cn(
+                                                                "flex flex-col items-center w-12",
+                                                                isLast ? "opacity-100 scale-110 font-bold" : "opacity-60"
+                                                            )}>
+                                                                <span className={cn(
+                                                                    "text-xs",
+                                                                    h.percent !== null ? (h.percent >= 90 ? "text-green-600" : h.percent >= 80 ? "text-blue-600" : "text-red-500") : "text-slate-300"
+                                                                )}>
+                                                                    {h.percent !== null ? `${h.percent.toFixed(0)}%` : '-'}
+                                                                </span>
+                                                                {isLast && h.percent !== null && prevVal !== null && (
+                                                                    <span className={cn("text-[10px]", trend === 'up' ? "text-green-500" : trend === 'down' ? "text-red-500" : "text-slate-400")}>
+                                                                        {trend === 'up' ? '▲' : trend === 'down' ? '▼' : '-'}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            ) : (
+                                                <div className="text-right ml-2">
+                                                    <div className="text-lg font-bold text-green-600 dark:text-green-400">
+                                                        {tech.rankingScore.toFixed(1)}%
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        );
+                    })()}
+                </div>
+
+                {/* Bottom 10 Peores Técnicos */}
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                    <div className="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 className="text-lg font-bold text-slate-900 dark:text-white">⚠️ Bottom 10 Técnicos</h3>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">
+                                {evolutionTableData.months.includes(selectedPeriod?.substring(0, 7))
+                                    ? `Ranking ${formatPeriod(selectedPeriod)}`
+                                    : "Ranking Promedio Histórico"}
+                            </p>
+                        </div>
+                        <div className="flex items-center gap-2 px-3 py-1 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg text-xs font-bold">
+                            <AlertTriangle className="w-3.5 h-3.5" />
+                            Atención
+                        </div>
+                    </div>
+                    {evolutionLoading ? (
+                        <div className="space-y-3">
+                            {[...Array(10)].map((_, i) => (
+                                <Skeleton key={i} className="h-16 w-full" />
+                            ))}
+                        </div>
+                    ) : (() => {
+                        // Determine months logic (REUSED LOGIC for consistency)
+                        const selectedMonth = selectedPeriod ? selectedPeriod.substring(0, 7) : "";
+                        const isFiltered = evolutionTableData.months.includes(selectedMonth);
+
+                        let monthsToDisplay: string[] = [];
+                        if (isFiltered) {
+                            const currentIndex = evolutionTableData.months.indexOf(selectedMonth);
+                            monthsToDisplay = evolutionTableData.months.slice(currentIndex, currentIndex + 3).reverse();
+                        } else {
+                            monthsToDisplay = [];
+                        }
+
+                        // Calculate stats for each technician
+                        const techStats = evolutionTableData.technicians.map(tech => {
+                            let comparisonBasis = 0;
+                            if (isFiltered) {
+                                const data = evolutionTableData.matrix[tech.rut]?.[selectedMonth];
+                                comparisonBasis = data?.total ? data.percent : (data?.cumple === 0 && data?.total > 0 ? 0 : 101); // 101 to push to bottom if sorted asc
+                            } else {
+                                let totalSum = 0;
+                                let cumpleSum = 0;
+                                evolutionTableData.months.forEach(month => {
+                                    const data = evolutionTableData.matrix[tech.rut]?.[month];
+                                    if (data) {
+                                        totalSum += data.total;
+                                        cumpleSum += data.cumple;
+                                    }
+                                });
+                                comparisonBasis = totalSum > 0 ? (cumpleSum / totalSum) * 100 : 0;
+                            }
+
+                            const history = monthsToDisplay.map(m => {
+                                const data = evolutionTableData.matrix[tech.rut]?.[m];
+                                return {
+                                    month: m,
+                                    percent: data && data.total > 0 ? data.percent : null
+                                };
+                            });
+
+                            return { ...tech, rankingScore: comparisonBasis, history };
+                        }).filter(t => {
+                            if (isFiltered) {
+                                const data = evolutionTableData.matrix[t.rut]?.[selectedMonth];
+                                return data && data.total > 0;
+                            } else {
+                                return evolutionTableData.months.some(m => evolutionTableData.matrix[t.rut]?.[m]?.total > 0);
+                            }
+                        });
+
+
+                        const bottom10 = techStats.sort((a, b) => a.rankingScore - b.rankingScore).slice(0, 10);
+
+                        if (bottom10.length === 0) {
+                            return (
+                                <div className="text-center py-8 text-slate-500">
+                                    No hay datos registrados para este periodo.
+                                </div>
+                            );
+                        }
+
+                        return (
+                            <div className="space-y-2">
+                                {isFiltered && (
+                                    <div className="flex justify-end px-3 mb-2 text-xs font-semibold text-slate-400 gap-4">
+                                        {monthsToDisplay.map(m => (
+                                            <div key={m} className="w-12 text-center">{m.split('-')[1]}</div>
+                                        ))}
+                                    </div>
+                                )}
+                                {bottom10.map((tech, idx) => (
+                                    <div key={tech.rut} className="flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-red-50 to-transparent dark:from-red-900/10 dark:to-transparent border border-red-100 dark:border-red-900/30 hover:shadow-md transition-all">
+                                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                                            <div className="w-8 h-8 bg-red-100 dark:bg-red-900/40 rounded-full flex items-center justify-center text-red-700 dark:text-red-300 font-bold text-xs shrink-0">
+                                                {idx + 1}
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                                                    {tech.name || tech.rut || 'Sin identificación'}
+                                                </p>
+                                                <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                                                    {tech.supervisor || 'Sin supervisor'}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-2">
+                                            {isFiltered ? (
+                                                <div className="flex gap-4">
+                                                    {tech.history.map((h: any, hIdx: number) => {
+                                                        const isLast = hIdx === tech.history.length - 1;
+                                                        const prevVal = hIdx > 0 ? tech.history[hIdx - 1].percent : null;
+                                                        const trend = (h.percent !== null && prevVal !== null) ? (h.percent >= prevVal ? 'up' : 'down') : 'flat';
+
+                                                        return (
+                                                            <div key={h.month} className={cn(
+                                                                "flex flex-col items-center w-12",
+                                                                isLast ? "opacity-100 scale-110 font-bold" : "opacity-60"
+                                                            )}>
+                                                                <span className={cn(
+                                                                    "text-xs",
+                                                                    h.percent !== null ? (h.percent >= 90 ? "text-green-600" : h.percent >= 80 ? "text-blue-600" : "text-red-500") : "text-slate-300"
+                                                                )}>
+                                                                    {h.percent !== null ? `${h.percent.toFixed(0)}%` : '-'}
+                                                                </span>
+                                                                {isLast && h.percent !== null && prevVal !== null && (
+                                                                    <span className={cn("text-[10px]", trend === 'up' ? "text-green-500" : trend === 'down' ? "text-red-500" : "text-slate-400")}>
+                                                                        {trend === 'up' ? '▲' : trend === 'down' ? '▼' : '-'}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            ) : (
+                                                <div className="text-right ml-2">
+                                                    <div className="text-lg font-bold text-red-600 dark:text-red-400">
+                                                        {tech.rankingScore.toFixed(1)}%
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        );
+                    })()}
+                </div>
+            </div>
+
+            {/* Evolución Mensual 2025 Table */}
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+                <div className="p-6 border-b border-slate-200 dark:border-slate-700">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Evolución Mensual por Técnico (2025+)</h3>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                                Seguimiento histórico del porcentaje de cumplimiento mensual de los técnicos.
+                            </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                <Input
+                                    type="text"
+                                    placeholder="Buscar técnico, RUT o supervisor..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="pl-10 w-[280px]"
+                                />
+                            </div>
+                            <Button
+                                onClick={exportToExcel}
+                                variant="outline"
+                                size="sm"
+                                className="flex items-center gap-2"
+                                disabled={evolutionTableData.technicians.length === 0}
+                            >
+                                <Download className="w-4 h-4" />
+                                Exportar Excel
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="overflow-x-auto p-6">
+                    {evolutionLoading ? (
+                        <div className="space-y-4">
+                            <div className="flex border-b border-slate-200 dark:border-slate-700 pb-2">
+                                {[...Array(5)].map((_, i) => (
+                                    <Skeleton key={i} className="h-4 w-full mx-2" />
+                                ))}
+                            </div>
+                            {[...Array(6)].map((_, i) => (
+                                <div key={i} className="flex gap-4">
+                                    {[...Array(5)].map((_, j) => (
+                                        <Skeleton key={j} className="h-10 w-full" />
+                                    ))}
+                                </div>
+                            ))}
+                        </div>
+                    ) : evolutionTableData.technicians.length === 0 ? (
+                        <div className="text-center py-12">
+                            <Award className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+                            <p className="text-slate-500 dark:text-slate-400">No hay datos de evolución disponibles</p>
+                        </div>
+                    ) : (
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="bg-slate-50 dark:bg-white/5">
+                                    <TableHead className="font-semibold text-slate-700 dark:text-slate-300">Supervisor</TableHead>
+                                    <TableHead className="font-semibold text-slate-700 dark:text-slate-300">Técnico</TableHead>
+                                    {evolutionTableData.months.map(month => (
+                                        <TableHead key={month} className="text-center font-semibold text-slate-700 dark:text-slate-300">
+                                            {month}
+                                        </TableHead>
+                                    ))}
+                                    <TableHead className="text-center font-semibold text-slate-700 dark:text-slate-300">Promedio</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {filteredTechnicians.map((tech) => {
+                                    // Calculate average over all displayed months
+                                    let totalSum = 0;
+                                    let cumpleSum = 0;
+
+                                    evolutionTableData.months.forEach(month => {
+                                        const data = evolutionTableData.matrix[tech.rut]?.[month];
+                                        if (data) {
+                                            totalSum += data.total;
+                                            cumpleSum += data.cumple;
+                                        }
+                                    });
+
+                                    const avgPercent = totalSum > 0 ? (cumpleSum / totalSum) * 100 : 0;
+
+                                    return (
+                                        <TableRow key={tech.rut} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                            <TableCell className="text-xs font-medium text-slate-500">{tech.supervisor}</TableCell>
+                                            <TableCell>
+                                                <div className="font-medium text-slate-900 dark:text-white text-sm">
+                                                    {tech.name}
+                                                </div>
+                                                <div className="text-xs text-slate-400 font-mono">
+                                                    {tech.rut}
+                                                </div>
+                                            </TableCell>
+                                            {evolutionTableData.months.map(month => {
+                                                const data = evolutionTableData.matrix[tech.rut]?.[month];
+                                                return (
+                                                    <TableCell key={month} className="text-center p-2">
+                                                        {data ? (
+                                                            <div className="flex flex-col items-center">
+                                                                <span className={cn(
+                                                                    "px-2 py-0.5 rounded text-xs font-bold",
+                                                                    data.percent >= 90 ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" :
+                                                                        data.percent >= 80 ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
+                                                                            "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                                                )}>
+                                                                    {data.percent.toFixed(0)}%
+                                                                </span>
+                                                                <span className="text-[10px] text-slate-400 mt-0.5">
+                                                                    {data.cumple}/{data.total}
+                                                                </span>
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-slate-300">-</span>
+                                                        )}
+                                                    </TableCell>
+                                                );
+                                            })}
+                                            <TableCell className="text-center font-bold">
+                                                <span className={cn(
+                                                    "px-2 py-1 rounded text-sm",
+                                                    avgPercent >= 90 ? "text-green-600" :
+                                                        avgPercent >= 80 ? "text-blue-600" :
+                                                            "text-red-600"
+                                                )}>
+                                                    {avgPercent.toFixed(1)}%
+                                                </span>
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })}
+                            </TableBody>
+                        </Table>
+                    )}
+                </div>
+            </div>
+        </div>
     );
 }

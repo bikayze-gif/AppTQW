@@ -1653,7 +1653,7 @@ export class MySQLStorage implements IStorage {
           cb.mes_contable,
           cb.DIFERENCIA_DIAS
         FROM tb_calidad_naranja_base cb
-        LEFT JOIN tb_user_tqw u ON TRIM(u.rut) = TRIM(cb.rut_tecnico_fs)
+        LEFT JOIN tb_user_tqw u ON u.rut = cb.rut_tecnico_fs
         WHERE cb.mes_contable = ?
         ORDER BY cb.FECHA_EJECUCION DESC`,
         [mesContable]
@@ -1662,6 +1662,38 @@ export class MySQLStorage implements IStorage {
       return rows as any[];
     } catch (error) {
       console.error("Error fetching Calidad TQW data:", error);
+      return [];
+    }
+  }
+
+  async getCalidadEvolution2025(): Promise<any[]> {
+    try {
+      // Query optimizada usando los índices existentes
+      // Agrupa por técnico y mes contable, calculando conteos de cumplimiento (0) vs total
+      const [rows] = await pool.execute(
+        `SELECT 
+            u.nombre as nombre_tecnico,
+            cb.rut_tecnico_fs as rut,
+            u.supervisor,
+            CASE 
+                WHEN u.supervisor IS NULL THEN 'Sin Asignar' 
+                WHEN TRIM(u.supervisor) = '' THEN 'Sin Asignar' 
+                ELSE u.supervisor 
+            END as supervisor_normalized,
+            DATE_FORMAT(cb.mes_contable, '%Y-%m') as mes,
+            COUNT(*) as total_ots,
+            SUM(CASE WHEN cb.CALIDAD_30 = '0' THEN 1 ELSE 0 END) as cumple_calidad
+        FROM tb_calidad_naranja_base cb
+        LEFT JOIN tb_user_tqw u ON u.rut = cb.rut_tecnico_fs
+        WHERE cb.mes_contable >= '2025-01-01'
+        GROUP BY u.nombre, cb.rut_tecnico_fs, u.supervisor, DATE_FORMAT(cb.mes_contable, '%Y-%m')
+        ORDER BY u.supervisor, u.nombre, mes ASC`
+      );
+
+      console.log("[Calidad Evolution] Rows returned:", (rows as any[]).length);
+      return rows as any[];
+    } catch (error) {
+      console.error("Error fetching Calidad Evolution data:", error);
       return [];
     }
   }
