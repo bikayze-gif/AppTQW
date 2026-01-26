@@ -106,6 +106,10 @@ export default function SupervisorCalidad() {
         enabled: !!selectedPeriod,
     });
 
+    const { data: monthlyStatsData = [], isLoading: monthlyStatsLoading } = useQuery<any[]>({
+        queryKey: ["/api/calidad-tqw/monthly-stats"],
+    });
+
     const { data: benchmarkData = [], isLoading: benchmarkLoading } = useQuery<any[]>({
         queryKey: ["/api/benchmark/data"],
     });
@@ -347,30 +351,9 @@ export default function SupervisorCalidad() {
             }))
             .sort((a, b) => b.total - a.total);
 
-        // Daily trend
-        const dailyMap: Record<string, { total: number, complies: number }> = {};
-        qualityData.forEach(d => {
-            if (d.FECHA_EJECUCION) {
-                const dateObj = new Date(d.FECHA_EJECUCION);
-                if (!isNaN(dateObj.getTime())) {
-                    const date = dateObj.toISOString().split('T')[0];
-                    if (!dailyMap[date]) dailyMap[date] = { total: 0, complies: 0 };
-                    dailyMap[date].total++;
-                    if (String(d.CALIDAD_30) === '0') dailyMap[date].complies++;
-                }
-            }
-        });
-
-        const dailyStats = Object.entries(dailyMap)
-            .map(([date, stats]) => {
-                const dObj = new Date(date + 'T12:00:00');
-                return {
-                    date,
-                    displayDate: `${dObj.getDate()} ${MONTH_NAMES[dObj.getMonth()]}`,
-                    ratio: (stats.complies / stats.total) * 100
-                };
-            })
-            .sort((a, b) => a.date.localeCompare(b.date));
+        // Monthly trend - This will be populated from the separate monthly stats query
+        // For now, return empty array as it will be handled separately
+        const dailyStats: any[] = [];
 
         // Network split
         const networkMap: Record<string, { total: number, complies: number }> = {};
@@ -397,6 +380,24 @@ export default function SupervisorCalidad() {
             networkStats
         };
     }, [qualityData]);
+
+    // Process monthly stats data separately for the evolution chart
+    const monthlyEvolutionStats = useMemo(() => {
+        if (!monthlyStatsData || monthlyStatsData.length === 0) return [];
+
+        return monthlyStatsData.map((item: any) => {
+            const [year, month] = item.mes.split('-');
+            const monthIndex = parseInt(month) - 1;
+
+            return {
+                date: item.mes,
+                displayDate: `${MONTH_NAMES[monthIndex]} ${year}`,
+                ratio: parseFloat(item.porcentaje_calidad),
+                total: item.total_ots,
+                complies: parseInt(item.cumple_calidad)
+            };
+        });
+    }, [monthlyStatsData]);
 
     const facetedBenchmarkData = useMemo(() => {
         const { periods, companies, matrix } = benchmarkTableData;
@@ -737,6 +738,8 @@ export default function SupervisorCalidad() {
                             selectedPeriod={selectedPeriod}
                             setSelectedPeriod={setSelectedPeriod}
                             periods={periods}
+                            monthlyEvolutionStats={monthlyEvolutionStats}
+                            monthlyStatsLoading={monthlyStatsLoading}
                         />
                     )}
 
@@ -1407,16 +1410,24 @@ function TelqwayView({
     isLoading,
     selectedPeriod,
     setSelectedPeriod,
-    periods
+    periods,
+    monthlyEvolutionStats,
+    monthlyStatsLoading
 }: {
     telqwayStats: any,
     isLoading: boolean,
     selectedPeriod: string,
     setSelectedPeriod: (val: string) => void,
-    periods: string[] | undefined
+    periods: string[] | undefined,
+    monthlyEvolutionStats: any[],
+    monthlyStatsLoading: boolean
 }) {
     // Search state for evolution table
     const [searchTerm, setSearchTerm] = useState("");
+    const [vigenteFilter, setVigenteFilter] = useState<string>("all");
+    const [supervisorFilter, setSupervisorFilter] = useState<string>("all");
+    const [sortColumn, setSortColumn] = useState<string>("supervisor");
+    const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
     // Fetch evolution data
     const { data: evolutionData = [], isLoading: evolutionLoading } = useQuery<any[]>({
@@ -1443,7 +1454,8 @@ function TelqwayView({
                 techniciansMap.set(key, {
                     rut: item.rut,
                     name: item.nombre_tecnico,
-                    supervisor: item.supervisor_normalized
+                    supervisor: item.supervisor_normalized,
+                    vigente: item.vigente
                 });
             }
         });
@@ -1468,6 +1480,47 @@ function TelqwayView({
         return { months, technicians, matrix };
     }, [evolutionData]);
 
+    // Process evolution data for supervisors
+    const supervisorEvolutionData = useMemo(() => {
+        if (!evolutionData.length) return { months: evolutionTableData.months, supervisors: [], matrix: {} };
+
+        const months = evolutionTableData.months;
+        const supervisorsSet = new Set<string>();
+        // Initialize matrix with sums
+        const sumsMatrix: Record<string, Record<string, { total: number, cumple: number }>> = {};
+
+        evolutionData.forEach(item => {
+            const supervisor = item.supervisor_normalized || "Sin Supervisor";
+            // Normalizar nombre de supervisor si es necesario
+            supervisorsSet.add(supervisor);
+
+            if (!sumsMatrix[supervisor]) sumsMatrix[supervisor] = {};
+            if (!sumsMatrix[supervisor][item.mes]) sumsMatrix[supervisor][item.mes] = { total: 0, cumple: 0 };
+
+            sumsMatrix[supervisor][item.mes].total += Number(item.total_ots);
+            sumsMatrix[supervisor][item.mes].cumple += Number(item.cumple_calidad);
+        });
+
+        // Convert to percent matrix
+        const matrix: Record<string, Record<string, { total: number, cumple: number, percent: number }>> = {};
+
+        Object.keys(sumsMatrix).forEach(sup => {
+            matrix[sup] = {};
+            Object.keys(sumsMatrix[sup]).forEach(month => {
+                const { total, cumple } = sumsMatrix[sup][month];
+                matrix[sup][month] = {
+                    total,
+                    cumple,
+                    percent: total > 0 ? (cumple / total) * 100 : 0
+                };
+            });
+        });
+
+        const supervisors = Array.from(supervisorsSet).sort();
+
+        return { months, supervisors, matrix };
+    }, [evolutionData, evolutionTableData.months]);
+
     // Export to Excel function
     const exportToExcel = () => {
         // Prepare data for Excel
@@ -1475,7 +1528,8 @@ function TelqwayView({
             const row: any = {
                 'Supervisor': tech.supervisor || '',
                 'Técnico': tech.name || '',
-                'RUT': tech.rut || ''
+                'RUT': tech.rut || '',
+                'Vigente': tech.vigente || ''
             };
 
             // Add month columns
@@ -1515,17 +1569,125 @@ function TelqwayView({
         XLSX.writeFile(wb, filename);
     };
 
-    // Filter technicians based on search term
-    const filteredTechnicians = useMemo(() => {
-        if (!searchTerm.trim()) return evolutionTableData.technicians;
+    // Get unique supervisors list
+    const supervisorsList = useMemo(() => {
+        const supervisors = new Set<string>();
+        evolutionTableData.technicians.forEach(tech => {
+            if (tech.supervisor) {
+                supervisors.add(tech.supervisor);
+            }
+        });
+        return Array.from(supervisors).sort();
+    }, [evolutionTableData.technicians]);
 
-        const term = searchTerm.toLowerCase();
-        return evolutionTableData.technicians.filter(tech =>
-            (tech.name || '').toLowerCase().includes(term) ||
-            (tech.rut || '').toLowerCase().includes(term) ||
-            (tech.supervisor || '').toLowerCase().includes(term)
-        );
-    }, [evolutionTableData.technicians, searchTerm]);
+    // Filter technicians based on search term, vigente filter, and supervisor filter
+    const filteredTechnicians = useMemo(() => {
+        let filtered = evolutionTableData.technicians;
+
+        // Apply supervisor filter
+        if (supervisorFilter !== "all") {
+            filtered = filtered.filter(tech => tech.supervisor === supervisorFilter);
+        }
+
+        // Apply vigente filter
+        if (vigenteFilter !== "all") {
+            filtered = filtered.filter(tech => tech.vigente === vigenteFilter);
+        }
+
+        // Apply search term filter
+        if (searchTerm.trim()) {
+            const term = searchTerm.toLowerCase();
+            filtered = filtered.filter(tech =>
+                (tech.name || '').toLowerCase().includes(term) ||
+                (tech.rut || '').toLowerCase().includes(term) ||
+                (tech.supervisor || '').toLowerCase().includes(term)
+            );
+        }
+
+        return filtered;
+    }, [evolutionTableData.technicians, searchTerm, vigenteFilter, supervisorFilter]);
+
+    // Sort technicians based on selected column
+    const sortedTechnicians = useMemo(() => {
+        const sorted = [...filteredTechnicians];
+
+        sorted.sort((a, b) => {
+            let valueA: any = "";
+            let valueB: any = "";
+
+            switch (sortColumn) {
+                case "supervisor":
+                    valueA = a.supervisor || "";
+                    valueB = b.supervisor || "";
+                    break;
+                case "name":
+                    valueA = a.name || "";
+                    valueB = b.name || "";
+                    break;
+                case "rut":
+                    valueA = a.rut || "";
+                    valueB = b.rut || "";
+                    break;
+                case "vigente":
+                    valueA = a.vigente || "";
+                    valueB = b.vigente || "";
+                    break;
+                case "average":
+                    // Calculate average for each technician
+                    let aTotalSum = 0, aCumpleSum = 0;
+                    let bTotalSum = 0, bCumpleSum = 0;
+                    evolutionTableData.months.forEach(month => {
+                        const aData = evolutionTableData.matrix[a.rut]?.[month];
+                        const bData = evolutionTableData.matrix[b.rut]?.[month];
+                        if (aData) {
+                            aTotalSum += aData.total;
+                            aCumpleSum += aData.cumple;
+                        }
+                        if (bData) {
+                            bTotalSum += bData.total;
+                            bCumpleSum += bData.cumple;
+                        }
+                    });
+                    valueA = aTotalSum > 0 ? (aCumpleSum / aTotalSum) * 100 : 0;
+                    valueB = bTotalSum > 0 ? (bCumpleSum / bTotalSum) * 100 : 0;
+                    break;
+                default:
+                    // Check if it's a month column (format: YYYY-MM)
+                    if (sortColumn.match(/^\d{4}-\d{2}$/)) {
+                        const aData = evolutionTableData.matrix[a.rut]?.[sortColumn];
+                        const bData = evolutionTableData.matrix[b.rut]?.[sortColumn];
+                        valueA = aData ? aData.percent : 0;
+                        valueB = bData ? bData.percent : 0;
+                    }
+                    break;
+            }
+
+            // String comparison
+            if (typeof valueA === "string" && typeof valueB === "string") {
+                return sortDirection === "asc"
+                    ? valueA.localeCompare(valueB)
+                    : valueB.localeCompare(valueA);
+            }
+
+            // Number comparison
+            if (sortDirection === "asc") {
+                return valueA < valueB ? -1 : valueA > valueB ? 1 : 0;
+            } else {
+                return valueA > valueB ? -1 : valueA < valueB ? 1 : 0;
+            }
+        });
+
+        return sorted;
+    }, [filteredTechnicians, sortColumn, sortDirection, evolutionTableData.months, evolutionTableData.matrix]);
+
+    const handleSort = (column: string) => {
+        if (sortColumn === column) {
+            setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+        } else {
+            setSortColumn(column);
+            setSortDirection("asc");
+        }
+    };
 
     return (
         <div className="space-y-6">
@@ -1616,12 +1778,12 @@ function TelqwayView({
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Evolución Diaria */}
                 <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">Evolución Diaria de Calidad</h3>
-                    {isLoading ? (
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">Evolución Mensual de Calidad</h3>
+                    {monthlyStatsLoading ? (
                         <ChartSkeleton height={300} type="line" />
                     ) : (
                         <ResponsiveContainer width="100%" height={300}>
-                            <LineChart data={telqwayStats?.dailyStats}>
+                            <LineChart data={monthlyEvolutionStats}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.5} />
                                 <XAxis
                                     dataKey="displayDate"
@@ -1671,7 +1833,7 @@ function TelqwayView({
                 {/* Calidad por Supervisor (Quick View) */}
                 <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
                     <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">Top Supervisores (Volumen)</h3>
-                    {isLoading ? (
+                    {isLoading || evolutionLoading ? (
                         <div className="space-y-4">
                             {[...Array(5)].map((_, i) => (
                                 <div key={i} className="flex items-center gap-3">
@@ -1683,48 +1845,153 @@ function TelqwayView({
                                 </div>
                             ))}
                         </div>
-                    ) : (
-                        <div className="space-y-4">
-                            {telqwayStats?.supervisorStats.sort((a: any, b: any) => b.ratio - a.ratio).slice(0, 6).map((sup: any, idx: number) => (
-                                <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/40 rounded-full flex items-center justify-center text-blue-700 dark:text-blue-300 font-bold text-xs">
-                                            {idx + 1}
-                                        </div>
-                                        <div className="overflow-hidden">
-                                            <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 truncate w-[120px]" title={sup.name}>
-                                                {sup.name}
-                                            </p>
-                                            <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                                                {sup.total} OTs • {sup.complies} Cumplen
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <div className={cn(
-                                            "text-sm font-bold",
-                                            sup.ratio >= 90 ? "text-green-600 dark:text-green-400" :
-                                                sup.ratio >= 80 ? "text-blue-600 dark:text-blue-400" :
-                                                    "text-red-600 dark:text-red-400"
-                                        )}>
-                                            {sup.ratio.toFixed(1)}%
-                                        </div>
-                                        <div className="w-20 h-1 bg-slate-200 dark:bg-slate-700 rounded-full mt-1 overflow-hidden">
-                                            <div
-                                                className={cn(
-                                                    "h-full transition-all duration-1000",
-                                                    sup.ratio >= 90 ? "bg-green-500" :
-                                                        sup.ratio >= 80 ? "bg-blue-500" :
-                                                            "bg-red-500"
-                                                )}
-                                                style={{ width: `${sup.ratio}%` }}
-                                            />
-                                        </div>
-                                    </div>
+                    ) : (() => {
+                        const selectedMonth = selectedPeriod ? selectedPeriod.substring(0, 7) : "";
+                        const isFiltered = evolutionTableData.months.includes(selectedMonth);
+
+                        let monthsToDisplay: string[] = [];
+                        if (isFiltered) {
+                            const currentIndex = evolutionTableData.months.indexOf(selectedMonth);
+                            monthsToDisplay = evolutionTableData.months.slice(currentIndex, currentIndex + 3).reverse();
+                        } else {
+                            monthsToDisplay = [];
+                        }
+
+                        // Calculate stats per supervisor
+                        const supStats = supervisorEvolutionData.supervisors.map(sup => {
+                            let comparisonBasis = 0;
+                            let totalOTs = 0;
+                            let complies = 0;
+
+                            if (isFiltered) {
+                                const data = supervisorEvolutionData.matrix[sup]?.[selectedMonth];
+                                comparisonBasis = data?.total ? data.percent : (data?.cumple === 0 && data?.total > 0 ? 0 : -1);
+                                totalOTs = data?.total || 0;
+                                complies = data?.cumple || 0;
+                            } else {
+                                // Historical avg
+                                let totalSum = 0;
+                                let cumpleSum = 0;
+                                supervisorEvolutionData.months.forEach(month => {
+                                    const data = supervisorEvolutionData.matrix[sup]?.[month];
+                                    if (data) {
+                                        totalSum += data.total;
+                                        cumpleSum += data.cumple;
+                                    }
+                                });
+                                comparisonBasis = totalSum > 0 ? (cumpleSum / totalSum) * 100 : 0;
+                                totalOTs = totalSum;
+                                complies = cumpleSum;
+                            }
+
+                            const history = monthsToDisplay.map(m => {
+                                const data = supervisorEvolutionData.matrix[sup]?.[m];
+                                return {
+                                    month: m,
+                                    percent: data && data.total > 0 ? data.percent : null
+                                };
+                            });
+
+                            return { name: sup, rankingScore: comparisonBasis, total: totalOTs, complies, history };
+                        }).filter(s => {
+                            if (isFiltered) {
+                                const data = supervisorEvolutionData.matrix[s.name]?.[selectedMonth];
+                                return data && data.total > 0;
+                            } else {
+                                return supervisorEvolutionData.months.some(m => supervisorEvolutionData.matrix[s.name]?.[m]?.total > 0);
+                            }
+                        }).sort((a, b) => b.rankingScore - a.rankingScore).slice(0, 6);
+
+                        if (supStats.length === 0) {
+                            return (
+                                <div className="text-center py-8 text-slate-500">
+                                    No hay datos registrados para este periodo.
                                 </div>
-                            ))}
-                        </div>
-                    )}
+                            );
+                        }
+
+                        return (
+                            <div className="space-y-4">
+                                {isFiltered && (
+                                    <div className="flex justify-end px-3 mb-2 text-xs font-semibold text-slate-400 gap-4">
+                                        {monthsToDisplay.map(m => (
+                                            <div key={m} className="w-12 text-center">{m.split('-')[1]}</div>
+                                        ))}
+                                    </div>
+                                )}
+                                {supStats.map((sup, idx) => (
+                                    <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
+                                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                                            <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/40 rounded-full flex items-center justify-center text-blue-700 dark:text-blue-300 font-bold text-xs shrink-0">
+                                                {idx + 1}
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 truncate" title={sup.name}>
+                                                    {sup.name}
+                                                </p>
+                                                <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                                                    {sup.total} OTs • {sup.complies} Cumplen
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-2">
+                                            {isFiltered ? (
+                                                <div className="flex gap-4">
+                                                    {sup.history.map((h, hIdx) => {
+                                                        const isLast = hIdx === sup.history.length - 1;
+                                                        const prevVal = hIdx > 0 ? sup.history[hIdx - 1].percent : null;
+                                                        const trend = (h.percent !== null && prevVal !== null) ? (h.percent >= prevVal ? 'up' : 'down') : 'flat';
+
+                                                        return (
+                                                            <div key={h.month} className={cn(
+                                                                "flex flex-col items-center w-12",
+                                                                isLast ? "opacity-100 scale-110 font-bold" : "opacity-60"
+                                                            )}>
+                                                                <span className={cn(
+                                                                    "text-xs",
+                                                                    h.percent !== null ? (h.percent >= 90 ? "text-green-600" : h.percent >= 80 ? "text-blue-600" : "text-red-500") : "text-slate-300"
+                                                                )}>
+                                                                    {h.percent !== null ? `${h.percent.toFixed(0)}%` : '-'}
+                                                                </span>
+                                                                {isLast && h.percent !== null && prevVal !== null && (
+                                                                    <span className={cn("text-[10px]", trend === 'up' ? "text-green-500" : trend === 'down' ? "text-red-500" : "text-slate-400")}>
+                                                                        {trend === 'up' ? '▲' : trend === 'down' ? '▼' : '-'}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            ) : (
+                                                <div className="text-right">
+                                                    <div className={cn(
+                                                        "text-sm font-bold",
+                                                        sup.rankingScore >= 90 ? "text-green-600 dark:text-green-400" :
+                                                            sup.rankingScore >= 80 ? "text-blue-600 dark:text-blue-400" :
+                                                                "text-red-600 dark:text-red-400"
+                                                    )}>
+                                                        {sup.rankingScore.toFixed(1)}%
+                                                    </div>
+                                                    <div className="w-20 h-1 bg-slate-200 dark:bg-slate-700 rounded-full mt-1 overflow-hidden">
+                                                        <div
+                                                            className={cn(
+                                                                "h-full transition-all duration-1000",
+                                                                sup.rankingScore >= 90 ? "bg-green-500" :
+                                                                    sup.rankingScore >= 80 ? "bg-blue-500" :
+                                                                        "bg-red-500"
+                                                            )}
+                                                            style={{ width: `${sup.rankingScore}%` }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        );
+                    })()}
                 </div>
             </div>
 
@@ -1894,11 +2161,11 @@ function TelqwayView({
                     })()}
                 </div>
 
-                {/* Bottom 10 Peores Técnicos */}
+                {/* NO TOP 10 Técnicos */}
                 <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
                     <div className="flex items-center justify-between mb-6">
                         <div>
-                            <h3 className="text-lg font-bold text-slate-900 dark:text-white">⚠️ Bottom 10 Técnicos</h3>
+                            <h3 className="text-lg font-bold text-slate-900 dark:text-white">⚠️ NO TOP 10 Técnicos</h3>
                             <p className="text-sm text-slate-500 dark:text-slate-400">
                                 {evolutionTableData.months.includes(selectedPeriod?.substring(0, 7))
                                     ? `Ranking ${formatPeriod(selectedPeriod)}`
@@ -2056,17 +2323,61 @@ function TelqwayView({
                                 Seguimiento histórico del porcentaje de cumplimiento mensual de los técnicos.
                             </p>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                <Input
-                                    type="text"
-                                    placeholder="Buscar técnico, RUT o supervisor..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="pl-10 w-[280px]"
-                                />
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                            {/* Filters Section with Labels */}
+                            <div className="flex flex-wrap items-center gap-3">
+                                <div className="flex flex-col gap-1">
+                                    <label className="text-xs font-medium text-slate-600 dark:text-slate-400 px-1">
+                                        Supervisor
+                                    </label>
+                                    <Select value={supervisorFilter} onValueChange={setSupervisorFilter}>
+                                        <SelectTrigger className="w-[180px]">
+                                            <SelectValue placeholder="Todos" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">Todos los supervisores</SelectItem>
+                                            {supervisorsList.map(supervisor => (
+                                                <SelectItem key={supervisor} value={supervisor}>
+                                                    {supervisor}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="flex flex-col gap-1">
+                                    <label className="text-xs font-medium text-slate-600 dark:text-slate-400 px-1">
+                                        Estado
+                                    </label>
+                                    <Select value={vigenteFilter} onValueChange={setVigenteFilter}>
+                                        <SelectTrigger className="w-[140px]">
+                                            <SelectValue placeholder="Todos" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">Todos</SelectItem>
+                                            <SelectItem value="Si">Vigente</SelectItem>
+                                            <SelectItem value="No">No Vigente</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="flex flex-col gap-1">
+                                    <label className="text-xs font-medium text-slate-600 dark:text-slate-400 px-1">
+                                        Buscar
+                                    </label>
+                                    <div className="relative">
+                                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                        <Input
+                                            type="text"
+                                            placeholder="Técnico, RUT..."
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            className="pl-10 w-[200px]"
+                                        />
+                                    </div>
+                                </div>
                             </div>
+
                             <Button
                                 onClick={exportToExcel}
                                 variant="outline"
@@ -2106,18 +2417,68 @@ function TelqwayView({
                         <Table>
                             <TableHeader>
                                 <TableRow className="bg-slate-50 dark:bg-white/5">
-                                    <TableHead className="font-semibold text-slate-700 dark:text-slate-300">Supervisor</TableHead>
-                                    <TableHead className="font-semibold text-slate-700 dark:text-slate-300">Técnico</TableHead>
+                                    <TableHead
+                                        className="font-semibold text-slate-700 dark:text-slate-300 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-900/50 transition-colors"
+                                        onClick={() => handleSort("supervisor")}
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            Supervisor
+                                            {sortColumn === "supervisor" && (
+                                                <ArrowUpDown className={`w-4 h-4 ${sortDirection === "asc" ? "rotate-0" : "rotate-180"}`} />
+                                            )}
+                                        </div>
+                                    </TableHead>
+                                    <TableHead
+                                        className="font-semibold text-slate-700 dark:text-slate-300 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-900/50 transition-colors"
+                                        onClick={() => handleSort("name")}
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            Técnico
+                                            {sortColumn === "name" && (
+                                                <ArrowUpDown className={`w-4 h-4 ${sortDirection === "asc" ? "rotate-0" : "rotate-180"}`} />
+                                            )}
+                                        </div>
+                                    </TableHead>
+                                    <TableHead
+                                        className="text-center font-semibold text-slate-700 dark:text-slate-300 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-900/50 transition-colors"
+                                        onClick={() => handleSort("vigente")}
+                                    >
+                                        <div className="flex items-center justify-center gap-2">
+                                            Vigente
+                                            {sortColumn === "vigente" && (
+                                                <ArrowUpDown className={`w-4 h-4 ${sortDirection === "asc" ? "rotate-0" : "rotate-180"}`} />
+                                            )}
+                                        </div>
+                                    </TableHead>
                                     {evolutionTableData.months.map(month => (
-                                        <TableHead key={month} className="text-center font-semibold text-slate-700 dark:text-slate-300">
-                                            {month}
+                                        <TableHead
+                                            key={month}
+                                            className="text-center font-semibold text-slate-700 dark:text-slate-300 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-900/50 transition-colors"
+                                            onClick={() => handleSort(month)}
+                                        >
+                                            <div className="flex items-center justify-center gap-1">
+                                                {month}
+                                                {sortColumn === month && (
+                                                    <ArrowUpDown className={`w-3 h-3 ${sortDirection === "asc" ? "rotate-0" : "rotate-180"}`} />
+                                                )}
+                                            </div>
                                         </TableHead>
                                     ))}
-                                    <TableHead className="text-center font-semibold text-slate-700 dark:text-slate-300">Promedio</TableHead>
+                                    <TableHead
+                                        className="text-center font-semibold text-slate-700 dark:text-slate-300 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-900/50 transition-colors"
+                                        onClick={() => handleSort("average")}
+                                    >
+                                        <div className="flex items-center justify-center gap-2">
+                                            Promedio
+                                            {sortColumn === "average" && (
+                                                <ArrowUpDown className={`w-4 h-4 ${sortDirection === "asc" ? "rotate-0" : "rotate-180"}`} />
+                                            )}
+                                        </div>
+                                    </TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {filteredTechnicians.map((tech) => {
+                                {sortedTechnicians.map((tech) => {
                                     // Calculate average over all displayed months
                                     let totalSum = 0;
                                     let cumpleSum = 0;
@@ -2142,6 +2503,16 @@ function TelqwayView({
                                                 <div className="text-xs text-slate-400 font-mono">
                                                     {tech.rut}
                                                 </div>
+                                            </TableCell>
+                                            <TableCell className="text-center">
+                                                <span className={cn(
+                                                    "px-2 py-0.5 rounded text-xs font-bold",
+                                                    tech.vigente === 'Si'
+                                                        ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                                                        : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                                )}>
+                                                    {tech.vigente || 'N/A'}
+                                                </span>
                                             </TableCell>
                                             {evolutionTableData.months.map(month => {
                                                 const data = evolutionTableData.matrix[tech.rut]?.[month];

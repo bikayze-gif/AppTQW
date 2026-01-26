@@ -1382,6 +1382,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // GET /api/calidad-tqw/monthly-stats
+  app.get("/api/calidad-tqw/monthly-stats", requireAuth, async (req, res) => {
+    try {
+      const data = await storage.getCalidadMonthlyStats();
+      res.json(data);
+    } catch (error) {
+      console.error("[Calidad TQW Monthly Stats API] Error:", error);
+      res.status(500).json({ error: "Failed to fetch Calidad TQW monthly stats" });
+    }
+  });
+
   // GET /api/calidad-tqw/evolution
   app.get("/api/calidad-tqw/evolution", requireAuth, async (req, res) => {
     try {
