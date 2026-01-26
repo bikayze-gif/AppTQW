@@ -301,7 +301,7 @@ Host tqw-prod
 
 | Fecha | Versión/Commit | Cambios Principales | Estado |
 |-------|----------------|---------------------|--------|
-| 2026-01-26 | e7e8f80 | Módulo Logístico, Polling, Seguridad Sesiones, Gitignore updates | ✅ Exitoso |
+| 2026-01-26 | fd090c6 | Fix: cambios pendientes cliente/servidor, iconos, views | ✅ Exitoso |
 | 2026-01-08 | 7bd2d6f | Workflow updates, UI improvements | ✅ Exitoso |
 
 ---
