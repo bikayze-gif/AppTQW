@@ -1798,7 +1798,7 @@ function TelqwayView({
                                     tickLine={false}
                                     axisLine={false}
                                     tickFormatter={(val) => `${val}%`}
-                                    domain={[0, 100]}
+                                    domain={[80, 100]}
                                 />
                                 <Tooltip
                                     contentStyle={{
