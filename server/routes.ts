@@ -579,6 +579,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Desafio Tecnico API route
+  app.get("/api/supervisor/desafio-tecnico", requireAuth, async (req, res) => {
+    try {
+      console.log("[Desafio Tecnico API] Request received");
+      const data = await storage.getDesafioTecnico();
+      console.log("[Desafio Tecnico API] Sending data");
+      res.json(data);
+    } catch (error) {
+      console.error("[Desafio Tecnico API] Error:", error);
+      res.status(500).json({ error: "Failed to fetch desafio tecnico data" });
+    }
+  });
+
   // KPI Mes Actual Dashboard API route
   app.get("/api/supervisor/kpi-mes-actual", async (req, res) => {
     try {

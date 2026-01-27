@@ -30,6 +30,7 @@ const MENU_ITEMS = [
     "Modulo Logistico",
     "KPI",
     "Calidad",
+    "Desafío Técnico",
     "Notifications",
     "Configuración" // Always visible usually, but let's include it
 ];
