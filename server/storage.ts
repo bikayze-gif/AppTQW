@@ -2578,6 +2578,30 @@ export class MySQLStorage implements IStorage {
       throw error;
     }
   }
+
+  async getDesafioTecnico(): Promise<any[]> {
+    try {
+      const query = `
+        SELECT
+          estado_turno,
+          supervisor,
+          RUT_O_DNI,
+          Nombre_Completo,
+          Justificaciones,
+          Motivo_Justificacion,
+          Estado_Evaluacion,
+          fecha_carga
+        FROM vw_desafio_tecnico
+        ORDER BY fecha_carga DESC
+      `;
+
+      const [rows] = await pool.execute(query);
+      return rows as any[];
+    } catch (error) {
+      console.error("Error fetching Desafio Tecnico data:", error);
+      throw error;
+    }
+  }
 }
 
 export const storage = new MySQLStorage();
