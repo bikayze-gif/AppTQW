@@ -287,7 +287,7 @@ Host tqw-prod
 - **Validación de Sesión:** Nuevo middleware de timeout (6 horas) para cerrar sesiones inactivas automáticamente.
 - **Logging Extendido:** Trazabilidad completa en la creación de solicitudes de material para depuración.
 - **Corrección de Duplicidad:** Optimización de queries SQL con `GROUP BY` y agregaciones para evitar duplicados causados por inconsistencias en `tb_user_tqw`.
-- **Compatibilidad SQL:** Ajuste de consultas para modo `ONLY_FULL_GROUP_BY`.
+- **Comºibilidad SQL:** Ajuste de consultas para modo `ONLY_FULL_GROUP_BY`.
 - **Estandarización:** Unificación de nombres de tablas a minúsculas (`tb_logis_tecnico_solicitud`) para compatibilidad Linux/Windows.
 
 ### 🧪 Pruebas Recomendadas (Post-Despliegue)

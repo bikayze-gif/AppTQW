@@ -384,3 +384,58 @@ export const maestroToaPaso = mysqlTable("tb_maestro_toa_paso", {
 });
 
 export type MaestroToaPaso = typeof maestroToaPaso.$inferSelect;
+
+// ============================================
+// SUPERVISOR NOTES SYSTEM
+// ============================================
+
+export const supervisorNotes = mysqlTable("tb_supervisor_notes", {
+  id: int("id").primaryKey().autoincrement(),
+  userId: int("user_id").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  content: text("content"),
+  category: varchar("category", { length: 50 }).notNull().default("Notes"),
+  imageUrl: varchar("image_url", { length: 500 }),
+  isArchived: tinyint("is_archived").notNull().default(0),
+  isPinned: tinyint("is_pinned").notNull().default(0),
+  reminderDate: datetime("reminder_date"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type SupervisorNote = typeof supervisorNotes.$inferSelect;
+
+export const insertNoteSchema = createInsertSchema(supervisorNotes, {
+  userId: z.coerce.number().int().positive(),
+  title: z.string().min(1, "El título es requerido").max(255),
+  content: z.string().nullable().optional(),
+  category: z.string().max(50).optional().default("Notes"),
+  imageUrl: z.string().max(500).nullable().optional(),
+  isArchived: z.number().min(0).max(1).optional().default(0),
+  isPinned: z.number().min(0).max(1).optional().default(0),
+  reminderDate: z.string().nullable().optional(),
+}).omit({ id: true, createdAt: true, updatedAt: true });
+
+export type InsertNote = z.infer<typeof insertNoteSchema>;
+
+export const supervisorNoteLabels = mysqlTable("tb_supervisor_note_labels", {
+  id: int("id").primaryKey().autoincrement(),
+  userId: int("user_id").notNull(),
+  name: varchar("name", { length: 50 }).notNull(),
+  icon: varchar("icon", { length: 50 }).default("FileText"),
+  color: varchar("color", { length: 100 }).default("bg-slate-100 text-slate-800"),
+  sortOrder: int("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type NoteLabel = typeof supervisorNoteLabels.$inferSelect;
+
+export const insertNoteLabelSchema = createInsertSchema(supervisorNoteLabels, {
+  userId: z.coerce.number().int().positive(),
+  name: z.string().min(1, "El nombre es requerido").max(50),
+  icon: z.string().max(50).default("FileText"),
+  color: z.string().max(100).optional(),
+  sortOrder: z.number().int().default(0),
+}).omit({ id: true, createdAt: true });
+
+export type InsertNoteLabel = z.infer<typeof insertNoteLabelSchema>;

@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import crypto from "crypto";
 import bcrypt from "bcrypt";
 import { storage } from "./storage";
-import { insertBillingSchema, loginSchema, materialSolicitudRequestSchema } from "@shared/schema";
+import { insertBillingSchema, loginSchema, materialSolicitudRequestSchema, insertNoteSchema, insertNoteLabelSchema } from "@shared/schema";
 import { z } from "zod";
 import { broadcast } from "./websocket";
 import { emailService } from "./services/email";
@@ -1678,6 +1678,251 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("[Maestro Toa Paso API] Error:", error);
       res.status(500).json({ error: "Failed to fetch Maestro Toa Paso data" });
+    }
+  });
+
+  // ============================================
+  // NOTES ROUTES
+  // ============================================
+
+  // GET all notes for the authenticated user
+  app.get("/api/notes", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "No autenticado" });
+      }
+
+      const { category, archived, search } = req.query;
+      const notes = await storage.getNotesByUser(userId, {
+        category: category as string,
+        archived: archived === "true" ? true : archived === "false" ? false : undefined,
+        search: search as string,
+      });
+      res.json(notes);
+    } catch (error) {
+      console.error("[Notes API] Error fetching notes:", error);
+      res.status(500).json({ error: "Error al obtener notas" });
+    }
+  });
+
+  // GET single note by ID
+  app.get("/api/notes/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "No autenticado" });
+      }
+
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "ID inválido" });
+      }
+
+      const note = await storage.getNoteById(id, userId);
+      if (!note) {
+        return res.status(404).json({ error: "Nota no encontrada" });
+      }
+      res.json(note);
+    } catch (error) {
+      console.error("[Notes API] Error fetching note:", error);
+      res.status(500).json({ error: "Error al obtener nota" });
+    }
+  });
+
+  // POST create new note
+  app.post("/api/notes", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "No autenticado" });
+      }
+
+      console.log("[Notes API] POST body:", JSON.stringify(req.body));
+      console.log("[Notes API] userId from session:", userId);
+
+      const dataToValidate = {
+        ...req.body,
+        userId,
+      };
+      console.log("[Notes API] Data to validate:", JSON.stringify(dataToValidate));
+
+      const validatedData = insertNoteSchema.parse(dataToValidate);
+      console.log("[Notes API] Validated data:", JSON.stringify(validatedData));
+
+      const note = await storage.createNote(validatedData);
+      res.status(201).json(note);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        console.error("[Notes API] Zod validation error:", JSON.stringify(error.errors, null, 2));
+        return res.status(400).json({ error: "Datos inválidos", details: error.errors });
+      }
+      console.error("[Notes API] Error creating note:", error);
+      res.status(500).json({ error: "Error al crear nota" });
+    }
+  });
+
+  // PATCH update note
+  app.patch("/api/notes/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "No autenticado" });
+      }
+
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "ID inválido" });
+      }
+
+      const validatedData = insertNoteSchema.partial().parse(req.body);
+      const note = await storage.updateNote(id, userId, validatedData);
+      if (!note) {
+        return res.status(404).json({ error: "Nota no encontrada" });
+      }
+      res.json(note);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Datos inválidos", details: error.errors });
+      }
+      console.error("[Notes API] Error updating note:", error);
+      res.status(500).json({ error: "Error al actualizar nota" });
+    }
+  });
+
+  // DELETE note
+  app.delete("/api/notes/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "No autenticado" });
+      }
+
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "ID inválido" });
+      }
+
+      const deleted = await storage.deleteNote(id, userId);
+      if (!deleted) {
+        return res.status(404).json({ error: "Nota no encontrada" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error("[Notes API] Error deleting note:", error);
+      res.status(500).json({ error: "Error al eliminar nota" });
+    }
+  });
+
+  // PATCH toggle archive note
+  app.patch("/api/notes/:id/archive", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "No autenticado" });
+      }
+
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "ID inválido" });
+      }
+
+      const note = await storage.toggleArchiveNote(id, userId);
+      if (!note) {
+        return res.status(404).json({ error: "Nota no encontrada" });
+      }
+      res.json(note);
+    } catch (error) {
+      console.error("[Notes API] Error toggling archive:", error);
+      res.status(500).json({ error: "Error al archivar nota" });
+    }
+  });
+
+  // PATCH toggle pin note
+  app.patch("/api/notes/:id/pin", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "No autenticado" });
+      }
+
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "ID inválido" });
+      }
+
+      const note = await storage.togglePinNote(id, userId);
+      if (!note) {
+        return res.status(404).json({ error: "Nota no encontrada" });
+      }
+      res.json(note);
+    } catch (error) {
+      console.error("[Notes API] Error toggling pin:", error);
+      res.status(500).json({ error: "Error al fijar nota" });
+    }
+  });
+
+  // GET user note labels
+  app.get("/api/notes/labels/list", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "No autenticado" });
+      }
+
+      const labels = await storage.getUserNoteLabels(userId);
+      res.json(labels);
+    } catch (error) {
+      console.error("[Notes API] Error fetching labels:", error);
+      res.status(500).json({ error: "Error al obtener etiquetas" });
+    }
+  });
+
+  // POST create note label
+  app.post("/api/notes/labels", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "No autenticado" });
+      }
+
+      const validatedData = insertNoteLabelSchema.parse({
+        ...req.body,
+        userId,
+      });
+
+      const label = await storage.createNoteLabel(validatedData);
+      res.status(201).json(label);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Datos inválidos", details: error.errors });
+      }
+      console.error("[Notes API] Error creating label:", error);
+      res.status(500).json({ error: "Error al crear etiqueta" });
+    }
+  });
+
+  // DELETE note label
+  app.delete("/api/notes/labels/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "No autenticado" });
+      }
+
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "ID inválido" });
+      }
+
+      const deleted = await storage.deleteNoteLabel(id, userId);
+      if (!deleted) {
+        return res.status(404).json({ error: "Etiqueta no encontrada" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error("[Notes API] Error deleting label:", error);
+      res.status(500).json({ error: "Error al eliminar etiqueta" });
     }
   });
 

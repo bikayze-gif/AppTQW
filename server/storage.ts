@@ -2,7 +2,7 @@ import { drizzle } from "drizzle-orm/mysql2";
 import mysql, { RowDataPacket } from "mysql2/promise";
 import * as schema from "@shared/schema";
 import { eq, desc, and, sql, gte } from "drizzle-orm";
-import type { Billing, InsertBilling, User, InsertLoginAttempt } from "@shared/schema";
+import type { Billing, InsertBilling, User, InsertLoginAttempt, SupervisorNote, InsertNote, NoteLabel, InsertNoteLabel } from "@shared/schema";
 import crypto from "crypto";
 import bcrypt from "bcrypt";
 import { dbConfig, securityConfig } from "./config";
@@ -187,6 +187,18 @@ export interface IStorage {
     expiresAt: string | null;
     isActive: boolean;
   }>): Promise<boolean>;
+
+  // Notes Operations
+  getNotesByUser(userId: number, options?: { category?: string; archived?: boolean; search?: string }): Promise<SupervisorNote[]>;
+  getNoteById(id: number, userId: number): Promise<SupervisorNote | undefined>;
+  createNote(note: InsertNote): Promise<SupervisorNote>;
+  updateNote(id: number, userId: number, data: Partial<InsertNote>): Promise<SupervisorNote | undefined>;
+  deleteNote(id: number, userId: number): Promise<boolean>;
+  toggleArchiveNote(id: number, userId: number): Promise<SupervisorNote | undefined>;
+  togglePinNote(id: number, userId: number): Promise<SupervisorNote | undefined>;
+  getUserNoteLabels(userId: number): Promise<NoteLabel[]>;
+  createNoteLabel(label: InsertNoteLabel): Promise<NoteLabel>;
+  deleteNoteLabel(id: number, userId: number): Promise<boolean>;
 
   // User TQW operations
   getUsersTQW(): Promise<User[]>;
@@ -1959,7 +1971,7 @@ export class MySQLStorage implements IStorage {
 
       if (equipmentType) {
         if (equipmentType.toUpperCase() === 'RESIDENCIAL') {
-          equipmentFilter = " AND Tipo_equipo IN ('RESIDENCIAL', 'Masivos')";
+          equipmentFilter = " AND Tipo_equipo = 'RESIDENCIAL'";
         } else if (equipmentType.toUpperCase() === 'SME') {
           equipmentFilter = " AND Tipo_equipo = 'SME'";
         } else {
@@ -2575,6 +2587,206 @@ export class MySQLStorage implements IStorage {
       };
     } catch (error) {
       console.error("Error fetching Maestro Toa Paso data:", error);
+      throw error;
+    }
+  }
+
+  // ============================================
+  // NOTES OPERATIONS
+  // ============================================
+
+  async getNotesByUser(userId: number, options?: { category?: string; archived?: boolean; search?: string }): Promise<SupervisorNote[]> {
+    try {
+      let query = `SELECT * FROM tb_supervisor_notes WHERE user_id = ?`;
+      const params: any[] = [userId];
+
+      if (options?.archived !== undefined) {
+        query += ` AND is_archived = ?`;
+        params.push(options.archived ? 1 : 0);
+      }
+
+      if (options?.category && options.category !== "Notes" && options.category !== "All") {
+        if (options.category === "Reminders") {
+          query += ` AND reminder_date IS NOT NULL`;
+        } else if (options.category === "Archive") {
+          // Override archived filter for Archive category
+          query = `SELECT * FROM tb_supervisor_notes WHERE user_id = ? AND is_archived = 1`;
+          params.length = 1; // Reset to just userId
+        } else {
+          query += ` AND category = ?`;
+          params.push(options.category);
+        }
+      }
+
+      if (options?.search) {
+        query += ` AND (title LIKE ? OR content LIKE ?)`;
+        const searchTerm = `%${options.search}%`;
+        params.push(searchTerm, searchTerm);
+      }
+
+      query += ` ORDER BY is_pinned DESC, created_at DESC`;
+
+      const [rows] = await pool.execute(query, params);
+      return rows as SupervisorNote[];
+    } catch (error) {
+      console.error("Error fetching notes:", error);
+      throw error;
+    }
+  }
+
+  async getNoteById(id: number, userId: number): Promise<SupervisorNote | undefined> {
+    try {
+      const [rows] = await pool.execute(
+        `SELECT * FROM tb_supervisor_notes WHERE id = ? AND user_id = ?`,
+        [id, userId]
+      );
+      const results = rows as SupervisorNote[];
+      return results[0];
+    } catch (error) {
+      console.error("Error fetching note by id:", error);
+      throw error;
+    }
+  }
+
+  async createNote(note: InsertNote): Promise<SupervisorNote> {
+    try {
+      const [result] = await pool.execute(
+        `INSERT INTO tb_supervisor_notes (user_id, title, content, category, image_url, is_archived, is_pinned, reminder_date)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          note.userId,
+          note.title,
+          note.content || null,
+          note.category || "Notes",
+          note.imageUrl || null,
+          note.isArchived || 0,
+          note.isPinned || 0,
+          note.reminderDate || null,
+        ]
+      );
+      const insertId = (result as any).insertId;
+      const created = await this.getNoteById(insertId, note.userId);
+      if (!created) throw new Error("Failed to create note");
+      return created;
+    } catch (error) {
+      console.error("Error creating note:", error);
+      throw error;
+    }
+  }
+
+  async updateNote(id: number, userId: number, data: Partial<InsertNote>): Promise<SupervisorNote | undefined> {
+    try {
+      const fields: string[] = [];
+      const values: any[] = [];
+
+      if (data.title !== undefined) { fields.push("title = ?"); values.push(data.title); }
+      if (data.content !== undefined) { fields.push("content = ?"); values.push(data.content); }
+      if (data.category !== undefined) { fields.push("category = ?"); values.push(data.category); }
+      if (data.imageUrl !== undefined) { fields.push("image_url = ?"); values.push(data.imageUrl); }
+      if (data.isArchived !== undefined) { fields.push("is_archived = ?"); values.push(data.isArchived); }
+      if (data.isPinned !== undefined) { fields.push("is_pinned = ?"); values.push(data.isPinned); }
+      if (data.reminderDate !== undefined) { fields.push("reminder_date = ?"); values.push(data.reminderDate); }
+
+      if (fields.length === 0) return this.getNoteById(id, userId);
+
+      values.push(id, userId);
+      await pool.execute(
+        `UPDATE tb_supervisor_notes SET ${fields.join(", ")} WHERE id = ? AND user_id = ?`,
+        values
+      );
+      return this.getNoteById(id, userId);
+    } catch (error) {
+      console.error("Error updating note:", error);
+      throw error;
+    }
+  }
+
+  async deleteNote(id: number, userId: number): Promise<boolean> {
+    try {
+      const [result] = await pool.execute(
+        `DELETE FROM tb_supervisor_notes WHERE id = ? AND user_id = ?`,
+        [id, userId]
+      );
+      return (result as any).affectedRows > 0;
+    } catch (error) {
+      console.error("Error deleting note:", error);
+      throw error;
+    }
+  }
+
+  async toggleArchiveNote(id: number, userId: number): Promise<SupervisorNote | undefined> {
+    try {
+      await pool.execute(
+        `UPDATE tb_supervisor_notes SET is_archived = NOT is_archived WHERE id = ? AND user_id = ?`,
+        [id, userId]
+      );
+      return this.getNoteById(id, userId);
+    } catch (error) {
+      console.error("Error toggling archive:", error);
+      throw error;
+    }
+  }
+
+  async togglePinNote(id: number, userId: number): Promise<SupervisorNote | undefined> {
+    try {
+      await pool.execute(
+        `UPDATE tb_supervisor_notes SET is_pinned = NOT is_pinned WHERE id = ? AND user_id = ?`,
+        [id, userId]
+      );
+      return this.getNoteById(id, userId);
+    } catch (error) {
+      console.error("Error toggling pin:", error);
+      throw error;
+    }
+  }
+
+  async getUserNoteLabels(userId: number): Promise<NoteLabel[]> {
+    try {
+      const [rows] = await pool.execute(
+        `SELECT * FROM tb_supervisor_note_labels WHERE user_id = ? ORDER BY sort_order ASC, name ASC`,
+        [userId]
+      );
+      return rows as NoteLabel[];
+    } catch (error) {
+      console.error("Error fetching note labels:", error);
+      throw error;
+    }
+  }
+
+  async createNoteLabel(label: InsertNoteLabel): Promise<NoteLabel> {
+    try {
+      const [result] = await pool.execute(
+        `INSERT INTO tb_supervisor_note_labels (user_id, name, icon, color, sort_order)
+         VALUES (?, ?, ?, ?, ?)`,
+        [
+          label.userId,
+          label.name,
+          label.icon || "FileText",
+          label.color || "bg-slate-100 text-slate-800",
+          label.sortOrder || 0,
+        ]
+      );
+      const insertId = (result as any).insertId;
+      const [rows] = await pool.execute(
+        `SELECT * FROM tb_supervisor_note_labels WHERE id = ?`,
+        [insertId]
+      );
+      return (rows as NoteLabel[])[0];
+    } catch (error) {
+      console.error("Error creating note label:", error);
+      throw error;
+    }
+  }
+
+  async deleteNoteLabel(id: number, userId: number): Promise<boolean> {
+    try {
+      const [result] = await pool.execute(
+        `DELETE FROM tb_supervisor_note_labels WHERE id = ? AND user_id = ?`,
+        [id, userId]
+      );
+      return (result as any).affectedRows > 0;
+    } catch (error) {
+      console.error("Error deleting note label:", error);
       throw error;
     }
   }
