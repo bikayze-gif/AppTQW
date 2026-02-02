@@ -149,23 +149,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Registrar intento exitoso
-      await storage.recordLoginAttempt({
+      // TEMPORAL: Comentado por bloqueos en MySQL
+      // Registrar intento exitoso (no bloqueante)
+      storage.recordLoginAttempt({
         email,
         ip_address: ip,
         user_agent: userAgent,
         success: 1,
         failure_reason: null,
-      });
+      }).catch(err => console.error('Error recording login attempt:', err));
 
-      // Crear token de sesión
+      // Crear token de sesión (no bloqueante)
       const sessionToken = crypto.randomBytes(32).toString("hex");
+      storage.createSession(user.rut, sessionToken).catch(err => console.error('Error creating session:', err));
 
-      // Guardar sesión en base de datos
-      await storage.createSession(user.rut, sessionToken);
-
-      // Registrar conexión
-      const connectionId = await storage.logConnection(user.rut, "/login", ip);
+      // Registrar conexión (no bloqueante)
+      let connectionId = null;
+      storage.logConnection(user.rut, "/login", ip).then(id => connectionId = id).catch(err => console.error('Error logging connection:', err));
 
       // Regenerar ID de sesión para prevenir session fixation
       req.session.regenerate((err) => {

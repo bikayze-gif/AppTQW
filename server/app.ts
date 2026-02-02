@@ -40,8 +40,12 @@ export const app = express();
 // Session configuration with security best practices
 let sessionStore: any;
 
+// TEMPORAL: Usando MemoryStore para evitar bloqueos en MySQL
+// TODO: Migrar a Redis para producción
+sessionStore = undefined; // MemoryStore por defecto
 
-// Usar MySQL para almacenar sesiones (desarrollo y producción)
+// Deshabilitado temporalmente por bloqueos en MySQL
+/*
 const MySQLStoreSession = MySQLStore(session);
 sessionStore = new MySQLStoreSession({
   host: dbConfig.host,
@@ -49,7 +53,7 @@ sessionStore = new MySQLStoreSession({
   user: dbConfig.user,
   password: dbConfig.password,
   database: dbConfig.database,
-  createDatabaseTable: true, // Crear tabla automáticamente si no existe
+  createDatabaseTable: true,
   schema: {
     tableName: 'sessions',
     columnNames: {
@@ -58,11 +62,12 @@ sessionStore = new MySQLStoreSession({
       data: 'data'
     }
   },
-  checkExpirationInterval: 900000, // Limpiar sesiones expiradas cada 15 minutos
-  expiration: 6 * 60 * 60 * 1000, // 6 horas
+  checkExpirationInterval: 900000,
+  expiration: 6 * 60 * 60 * 1000,
 });
+*/
 
-log("Session store: MySQL");
+log("Session store: MemoryStore (temporal)");
 
 // CORS Configuration
 const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
@@ -107,12 +112,11 @@ app.use(
     secret: sessionConfig.secret,
     resave: false,
     saveUninitialized: false,
+    rolling: false, // No actualizar sesión en cada request para evitar bloqueos
     name: sessionConfig.cookieName,
     cookie: {
       httpOnly: true,
-      // TEMPORARY: Forcing secure:false because Nginx proxy sends X-Forwarded-Proto:http
-      // TODO: Fix Nginx to send X-Forwarded-Proto:https, then change this back to true
-      secure: false,
+      secure: process.env.NODE_ENV === 'production', // true en producción con HTTPS
       sameSite: "lax", // 'lax' is safer/easier than 'none' for now unless we need cross-site
       maxAge: sessionConfig.maxAge,
     },
