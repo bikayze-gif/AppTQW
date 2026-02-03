@@ -2542,8 +2542,19 @@ export class MySQLStorage implements IStorage {
       };
 
       const dbSortColumn = sortMapping[sortBy] || "id";
-      const safeSortBy = dbSortColumn; // Ya mapeado a columna válida de DB
       const safeSortOrder = sortOrder === "asc" ? "ASC" : "DESC";
+
+      // Construir ORDER BY con conversión de fechas para ordenamiento correcto
+      let orderByClause = "";
+      if (dbSortColumn === "fecha_entrega") {
+        orderByClause = `STR_TO_DATE(fecha_entrega, '%d/%m/%Y') ${safeSortOrder}`;
+      } else if (dbSortColumn === "fecha_instalacion") {
+        orderByClause = `STR_TO_DATE(fecha_instalacion, '%d-%m-%Y') ${safeSortOrder}`;
+      } else if (dbSortColumn === "fecha_carga") {
+        orderByClause = `fecha_carga ${safeSortOrder}`;
+      } else {
+        orderByClause = `${dbSortColumn} ${safeSortOrder}`;
+      }
 
       // Query para contar total
       const [countResult] = await pool.execute(
@@ -2574,7 +2585,7 @@ export class MySQLStorage implements IStorage {
           DATE_FORMAT(fecha_carga, '%d-%m-%Y') as fecha_carga
          FROM tb_maestro_toa_paso
          ${whereClause}
-         ORDER BY ${safeSortBy} ${safeSortOrder}
+         ORDER BY ${orderByClause}
          LIMIT ${limit} OFFSET ${offset}`,
         params
       );
