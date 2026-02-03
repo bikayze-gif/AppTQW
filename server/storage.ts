@@ -2839,6 +2839,146 @@ export class MySQLStorage implements IStorage {
     }
   }
 
+  // ============================================
+  // MÉTODOS PARA GESTIÓN DE TURNOS (tb_turnos_py)
+  // ============================================
+
+  /**
+   * Obtiene la lista de meses disponibles en tb_turnos_py
+   */
+  async getTurnosPyMesesDisponibles(): Promise<{ mes: string; cantidad: number }[]> {
+    try {
+      const query = `
+        SELECT
+          DATE_FORMAT(FECHA, '%Y-%m') as mes,
+          COUNT(*) as cantidad
+        FROM tb_turnos_py
+        WHERE FECHA IS NOT NULL
+        GROUP BY DATE_FORMAT(FECHA, '%Y-%m')
+        ORDER BY mes DESC
+      `;
+
+      const [rows] = await pool.execute(query);
+      return (rows as any[]).map((row) => ({
+        mes: row.mes,
+        cantidad: Number(row.cantidad),
+      }));
+    } catch (error) {
+      console.error("Error fetching turnos py meses disponibles:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Obtiene los turnos filtrados por mes
+   * @param mesAnio - Mes en formato 'YYYY-MM' (ej: '2025-06')
+   */
+  async getTurnosPyPorMes(mesAnio: string): Promise<any[]> {
+    try {
+      const query = `
+        SELECT
+          \`DIAS TURNO\` as diasTurno,
+          Mes_Cntb as mesCntb,
+          FECHA as fecha,
+          ZONA as zona,
+          TIPO as tipo,
+          SUPERVISOR as supervisor,
+          PATENTE as patente,
+          FONO as fono,
+          Codi as codi,
+          RUT as rut,
+          NOMBRE as nombre,
+          \`TURNO BASE\` as turnoBase,
+          \`TIPO.1\` as tipo1,
+          Bucket as bucket,
+          Estado as estado,
+          OBSERVACION as observacion,
+          TAG as tag,
+          \`mes cron\` as mesCron,
+          semana,
+          Estacionamiento as estacionamiento,
+          \`TURNO PM Incentivo\` as turnoPmIncentivo,
+          \`Tipo tecnico\` as tipoTecnico
+        FROM tb_turnos_py
+        WHERE DATE_FORMAT(FECHA, '%Y-%m') = ?
+        ORDER BY FECHA, NOMBRE
+      `;
+
+      const [rows] = await pool.execute(query, [mesAnio]);
+      return rows as any[];
+    } catch (error) {
+      console.error("Error fetching turnos py por mes:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Obtiene estadísticas de turnos por mes
+   * @param mesAnio - Mes en formato 'YYYY-MM'
+   */
+  async getTurnosPyEstadisticas(mesAnio: string): Promise<{
+    totalTurnos: number;
+    totalTecnicos: number;
+    porZona: { zona: string; cantidad: number }[];
+    porEstado: { estado: string; cantidad: number }[];
+  }> {
+    try {
+      // Obtener totales
+      const queryTotales = `
+        SELECT
+          COUNT(*) as total_turnos,
+          COUNT(DISTINCT RUT) as total_tecnicos
+        FROM tb_turnos_py
+        WHERE DATE_FORMAT(FECHA, '%Y-%m') = ?
+      `;
+
+      const [rowsTotales] = await pool.execute(queryTotales, [mesAnio]);
+      const totales = (rowsTotales as any[])[0];
+
+      // Obtener distribución por zona
+      const queryZonas = `
+        SELECT
+          ZONA as zona,
+          COUNT(*) as cantidad
+        FROM tb_turnos_py
+        WHERE DATE_FORMAT(FECHA, '%Y-%m') = ?
+        GROUP BY ZONA
+        ORDER BY cantidad DESC
+      `;
+
+      const [rowsZonas] = await pool.execute(queryZonas, [mesAnio]);
+
+      // Obtener distribución por estado
+      const queryEstados = `
+        SELECT
+          Estado as estado,
+          COUNT(*) as cantidad
+        FROM tb_turnos_py
+        WHERE DATE_FORMAT(FECHA, '%Y-%m') = ?
+        GROUP BY Estado
+        ORDER BY cantidad DESC
+      `;
+
+      const [rowsEstados] = await pool.execute(queryEstados, [mesAnio]);
+
+      return {
+        totalTurnos: Number(totales.total_turnos),
+        totalTecnicos: Number(totales.total_tecnicos),
+        porZona: (rowsZonas as any[]).map((row) => ({
+          zona: row.zona || "Sin zona",
+          cantidad: Number(row.cantidad),
+        })),
+        porEstado: (rowsEstados as any[]).map((row) => ({
+          estado: row.estado || "Sin estado",
+          cantidad: Number(row.cantidad),
+        })),
+      };
+    } catch (error) {
+      console.error("Error fetching turnos py estadisticas:", error);
+      throw error;
+    }
+  }
+
   async getDesafioTecnico(): Promise<any[]> {
     try {
       const query = `

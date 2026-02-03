@@ -1936,6 +1936,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ============================================
+  // ENDPOINTS DE TURNOS (tb_turnos_py)
+  // ============================================
+
+  // Obtener meses disponibles
+  app.get("/api/supervisor/turnos/meses", requireAuth, async (req, res) => {
+    try {
+      const meses = await storage.getTurnosPyMesesDisponibles();
+      res.json(meses);
+    } catch (error) {
+      console.error("Error al obtener meses disponibles:", error);
+      res.status(500).json({ error: "Error al obtener meses disponibles" });
+    }
+  });
+
+  // Obtener turnos por mes
+  app.get("/api/supervisor/turnos/:mes", requireAuth, async (req, res) => {
+    try {
+      const { mes } = req.params;
+
+      // Validar formato del mes (YYYY-MM)
+      if (!/^\d{4}-\d{2}$/.test(mes)) {
+        return res.status(400).json({ error: "Formato de mes inválido. Use YYYY-MM" });
+      }
+
+      const turnos = await storage.getTurnosPyPorMes(mes);
+      res.json(turnos);
+    } catch (error) {
+      console.error("Error al obtener turnos:", error);
+      res.status(500).json({ error: "Error al obtener turnos" });
+    }
+  });
+
+  // Obtener estadísticas de turnos por mes
+  app.get("/api/supervisor/turnos/:mes/estadisticas", requireAuth, async (req, res) => {
+    try {
+      const { mes } = req.params;
+
+      if (!/^\d{4}-\d{2}$/.test(mes)) {
+        return res.status(400).json({ error: "Formato de mes inválido. Use YYYY-MM" });
+      }
+
+      const estadisticas = await storage.getTurnosPyEstadisticas(mes);
+      res.json(estadisticas);
+    } catch (error) {
+      console.error("Error al obtener estadísticas:", error);
+      res.status(500).json({ error: "Error al obtener estadísticas" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

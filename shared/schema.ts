@@ -1,4 +1,4 @@
-import { mysqlTable, varchar, text, int, decimal, date, datetime, tinyint, json, bigint, timestamp } from "drizzle-orm/mysql-core";
+import { mysqlTable, varchar, text, int, decimal, date, datetime, tinyint, json, bigint, timestamp, double } from "drizzle-orm/mysql-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -439,3 +439,35 @@ export const insertNoteLabelSchema = createInsertSchema(supervisorNoteLabels, {
 }).omit({ id: true, createdAt: true });
 
 export type InsertNoteLabel = z.infer<typeof insertNoteLabelSchema>;
+
+// ============================================
+// TABLA DE TURNOS PYTHON (tb_turnos_py)
+// ============================================
+
+// Tabla tb_turnos_py - Importada desde Google Sheets vía PyTurnos.py
+export const turnosPy = mysqlTable("tb_turnos_py", {
+  diasTurno: bigint("DIAS TURNO", { mode: "number" }),
+  mesCntb: text("Mes_Cntb"),
+  fecha: text("FECHA"),
+  zona: text("ZONA"),
+  tipo: text("TIPO"),
+  supervisor: text("SUPERVISOR"),
+  patente: text("PATENTE"),
+  fono: text("FONO"),
+  codi: text("Codi"),
+  rut: text("RUT"),
+  nombre: text("NOMBRE"),
+  turnoBase: text("TURNO BASE"),
+  tipo1: text("TIPO.1"),
+  bucket: text("Bucket"),
+  estado: text("Estado"),
+  observacion: text("OBSERVACION"),
+  tag: text("TAG"),
+  mesCron: double("mes cron"),
+  semana: double("semana"),
+  estacionamiento: double("Estacionamiento"),
+  turnoPmIncentivo: text("TURNO PM Incentivo"),
+  tipoTecnico: text("Tipo tecnico"),
+});
+
+export type TurnoPy = typeof turnosPy.$inferSelect;

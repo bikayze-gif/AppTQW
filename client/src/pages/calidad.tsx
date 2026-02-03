@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Label } from "recharts";
 import { Search, X, ArrowUp, ArrowDown, ChevronLeft, CheckCircle, XCircle, Sheet } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
@@ -14,6 +14,31 @@ const MONTH_NAMES = [
   "Ene", "Feb", "Mar", "Abr", "May", "Jun",
   "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"
 ];
+
+// Componente personalizado para renderizar etiquetas de datos en los gráficos
+const CustomLabel = (props: any) => {
+  const { x, y, value, fill } = props;
+
+  // No mostrar etiqueta si el valor es 0 o undefined
+  if (!value || value === 0) return null;
+
+  // Usar tamaño de fuente responsive: más pequeño en móviles
+  const fontSize = window.innerWidth < 768 ? 9 : 10;
+
+  return (
+    <text
+      x={x}
+      y={y - 8}
+      fill={fill}
+      fontSize={fontSize}
+      fontWeight="600"
+      textAnchor="middle"
+      opacity={0.9}
+    >
+      {formatDecimal(value)}%
+    </text>
+  );
+};
 
 // Función para parsear fechas en diversos formatos y retornar DD/MM/YYYY
 function parseDateDDMMYYYY(dateString: string): string {
@@ -442,6 +467,7 @@ export default function Calidad() {
                       strokeWidth={3}
                       dot={{ fill: '#a855f7', strokeWidth: 2, r: 4 }}
                       name="Eficiencia General"
+                      label={<CustomLabel fill="#a855f7" />}
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -500,6 +526,7 @@ export default function Calidad() {
                       strokeWidth={2.5}
                       dot={{ fill: '#06b6d4', strokeWidth: 2, r: 3 }}
                       name="hfc"
+                      label={<CustomLabel fill="#06b6d4" />}
                     />
                     <Line
                       type="monotone"
@@ -508,6 +535,7 @@ export default function Calidad() {
                       strokeWidth={2.5}
                       dot={{ fill: '#f59e0b', strokeWidth: 2, r: 3 }}
                       name="ftth"
+                      label={<CustomLabel fill="#f59e0b" />}
                     />
                   </LineChart>
                 </ResponsiveContainer>

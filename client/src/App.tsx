@@ -27,6 +27,7 @@ import SupervisorLanding from "@/pages/supervisor/landing";
 import SupervisorCalendar from "@/pages/supervisor/calendar";
 import SupervisorMessenger from "@/pages/supervisor/messenger";
 import SupervisorScrumboard from "@/pages/supervisor/scrumboard";
+import SupervisorTurnos from "@/pages/supervisor/turnos";
 import SupervisorMonitoring from "@/pages/supervisor/monitoring";
 import SupervisorBilling from "@/pages/supervisor/billing";
 import SupervisorKPI from "@/pages/supervisor/kpi";
@@ -103,6 +104,13 @@ function Router() {
         <ProtectedRoute>
           <PermissionProtectedRoute requiredMenuItem="Desafío Técnico">
             <SupervisorDesafioTecnico />
+          </PermissionProtectedRoute>
+        </ProtectedRoute>
+      </Route>
+      <Route path="/supervisor/turnos">
+        <ProtectedRoute>
+          <PermissionProtectedRoute requiredMenuItem="Turnos">
+            <SupervisorTurnos />
           </PermissionProtectedRoute>
         </ProtectedRoute>
       </Route>

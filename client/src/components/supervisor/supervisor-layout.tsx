@@ -7,7 +7,7 @@ import {
   HelpCircle, Mail, FileText, Trello, CheckSquare,
   User, Bell, Settings, Menu, ChevronRight,
   LogOut, NotebookPen, BarChart3, Receipt, Sun, Moon,
-  AlertCircle, CheckCircle2, Package, Briefcase, Truck, Maximize, Minimize, Check, Trophy
+  AlertCircle, CheckCircle2, Package, Briefcase, Truck, Maximize, Minimize, Check, Trophy, CalendarDays
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { format } from "date-fns";
@@ -101,6 +101,8 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
       setLocation("/supervisor/modulo-logistico");
     } else if (label === "Desafío Técnico") {
       setLocation("/supervisor/desafio-tecnico");
+    } else if (label === "Turnos") {
+      setLocation("/supervisor/turnos");
     } else if (label === "Configuración") {
       setLocation("/supervisor/settings/parametros");
     }
@@ -121,6 +123,7 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
     { icon: BarChart3, label: "KPI", hasSubmenu: false },
     { icon: CheckSquare, label: "Calidad", hasSubmenu: false },
     { icon: Trophy, label: "Desafío Técnico", hasSubmenu: false },
+    { icon: CalendarDays, label: "Turnos", hasSubmenu: false },
     // { icon: CheckSquare, label: "Tasks", badge: "12 remaining tasks", hasSubmenu: false },
     // { icon: User, label: "Profile", hasSubmenu: false },
     { icon: Bell, label: "Notifications", hasSubmenu: false },

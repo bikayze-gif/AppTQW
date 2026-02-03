@@ -31,6 +31,7 @@ const MENU_ITEMS = [
     "KPI",
     "Calidad",
     "Desafío Técnico",
+    "Turnos",
     "Notifications",
     "Configuración" // Always visible usually, but let's include it
 ];
