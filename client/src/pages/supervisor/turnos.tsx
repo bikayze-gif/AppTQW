@@ -1,7 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { SupervisorLayout } from "@/components/supervisor/supervisor-layout";
 import { useQuery } from "@tanstack/react-query";
-import { CalendarDays, Users, MapPin, Activity, Search, ChevronUp, ChevronDown, ChevronsUpDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarDays, Users, MapPin, Activity, Search, ChevronUp, ChevronDown, ChevronsUpDown, ChevronLeft, ChevronRight, Calendar, X } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -20,7 +20,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
 interface MesDisponible {
   mes: string;
@@ -54,6 +54,7 @@ interface TurnoPy {
 
 type SortDirection = "asc" | "desc" | null;
 type SortColumn = keyof TurnoPy | null;
+type FilterMode = "period" | "dateRange" | null;
 
 const PAGE_SIZES = [10, 25, 50, 100];
 
@@ -78,6 +79,16 @@ export default function SupervisorTurnos() {
   const [pageSize, setPageSize] = useState(25);
   const [sortColumn, setSortColumn] = useState<SortColumn>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+  const [filterMode, setFilterMode] = useState<FilterMode>("period");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+
+  // Efecto para activar automáticamente el filtro de rango cuando ambas fechas estén completas
+  useEffect(() => {
+    if (dateFrom && dateTo && dateFrom <= dateTo) {
+      setFilterMode("dateRange");
+    }
+  }, [dateFrom, dateTo]);
 
   // Obtener meses disponibles
   const { data: mesesDisponibles = [] } = useQuery<MesDisponible[]>({
@@ -91,18 +102,30 @@ export default function SupervisorTurnos() {
     }
   }, [mesesDisponibles, mesSeleccionado]);
 
-  // Obtener turnos del mes seleccionado
+  // Obtener turnos del mes seleccionado (siempre carga si hay mes, independiente del filterMode)
   const { data: turnos = [], isLoading: loadingTurnos } = useQuery<TurnoPy[]>({
     queryKey: [`/api/supervisor/turnos/${mesSeleccionado}`],
     enabled: !!mesSeleccionado,
   });
 
-  // Filtrar datos
+  // Filtrar datos por rango de fechas
+  const dateRangeFilteredData = useMemo(() => {
+    if (filterMode !== "dateRange" || !dateFrom || !dateTo) return turnos;
+
+    return turnos.filter((turno) => {
+      if (!turno.fecha) return false;
+      return turno.fecha >= dateFrom && turno.fecha <= dateTo;
+    });
+  }, [turnos, filterMode, dateFrom, dateTo]);
+
+  // Aplicar filtro de búsqueda
   const filteredData = useMemo(() => {
-    if (!searchTerm.trim()) return turnos;
+    const dataToFilter = filterMode === "dateRange" ? dateRangeFilteredData : turnos;
+
+    if (!searchTerm.trim()) return dataToFilter;
 
     const term = searchTerm.toLowerCase();
-    return turnos.filter((turno) => {
+    return dataToFilter.filter((turno) => {
       return (
         turno.fecha?.toLowerCase().includes(term) ||
         turno.nombre?.toLowerCase().includes(term) ||
@@ -115,21 +138,13 @@ export default function SupervisorTurnos() {
         turno.turnoBase?.toLowerCase().includes(term)
       );
     });
-  }, [turnos, searchTerm]);
+  }, [turnos, dateRangeFilteredData, filterMode, searchTerm]);
 
   // Calcular estadísticas dinámicas basadas en datos filtrados
   const dynamicStats = useMemo(() => {
     const totalTurnos = filteredData.length;
     const uniqueRuts = new Set(filteredData.map(t => t.rut).filter(Boolean));
     const totalTecnicos = uniqueRuts.size;
-
-    // Contar por zona
-    const zonasMap = new Map<string, number>();
-    filteredData.forEach(t => {
-      const zona = t.zona || "Sin zona";
-      zonasMap.set(zona, (zonasMap.get(zona) || 0) + 1);
-    });
-    const porZona = Array.from(zonasMap.entries()).map(([zona, cantidad]) => ({ zona, cantidad }));
 
     // Contar por estado
     const estadosMap = new Map<string, number>();
@@ -141,7 +156,7 @@ export default function SupervisorTurnos() {
       .map(([estado, cantidad]) => ({ estado, cantidad, color: getEstadoColor(estado) }))
       .sort((a, b) => b.cantidad - a.cantidad);
 
-    return { totalTurnos, totalTecnicos, porZona, porEstado };
+    return { totalTurnos, totalTecnicos, porEstado };
   }, [filteredData]);
 
   // Ordenar datos
@@ -179,7 +194,7 @@ export default function SupervisorTurnos() {
   // Reset página cuando cambia el filtro o mes
   useMemo(() => {
     setCurrentPage(1);
-  }, [searchTerm, mesSeleccionado, pageSize]);
+  }, [searchTerm, mesSeleccionado, pageSize, dateFrom, dateTo, filterMode]);
 
   const handleSort = (column: SortColumn) => {
     if (sortColumn === column) {
@@ -193,6 +208,19 @@ export default function SupervisorTurnos() {
       setSortColumn(column);
       setSortDirection("asc");
     }
+  };
+
+  const handlePeriodChange = (value: string) => {
+    setMesSeleccionado(value);
+    setFilterMode("period");
+    setDateFrom("");
+    setDateTo("");
+  };
+
+  const clearDateRange = () => {
+    setDateFrom("");
+    setDateTo("");
+    setFilterMode("period");
   };
 
   const SortIcon = ({ column }: { column: SortColumn }) => {
@@ -231,39 +259,20 @@ export default function SupervisorTurnos() {
 
   return (
     <SupervisorLayout>
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="max-w-full mx-auto px-4 space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-800 dark:text-white">
-              Gestión de Turnos
-            </h1>
-            <p className="text-slate-500 dark:text-slate-400">
-              Consulta y administra los turnos del equipo técnico
-            </p>
-          </div>
-
-          {/* Selector de Mes */}
-          <div className="w-64">
-            <Select value={mesSeleccionado} onValueChange={setMesSeleccionado}>
-              <SelectTrigger className="w-full">
-                <CalendarDays className="mr-2 h-4 w-4" />
-                <SelectValue placeholder="Seleccione un mes" />
-              </SelectTrigger>
-              <SelectContent>
-                {mesesDisponibles.map((mes) => (
-                  <SelectItem key={mes.mes} value={mes.mes}>
-                    {formatMes(mes.mes)} ({mes.cantidad} turnos)
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800 dark:text-white">
+            Gestión de Turnos
+          </h1>
+          <p className="text-slate-500 dark:text-slate-400">
+            Consulta y administra los turnos del equipo técnico
+          </p>
         </div>
 
-        {/* Estadísticas dinámicas - Grid 2x2 + Gráfico */}
+        {/* Estadísticas dinámicas - KPIs + Gráfico */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* KPIs en grid 2x2 */}
+          {/* KPIs */}
           <div className="lg:col-span-2 grid grid-cols-2 gap-4">
             <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
               <div className="flex items-center gap-3">
@@ -288,34 +297,6 @@ export default function SupervisorTurnos() {
                   <p className="text-sm text-slate-500 dark:text-slate-400">Técnicos</p>
                   <p className="text-2xl font-bold text-slate-800 dark:text-white">
                     {dynamicStats.totalTecnicos}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-purple-100 dark:bg-purple-900 rounded-lg">
-                  <MapPin className="h-6 w-6 text-purple-600 dark:text-purple-300" />
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">Zonas</p>
-                  <p className="text-2xl font-bold text-slate-800 dark:text-white">
-                    {dynamicStats.porZona.length}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-orange-100 dark:bg-orange-900 rounded-lg">
-                  <Activity className="h-6 w-6 text-orange-600 dark:text-orange-300" />
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">Estados</p>
-                  <p className="text-2xl font-bold text-slate-800 dark:text-white">
-                    {dynamicStats.porEstado.length}
                   </p>
                 </div>
               </div>
@@ -375,20 +356,21 @@ export default function SupervisorTurnos() {
         {/* Tabla de Turnos */}
         <div className="bg-white dark:bg-slate-800 rounded-lg shadow">
           <div className="p-6">
-            {/* Toolbar: Título y Controles */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                  Turnos - {mesSeleccionado && formatMes(mesSeleccionado)}
-                </h2>
-                <span className="text-sm text-slate-500">
-                  ({sortedData.length} registros)
-                </span>
-              </div>
+            {/* Toolbar: Filtros */}
+            <div className="space-y-4 mb-6">
+              {/* Primera fila: Título y búsqueda */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+                    Turnos
+                  </h2>
+                  <span className="text-sm text-slate-500">
+                    ({sortedData.length} registros)
+                  </span>
+                </div>
 
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
                 {/* Input de búsqueda */}
-                <div className="relative w-full sm:w-72">
+                <div className="relative w-full sm:w-80">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <Input
                     placeholder="Buscar por fecha, nombre, RUT, zona..."
@@ -396,6 +378,77 @@ export default function SupervisorTurnos() {
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
                   />
+                </div>
+              </div>
+
+              {/* Segunda fila: Filtros de fecha/período y paginación */}
+              <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 flex-1">
+                  {/* Filtro por período */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                      Por período:
+                    </span>
+                    <div className="relative">
+                      <Select
+                        value={filterMode === "period" ? mesSeleccionado : ""}
+                        onValueChange={handlePeriodChange}
+                      >
+                        <SelectTrigger className={`w-56 ${filterMode === "period" ? "ring-2 ring-blue-500 border-blue-500" : ""}`}>
+                          <CalendarDays className="mr-2 h-4 w-4" />
+                          <SelectValue placeholder="Seleccione un mes" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {mesesDisponibles.map((mes) => (
+                            <SelectItem key={mes.mes} value={mes.mes}>
+                              {formatMes(mes.mes)} ({mes.cantidad} turnos)
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {filterMode === "period" && (
+                        <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full"></div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Separador visual */}
+                  <div className="hidden sm:block h-8 w-px bg-slate-300 dark:bg-slate-600"></div>
+
+                  {/* Filtro por rango de fechas */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                      Por rango:
+                    </span>
+                    <div className="flex items-center gap-2 relative">
+                      {filterMode === "dateRange" && (
+                        <div className="absolute -top-1 -left-1 w-2 h-2 bg-blue-500 rounded-full"></div>
+                      )}
+                      <Input
+                        type="date"
+                        value={dateFrom}
+                        onChange={(e) => setDateFrom(e.target.value)}
+                        className={`w-40 ${filterMode === "dateRange" ? "ring-2 ring-blue-500 border-blue-500" : ""}`}
+                      />
+                      <span className="text-slate-500">→</span>
+                      <Input
+                        type="date"
+                        value={dateTo}
+                        onChange={(e) => setDateTo(e.target.value)}
+                        className={`w-40 ${filterMode === "dateRange" ? "ring-2 ring-blue-500 border-blue-500" : ""}`}
+                      />
+                      {filterMode === "dateRange" && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={clearDateRange}
+                          className="h-8"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 {/* Selector de registros por página */}
@@ -423,7 +476,7 @@ export default function SupervisorTurnos() {
               </div>
             ) : sortedData.length === 0 ? (
               <div className="text-center py-12 text-slate-500 dark:text-slate-400">
-                {searchTerm ? "No se encontraron resultados para la búsqueda" : "No hay turnos para este mes"}
+                {searchTerm ? "No se encontraron resultados para la búsqueda" : "No hay turnos para este período"}
               </div>
             ) : (
               <>

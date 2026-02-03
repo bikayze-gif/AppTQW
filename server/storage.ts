@@ -2935,19 +2935,6 @@ export class MySQLStorage implements IStorage {
       const [rowsTotales] = await pool.execute(queryTotales, [mesAnio]);
       const totales = (rowsTotales as any[])[0];
 
-      // Obtener distribución por zona
-      const queryZonas = `
-        SELECT
-          ZONA as zona,
-          COUNT(*) as cantidad
-        FROM tb_turnos_py
-        WHERE DATE_FORMAT(FECHA, '%Y-%m') = ?
-        GROUP BY ZONA
-        ORDER BY cantidad DESC
-      `;
-
-      const [rowsZonas] = await pool.execute(queryZonas, [mesAnio]);
-
       // Obtener distribución por estado
       const queryEstados = `
         SELECT
@@ -2964,10 +2951,6 @@ export class MySQLStorage implements IStorage {
       return {
         totalTurnos: Number(totales.total_turnos),
         totalTecnicos: Number(totales.total_tecnicos),
-        porZona: (rowsZonas as any[]).map((row) => ({
-          zona: row.zona || "Sin zona",
-          cantidad: Number(row.cantidad),
-        })),
         porEstado: (rowsEstados as any[]).map((row) => ({
           estado: row.estado || "Sin estado",
           cantidad: Number(row.cantidad),
