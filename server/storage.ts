@@ -157,7 +157,7 @@ export interface IStorage {
     sortBy?: string,
     sortOrder?: 'asc' | 'desc'
   ): Promise<{ data: schema.MaestroToaPaso[], total: number }>;
-
+  getMaestroToaPasoStats(): Promise<Array<{ fecha: string, total: number }>>;
 
   // SME Operations
   getSmeActivities(startDate?: string, endDate?: string): Promise<any[]>;
@@ -2616,6 +2616,25 @@ export class MySQLStorage implements IStorage {
       };
     } catch (error) {
       console.error("Error fetching Maestro Toa Paso data:", error);
+      throw error;
+    }
+  }
+
+  async getMaestroToaPasoStats(): Promise<Array<{ fecha: string, total: number }>> {
+    try {
+      const [rows] = await pool.execute(
+        `SELECT
+          DATE_FORMAT(STR_TO_DATE(fecha_entrega, '%d/%m/%Y'), '%d-%m-%Y') as fecha,
+          COUNT(*) as total
+        FROM tb_maestro_toa_paso
+        WHERE fecha_entrega IS NOT NULL
+        GROUP BY fecha
+        ORDER BY MIN(STR_TO_DATE(fecha_entrega, '%d/%m/%Y')) ASC`
+      );
+
+      return rows as Array<{ fecha: string, total: number }>;
+    } catch (error) {
+      console.error("Error fetching Maestro Toa Paso stats:", error);
       throw error;
     }
   }

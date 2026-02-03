@@ -5,6 +5,7 @@ import { LayoutDashboard, TrendingUp, Award, Zap, Package, Truck, RotateCcw, Cli
 import { RequestDashboard } from "@/components/supervisor/logistica/solicitudes/request-dashboard";
 
 import { ManualAssignmentTable } from "@/components/supervisor/logistica/manual-assignment/manual-assignment-table";
+import { AssignmentChart } from "@/components/supervisor/logistica/manual-assignment/assignment-chart";
 
 export default function SupervisorLogistica() {
     const [activeTab, setActiveTab] = useState<'inventario' | 'despachos' | 'devoluciones' | 'solicitudes'>('solicitudes');
@@ -83,14 +84,25 @@ export default function SupervisorLogistica() {
                     {activeTab === 'solicitudes' ? (
                         <RequestDashboard />
                     ) : activeTab === 'despachos' ? (
-                        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6">
-                            <div className="mb-6">
-                                <h2 className="text-xl font-bold text-slate-900 dark:text-white">Asignación Manual</h2>
-                                <p className="text-slate-500 dark:text-slate-400 text-sm">
-                                    Visualización completa del maestro TOA paso
-                                </p>
+                        <div className="space-y-6">
+                            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6">
+                                <div className="mb-6">
+                                    <h2 className="text-xl font-bold text-slate-900 dark:text-white">Distribución por Fecha de Entrega</h2>
+                                    <p className="text-slate-500 dark:text-slate-400 text-sm">
+                                        Total de registros agrupados por fecha
+                                    </p>
+                                </div>
+                                <AssignmentChart />
                             </div>
-                            <ManualAssignmentTable />
+                            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6">
+                                <div className="mb-6">
+                                    <h2 className="text-xl font-bold text-slate-900 dark:text-white">Asignación Manual</h2>
+                                    <p className="text-slate-500 dark:text-slate-400 text-sm">
+                                        Visualización completa del maestro TOA paso
+                                    </p>
+                                </div>
+                                <ManualAssignmentTable />
+                            </div>
                         </div>
                     ) : (
                         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-12 text-center min-h-[500px] flex flex-col items-center justify-center overflow-hidden relative">

@@ -1681,6 +1681,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/supervisor/logistica/maestro-toa-paso/stats", requireRole("supervisor", "admin", "gerencia", "logistica"), async (req, res) => {
+    try {
+      const stats = await storage.getMaestroToaPasoStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("[Maestro Toa Paso Stats API] Error:", error);
+      res.status(500).json({ error: "Failed to fetch Maestro Toa Paso stats" });
+    }
+  });
+
   // ============================================
   // NOTES ROUTES
   // ============================================
