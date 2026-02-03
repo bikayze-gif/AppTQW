@@ -176,6 +176,36 @@ export default function SupervisorModuloLogistico() {
                                 </p>
                             </div>
 
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <Card className="bg-amber-50/50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-900/20 shadow-sm">
+                                    <CardContent className="p-4 flex items-center justify-between">
+                                        <div>
+                                            <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider mb-1">Solicitudes Pendientes</p>
+                                            <h3 className="text-2xl font-black text-slate-900 dark:text-white leading-none">
+                                                {filteredAndSortedSolicitudes.filter(s => s.ESTADO_BODEGA !== "OK").length}
+                                            </h3>
+                                        </div>
+                                        <div className="bg-amber-100 dark:bg-amber-900/30 p-2 rounded-lg">
+                                            <RotateCcw className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                                        </div>
+                                    </CardContent>
+                                </Card>
+
+                                <Card className="bg-green-50/50 dark:bg-green-900/10 border-green-100 dark:border-green-900/20 shadow-sm">
+                                    <CardContent className="p-4 flex items-center justify-between">
+                                        <div>
+                                            <p className="text-[10px] font-bold text-green-600 dark:text-green-400 uppercase tracking-wider mb-1">Solicitudes Procesadas (OK)</p>
+                                            <h3 className="text-2xl font-black text-slate-900 dark:text-white leading-none">
+                                                {filteredAndSortedSolicitudes.filter(s => s.ESTADO_BODEGA === "OK").length}
+                                            </h3>
+                                        </div>
+                                        <div className="bg-green-100 dark:bg-green-900/30 p-2 rounded-lg">
+                                            <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </div>
+
                             <div className="flex flex-wrap items-center gap-4 bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
                                 <div className="flex items-center gap-2">
                                     <span className="text-xs font-bold text-slate-500 uppercase tracking-tight">Desde:</span>

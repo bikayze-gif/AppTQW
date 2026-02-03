@@ -2552,11 +2552,29 @@ export class MySQLStorage implements IStorage {
       );
       const total = (countResult as any)[0].total;
 
-      // Query para obtener datos
+      // Query para obtener datos con formateo de fechas
       const [rows] = await pool.execute(
-        `SELECT * FROM tb_maestro_toa_paso 
-         ${whereClause} 
-         ORDER BY ${safeSortBy} ${safeSortOrder} 
+        `SELECT
+          id,
+          sistema_legado,
+          sociedad,
+          rut_tecnico,
+          centro,
+          almacen,
+          material,
+          numero_de_serie,
+          cantidad,
+          DATE_FORMAT(STR_TO_DATE(fecha_entrega, '%d/%m/%Y'), '%d-%m-%Y') as fecha_entrega,
+          nombre_tecnico,
+          fecha_instalacion,
+          n_orden,
+          rut_cliente,
+          familia_material,
+          resultado_carga_en_sap,
+          DATE_FORMAT(fecha_carga, '%d-%m-%Y') as fecha_carga
+         FROM tb_maestro_toa_paso
+         ${whereClause}
+         ORDER BY ${safeSortBy} ${safeSortOrder}
          LIMIT ${limit} OFFSET ${offset}`,
         params
       );
