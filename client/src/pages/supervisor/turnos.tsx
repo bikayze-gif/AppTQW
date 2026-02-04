@@ -73,22 +73,34 @@ const getEstadoColor = (estado: string): string => {
 };
 
 export default function SupervisorTurnos() {
+  // Obtener fecha de hoy en formato YYYY-MM-DD
+  const today = new Date().toISOString().split('T')[0];
+
   const [mesSeleccionado, setMesSeleccionado] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [sortColumn, setSortColumn] = useState<SortColumn>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
-  const [filterMode, setFilterMode] = useState<FilterMode>("period");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
+  const [filterMode, setFilterMode] = useState<FilterMode>("dateRange");
+  const [dateFrom, setDateFrom] = useState(today);
+  const [dateTo, setDateTo] = useState(today);
 
   // Efecto para activar automáticamente el filtro de rango cuando ambas fechas estén completas
   useEffect(() => {
     if (dateFrom && dateTo && dateFrom <= dateTo) {
       setFilterMode("dateRange");
+
+      // Asegurar que hay un mes seleccionado para cargar datos
+      // Extraer año-mes de dateFrom (formato YYYY-MM-DD)
+      const mesFromDateFrom = dateFrom.substring(0, 7); // "2026-02-04" -> "2026-02"
+
+      // Si no hay mes seleccionado o el mes actual no coincide con el rango, actualizar
+      if (!mesSeleccionado || !dateFrom.startsWith(mesSeleccionado)) {
+        setMesSeleccionado(mesFromDateFrom);
+      }
     }
-  }, [dateFrom, dateTo]);
+  }, [dateFrom, dateTo, mesSeleccionado]);
 
   // Obtener meses disponibles
   const { data: mesesDisponibles = [] } = useQuery<MesDisponible[]>({
@@ -156,7 +168,44 @@ export default function SupervisorTurnos() {
       .map(([estado, cantidad]) => ({ estado, cantidad, color: getEstadoColor(estado) }))
       .sort((a, b) => b.cantidad - a.cantidad);
 
-    return { totalTurnos, totalTecnicos, porEstado };
+    // Crear tabla cruzada supervisor vs estado
+    const supervisorEstadoMap = new Map<string, Map<string, number>>();
+    const todosEstados = new Set<string>();
+
+    filteredData.forEach(t => {
+      const supervisor = t.supervisor || "Sin supervisor";
+      const estado = t.estado || "N/A";
+
+      todosEstados.add(estado);
+
+      if (!supervisorEstadoMap.has(supervisor)) {
+        supervisorEstadoMap.set(supervisor, new Map());
+      }
+
+      const estadosDelSupervisor = supervisorEstadoMap.get(supervisor)!;
+      estadosDelSupervisor.set(estado, (estadosDelSupervisor.get(estado) || 0) + 1);
+    });
+
+    // Convertir a array ordenado
+    const tablaCruzada = Array.from(supervisorEstadoMap.entries())
+      .map(([supervisor, estadosMap]) => {
+        const fila: any = { supervisor };
+        let total = 0;
+
+        Array.from(todosEstados).forEach(estado => {
+          const cantidad = estadosMap.get(estado) || 0;
+          fila[estado] = cantidad;
+          total += cantidad;
+        });
+
+        fila.total = total;
+        return fila;
+      })
+      .sort((a, b) => b.total - a.total);
+
+    const estadosOrdenados = Array.from(todosEstados).sort();
+
+    return { totalTurnos, totalTecnicos, porEstado, tablaCruzada, estadosOrdenados };
   }, [filteredData]);
 
   // Ordenar datos
@@ -270,32 +319,32 @@ export default function SupervisorTurnos() {
           </p>
         </div>
 
-        {/* Estadísticas dinámicas - KPIs + Gráfico */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* KPIs */}
-          <div className="lg:col-span-2 grid grid-cols-2 gap-4">
-            <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                  <CalendarDays className="h-6 w-6 text-blue-600 dark:text-blue-300" />
+        {/* Estadísticas dinámicas - KPIs + Gráfico + Tabla Cruzada */}
+        <div className="grid grid-cols-1 lg:grid-cols-[0.7fr_1.15fr_1.15fr] gap-4">
+          {/* KPIs - Columna vertical */}
+          <div className="flex flex-col gap-4">
+            <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-4">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                  <CalendarDays className="h-5 w-5 text-blue-600 dark:text-blue-300" />
                 </div>
                 <div>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">Total Turnos</p>
-                  <p className="text-2xl font-bold text-slate-800 dark:text-white">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Total Turnos</p>
+                  <p className="text-xl font-bold text-slate-800 dark:text-white">
                     {dynamicStats.totalTurnos.toLocaleString()}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-green-100 dark:bg-green-900 rounded-lg">
-                  <Users className="h-6 w-6 text-green-600 dark:text-green-300" />
+            <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-4">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
+                  <Users className="h-5 w-5 text-green-600 dark:text-green-300" />
                 </div>
                 <div>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">Técnicos</p>
-                  <p className="text-2xl font-bold text-slate-800 dark:text-white">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Colaboradores</p>
+                  <p className="text-xl font-bold text-slate-800 dark:text-white">
                     {dynamicStats.totalTecnicos}
                   </p>
                 </div>
@@ -349,6 +398,49 @@ export default function SupervisorTurnos() {
                   </span>
                 </div>
               ))}
+            </div>
+          </div>
+
+          {/* Tabla cruzada Supervisor vs Estado */}
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+            <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-4">
+              Supervisores por Estado
+            </h3>
+            <div className="overflow-auto max-h-[320px]">
+              <table className="w-full text-xs">
+                <thead className="sticky top-0 bg-slate-50 dark:bg-slate-700">
+                  <tr>
+                    <th className="text-left p-2 border-b dark:border-slate-600 font-medium text-slate-700 dark:text-slate-300">
+                      Supervisor
+                    </th>
+                    {dynamicStats.estadosOrdenados.map((estado) => (
+                      <th key={estado} className="text-center p-2 border-b dark:border-slate-600 font-medium text-slate-700 dark:text-slate-300">
+                        {estado}
+                      </th>
+                    ))}
+                    <th className="text-center p-2 border-b dark:border-slate-600 font-medium text-slate-700 dark:text-slate-300">
+                      Total
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {dynamicStats.tablaCruzada.map((fila, idx) => (
+                    <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                      <td className="p-2 border-b dark:border-slate-600 text-slate-800 dark:text-slate-200 font-medium">
+                        {fila.supervisor}
+                      </td>
+                      {dynamicStats.estadosOrdenados.map((estado) => (
+                        <td key={estado} className="text-center p-2 border-b dark:border-slate-600 text-slate-600 dark:text-slate-400">
+                          {fila[estado] || 0}
+                        </td>
+                      ))}
+                      <td className="text-center p-2 border-b dark:border-slate-600 font-semibold text-slate-800 dark:text-slate-200">
+                        {fila.total}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>

@@ -2879,7 +2879,7 @@ export class MySQLStorage implements IStorage {
         SELECT
           \`DIAS TURNO\` as diasTurno,
           Mes_Cntb as mesCntb,
-          FECHA as fecha,
+          DATE_FORMAT(FECHA, '%Y-%m-%d') as fecha,
           ZONA as zona,
           TIPO as tipo,
           SUPERVISOR as supervisor,
@@ -2919,7 +2919,6 @@ export class MySQLStorage implements IStorage {
   async getTurnosPyEstadisticas(mesAnio: string): Promise<{
     totalTurnos: number;
     totalTecnicos: number;
-    porZona: { zona: string; cantidad: number }[];
     porEstado: { estado: string; cantidad: number }[];
   }> {
     try {
