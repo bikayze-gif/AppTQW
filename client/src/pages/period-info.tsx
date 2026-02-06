@@ -6,7 +6,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/lib/auth-context";
 import { MaterialForm } from "@/components/material-form";
 
-const GLOBAL_PERIODO = "202601";
+const GLOBAL_PERIODO = "202602";
 
 interface TqwData {
   RutTecnicoOrig: string;
