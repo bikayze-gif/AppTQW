@@ -591,8 +591,8 @@ export class MySQLStorage implements IStorage {
       const [rows] = await pool.execute(
         `SELECT t.pass_new, w.id, w.email, w.nombre, w.area, w.supervisor, w.rut, w.PERFIL, w.ZONA_GEO
         FROM (
-          SELECT a.usuario, a.pass_new, a.fecha_registro, 
-                 (SELECT COUNT(*) FROM tb_claves_usuarios b 
+          SELECT a.usuario, a.pass_new, a.fecha_registro,
+                 (SELECT COUNT(*) FROM tb_claves_usuarios b
                   WHERE a.usuario = b.usuario AND a.fecha_registro <= b.fecha_registro) as total
           FROM tb_claves_usuarios a
           WHERE a.usuario = ?
@@ -2957,6 +2957,54 @@ export class MySQLStorage implements IStorage {
       };
     } catch (error) {
       console.error("Error fetching turnos py estadisticas:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Obtiene la última actualización de turnos desde la tabla de auditoría
+   */
+  async getUltimaActualizacionTurnos(): Promise<{
+    fecha_operacion: string;
+    hora_operacion: string;
+    cantidad_registros: number;
+    registros_exitosos: number;
+    duracion_segundos: number;
+    estado: string;
+  } | null> {
+    try {
+      const query = `
+        SELECT
+          fecha_operacion,
+          TIME_FORMAT(fecha_operacion, '%H:%i:%s') as hora_operacion,
+          cantidad_registros,
+          registros_exitosos,
+          ROUND(duracion_ms / 1000, 2) as duracion_segundos,
+          estado
+        FROM tb_auditoria_actualizaciones
+        WHERE nombre_tabla = 'tb_turnos_py'
+          AND estado = 'EXITOSO'
+        ORDER BY fecha_operacion DESC
+        LIMIT 1
+      `;
+
+      const [rows] = await pool.execute(query);
+      const result = (rows as any[])[0];
+
+      if (!result) {
+        return null;
+      }
+
+      return {
+        fecha_operacion: result.fecha_operacion,
+        hora_operacion: result.hora_operacion,
+        cantidad_registros: Number(result.cantidad_registros),
+        registros_exitosos: Number(result.registros_exitosos),
+        duracion_segundos: Number(result.duracion_segundos),
+        estado: result.estado,
+      };
+    } catch (error) {
+      console.error("Error fetching ultima actualizacion turnos:", error);
       throw error;
     }
   }

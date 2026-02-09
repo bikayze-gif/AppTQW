@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { SupervisorLayout } from "@/components/supervisor/supervisor-layout";
 import { useQuery } from "@tanstack/react-query";
-import { CalendarDays, Users, MapPin, Activity, Search, ChevronUp, ChevronDown, ChevronsUpDown, ChevronLeft, ChevronRight, Calendar, X } from "lucide-react";
+import { CalendarDays, Users, MapPin, Activity, Search, ChevronUp, ChevronDown, ChevronsUpDown, ChevronLeft, ChevronRight, Calendar, X, RefreshCw, Clock } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -118,6 +118,19 @@ export default function SupervisorTurnos() {
   const { data: turnos = [], isLoading: loadingTurnos } = useQuery<TurnoPy[]>({
     queryKey: [`/api/supervisor/turnos/${mesSeleccionado}`],
     enabled: !!mesSeleccionado,
+  });
+
+  // Obtener última actualización desde auditoría
+  const { data: ultimaActualizacion } = useQuery<{
+    fecha_operacion: string;
+    hora_operacion: string;
+    cantidad_registros: number;
+    registros_exitosos: number;
+    duracion_segundos: number;
+    estado: string;
+  }>({
+    queryKey: ["/api/supervisor/turnos/auditoria/ultima"],
+    refetchInterval: 60000, // Refrescar cada minuto
   });
 
   // Filtrar datos por rango de fechas
@@ -347,6 +360,35 @@ export default function SupervisorTurnos() {
                   <p className="text-xl font-bold text-slate-800 dark:text-white">
                     {dynamicStats.totalTecnicos}
                   </p>
+                </div>
+              </div>
+            </div>
+
+            {/* KPI de Última Actualización */}
+            <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-4">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
+                  <RefreshCw className="h-5 w-5 text-purple-600 dark:text-purple-300" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Última Actualización</p>
+                  {ultimaActualizacion ? (
+                    <>
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-slate-400" />
+                        <p className="text-sm font-semibold text-slate-800 dark:text-white">
+                          {new Date(ultimaActualizacion.fecha_operacion).toLocaleDateString('es-CL')} {ultimaActualizacion.hora_operacion}
+                        </p>
+                      </div>
+                      <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">
+                        {ultimaActualizacion.registros_exitosos.toLocaleString()} registros
+                        <span className="text-slate-400 mx-1">•</span>
+                        {ultimaActualizacion.duracion_segundos}s
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-sm text-slate-400">Sin datos</p>
+                  )}
                 </div>
               </div>
             </div>

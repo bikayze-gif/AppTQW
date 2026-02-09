@@ -1986,6 +1986,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Obtener última actualización de turnos desde auditoría
+  app.get("/api/supervisor/turnos/auditoria/ultima", requireAuth, async (req, res) => {
+    try {
+      const ultimaActualizacion = await storage.getUltimaActualizacionTurnos();
+      res.json(ultimaActualizacion);
+    } catch (error) {
+      console.error("Error al obtener última actualización:", error);
+      res.status(500).json({ error: "Error al obtener última actualización" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
