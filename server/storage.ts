@@ -2975,8 +2975,8 @@ export class MySQLStorage implements IStorage {
     try {
       const query = `
         SELECT
-          fecha_operacion,
-          TIME_FORMAT(fecha_operacion, '%H:%i:%s') as hora_operacion,
+          CONVERT_TZ(fecha_operacion, '+00:00', '-03:00') as fecha_operacion,
+          TIME_FORMAT(CONVERT_TZ(fecha_operacion, '+00:00', '-03:00'), '%H:%i:%s') as hora_operacion,
           cantidad_registros,
           registros_exitosos,
           ROUND(duracion_ms / 1000, 2) as duracion_segundos,
