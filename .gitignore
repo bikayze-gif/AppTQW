@@ -7,3 +7,7 @@ vite.config.ts.*
 sessions/
 source/
 sources/
+events.jsonl
+server.log
+nul
+*.sql
