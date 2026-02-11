@@ -40,6 +40,7 @@ import ParametricoPuntaje from "@/pages/supervisor/settings/parametrico-puntaje"
 import SidebarPermissions from "@/pages/supervisor/settings/permissions";
 import NotificationsSettings from "@/pages/supervisor/settings/notifications";
 import UserManagement from "@/pages/supervisor/settings/users";
+import SessionMonitor from "@/pages/supervisor/settings/session-monitor";
 
 function Router() {
   return (
@@ -139,6 +140,13 @@ function Router() {
         <ProtectedRoute>
           <PermissionProtectedRoute requiredMenuItem="Configuración">
             <UserManagement />
+          </PermissionProtectedRoute>
+        </ProtectedRoute>
+      </Route>
+      <Route path="/supervisor/settings/sessions">
+        <ProtectedRoute>
+          <PermissionProtectedRoute requiredMenuItem="Configuración">
+            <SessionMonitor />
           </PermissionProtectedRoute>
         </ProtectedRoute>
       </Route>

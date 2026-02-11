@@ -471,3 +471,58 @@ export const turnosPy = mysqlTable("tb_turnos_py", {
 });
 
 export type TurnoPy = typeof turnosPy.$inferSelect;
+
+// ============================================
+// SESSION MONITOR TYPES
+// ============================================
+
+export interface ActiveSessionView {
+  sessionId: string;
+  userId: number;
+  nombre: string;
+  email: string;
+  perfil: string;
+  area: string | null;
+  loginTime: string;
+  lastActivity: string;
+  duration: string;
+  ip: string;
+}
+
+export interface LoginMonitorStats {
+  totalLoginsToday: number;
+  failedAttemptsToday: number;
+  activeSessionsCount: number;
+  uniqueUsersToday: number;
+  avgSessionDuration: string;
+  successRate: number;
+}
+
+export interface ConnectionLogEntry {
+  id: number;
+  usuario: string;
+  nombre: string;
+  email: string;
+  perfil: string;
+  area: string | null;
+  loginTime: string;
+  logoutTime: string | null;
+  duration: string | null;
+  ip: string;
+  status: 'active' | 'closed' | 'expired';
+}
+
+export interface LoginAttemptEntry {
+  id: number;
+  email: string;
+  ipAddress: string;
+  userAgent: string | null;
+  success: boolean;
+  failureReason: string | null;
+  createdAt: string;
+}
+
+export interface HourlyDistribution {
+  hour: number;
+  count: number;
+}

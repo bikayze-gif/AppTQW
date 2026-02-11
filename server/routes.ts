@@ -46,7 +46,7 @@ export function validateSessionTimeout(req: Request, res: Response, next: NextFu
   const now = Date.now();
   const lastActivity = req.session.lastActivity || now;
   const inactiveTime = now - lastActivity;
-  const maxInactiveTime = 6 * 60 * 60 * 1000; // 6 horas
+  const maxInactiveTime = 35 * 60 * 1000; // 35 minutos (respaldo del auto-cierre del cliente a 30min)
 
   if (inactiveTime > maxInactiveTime) {
     console.log(`[AUTH] Sesión expirada por inactividad: ${req.session.user.email}, Inactivo por: ${Math.floor(inactiveTime / 1000 / 60)} minutos`);
@@ -158,6 +158,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: 1,
         failure_reason: null,
       }).catch(err => console.error('Error recording login attempt:', err));
+
+      // Cerrar sesiones previas del mismo usuario (last login wins)
+      await storage.closeActiveSessionsByUser(user.rut);
 
       // Crear token de sesión (no bloqueante)
       const sessionToken = crypto.randomBytes(32).toString("hex");
@@ -483,13 +486,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // GET /api/auth/session-ping - Mantener sesión activa
-  app.get("/api/auth/session-ping", (req, res) => {
+  app.get("/api/auth/session-ping", async (req, res) => {
     if (!req.session.user) {
       return res.json({
         success: true,
         sessionActive: false,
         sessionExpired: true,
       });
+    }
+
+    // Verificar si la conexión fue cerrada por otro login (concurrent session)
+    const connectionId = req.session.connectionId;
+    if (connectionId) {
+      const status = await storage.getConnectionStatus(connectionId);
+      if (status && status !== 'ACTIVE') {
+        console.log(`[AUTH] Sesión ${connectionId} fue cerrada (estado: ${status}), notificando al cliente`);
+        req.session.destroy(() => {});
+        return res.json({
+          success: true,
+          sessionActive: false,
+          sessionKicked: true,
+          message: "Tu sesión fue cerrada porque iniciaste sesión en otro dispositivo.",
+        });
+      }
     }
 
     // Actualizar última actividad
@@ -1996,6 +2015,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Error al obtener última actualización" });
     }
   });
+
+  // ============================================
+  // SESSION MONITOR ENDPOINTS
+  // ============================================
+
+  app.get("/api/supervisor/session-monitor", requireAuth, async (req, res) => {
+    try {
+      const data = await storage.getSessionMonitorData();
+      res.json(data);
+    } catch (error) {
+      console.error("Error fetching session monitor data:", error);
+      res.status(500).json({ error: "Error al obtener datos del monitor de sesiones" });
+    }
+  });
+
+  app.get("/api/supervisor/session-monitor/stats", requireAuth, async (req, res) => {
+    try {
+      const { dateFrom, dateTo } = req.query;
+      const from = (dateFrom as string) || new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0];
+      const to = (dateTo as string) || new Date().toISOString().split('T')[0] + ' 23:59:59';
+      const data = await storage.getSessionMonitorStats(from, to);
+      res.json(data);
+    } catch (error) {
+      console.error("Error fetching session monitor stats:", error);
+      res.status(500).json({ error: "Error al obtener estadísticas del monitor" });
+    }
+  });
+
+  app.get("/api/supervisor/session-monitor/active", requireAuth, async (req, res) => {
+    try {
+      const data = await storage.getActiveSessionsList();
+      res.json(data);
+    } catch (error) {
+      console.error("Error fetching active sessions:", error);
+      res.status(500).json({ error: "Error al obtener sesiones activas" });
+    }
+  });
+
+  // DELETE /api/supervisor/session-monitor/sessions/:id - Cerrar sesión remota (admin)
+  app.delete("/api/supervisor/session-monitor/sessions/:id", requireAuth, requireRole("admin", "gerencia", "supervisor"), async (req, res) => {
+    try {
+      const connectionId = parseInt(req.params.id);
+      if (isNaN(connectionId)) {
+        return res.status(400).json({ error: "ID de sesión inválido" });
+      }
+
+      const closed = await storage.forceCloseSession(connectionId);
+      if (!closed) {
+        return res.status(404).json({ error: "Sesión no encontrada o ya cerrada" });
+      }
+
+      console.log(`[SESSION] Admin ${req.session.user?.email} cerró sesión ${connectionId}`);
+      res.json({ success: true, message: "Sesión cerrada exitosamente" });
+    } catch (error) {
+      console.error("Error force closing session:", error);
+      res.status(500).json({ error: "Error al cerrar sesión" });
+    }
+  });
+
+  // ============================================
+  // CRON: Limpieza de sesiones zombie (cada 5 minutos)
+  // ============================================
+  const ZOMBIE_CLEANUP_INTERVAL = 5 * 60 * 1000; // 5 minutos
+  setInterval(async () => {
+    try {
+      const cleaned = await storage.cleanupZombieSessions();
+      if (cleaned > 0) {
+        console.log(`[CRON] Limpieza de sesiones zombie: ${cleaned} sesiones cerradas`);
+      }
+    } catch (error) {
+      console.error("[CRON] Error en limpieza de sesiones zombie:", error);
+    }
+  }, ZOMBIE_CLEANUP_INTERVAL);
+
+  // Ejecutar limpieza inicial al arrancar
+  storage.cleanupZombieSessions().then(cleaned => {
+    if (cleaned > 0) {
+      console.log(`[CRON] Limpieza inicial: ${cleaned} sesiones zombie cerradas`);
+    }
+  }).catch(err => console.error("[CRON] Error en limpieza inicial:", err));
 
   const httpServer = createServer(app);
 

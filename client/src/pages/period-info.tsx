@@ -5,6 +5,7 @@ import { AlertCircle, ChevronUp, ChevronDown } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/lib/auth-context";
 import { MaterialForm } from "@/components/material-form";
+import { useLocation } from "wouter";
 
 const GLOBAL_PERIODO = "202602";
 
@@ -98,11 +99,20 @@ function CollapsibleSection({ title, isOpen, onToggle, children }: CollapsibleSe
 
 export default function PeriodInfo() {
   const { user } = useAuth();
+  const [, setLocation] = useLocation();
   const [data, setData] = useState<TqwData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showMaterialForm, setShowMaterialForm] = useState(false);
 
+  // 🔒 GUARDIA DE SESIÓN: Redirigir a login si no hay usuario autenticado
+  useEffect(() => {
+    if (!user?.rut) {
+      console.log("[PeriodInfo] No hay usuario autenticado, redirigiendo a login");
+      setLocation("/login");
+      return;
+    }
+  }, [user, setLocation]);
 
   // Estado de secciones colapsables
   const [sections, setSections] = useState({
@@ -116,20 +126,27 @@ export default function PeriodInfo() {
   useEffect(() => {
     async function fetchData() {
       if (!user?.rut) {
+        console.warn("[PeriodInfo] Intento de fetch sin RUT de usuario");
         setError("No se pudo obtener el RUT del usuario");
         setLoading(false);
         return;
       }
 
+      console.log(`[PeriodInfo] Fetching data for RUT: ${user.rut}, period: ${GLOBAL_PERIODO}`);
+
       try {
         const response = await fetch(`/api/tqw-comision/${user.rut}/${GLOBAL_PERIODO}`);
         if (!response.ok) {
+          console.error(`[PeriodInfo] API error: ${response.status} ${response.statusText}`);
           throw new Error("No se encontraron datos para este RUT y período");
         }
         const result = await response.json();
+        console.log(`[PeriodInfo] Data loaded successfully for ${user.rut}`);
         setData(result);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Error al cargar los datos");
+        const errorMsg = err instanceof Error ? err.message : "Error al cargar los datos";
+        console.error(`[PeriodInfo] Error fetching data:`, err);
+        setError(errorMsg);
       } finally {
         setLoading(false);
       }
@@ -167,6 +184,11 @@ export default function PeriodInfo() {
     // Esta función se llama después de confirmar, así que solo cerramos el formulario
     setShowMaterialForm(false);
   };
+
+  // 🔒 BLOQUEO DE RENDER: No renderizar nada si no hay usuario
+  if (!user?.rut) {
+    return null;
+  }
 
   if (loading) {
     return (

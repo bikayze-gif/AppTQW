@@ -202,6 +202,17 @@ export interface IStorage {
 
   // User TQW operations
   getUsersTQW(): Promise<User[]>;
+
+  // Session Monitor operations
+  getSessionMonitorData(): Promise<any>;
+  getSessionMonitorStats(dateFrom: string, dateTo: string): Promise<any>;
+  getActiveSessionsList(): Promise<any[]>;
+
+  // Session Management v2
+  closeActiveSessionsByUser(rut: string): Promise<number>;
+  forceCloseSession(connectionId: number): Promise<boolean>;
+  cleanupZombieSessions(): Promise<number>;
+  getConnectionStatus(connectionId: number): Promise<string | null>;
 }
 
 export class MySQLStorage implements IStorage {
@@ -2013,7 +2024,7 @@ export class MySQLStorage implements IStorage {
 
       // 2. Daily Trend
       const [dailyRows] = await pool.execute<RowDataPacket[]>(
-        `SELECT 
+        `SELECT
             fecha_format as date,
             SUM(Completado_RGU) as rgu,
             COUNT(DISTINCT RUT_FORMAT) as technicians,
@@ -2024,6 +2035,21 @@ export class MySQLStorage implements IStorage {
         WHERE YEAR(fecha_format) = ? AND MONTH(fecha_format) = ?${equipmentFilter}
         GROUP BY fecha_format
         ORDER BY fecha_format ASC`,
+        params
+      );
+
+      // 2b. Daily Trend by Zona_Factura
+      const [dailyByZoneRows] = await pool.execute<RowDataPacket[]>(
+        `SELECT
+            fecha_format as date,
+            Zona_Factura as zona,
+            SUM(Completado_RGU) as rgu,
+            COUNT(DISTINCT RUT_FORMAT) as technicians
+        FROM tb_kpi_gerencia_rgu_tecnicos
+        WHERE YEAR(fecha_format) = ? AND MONTH(fecha_format) = ?${equipmentFilter}
+          AND Zona_Factura IS NOT NULL
+        GROUP BY fecha_format, Zona_Factura
+        ORDER BY fecha_format ASC, Zona_Factura ASC`,
         params
       );
 
@@ -2152,6 +2178,12 @@ export class MySQLStorage implements IStorage {
           completionRate: Number(row.completionRate),
           completedActivities: Number(row.completedActivities),
           notCompletedActivities: Number(row.notCompletedActivities),
+        })),
+        dailyTrendByZone: dailyByZoneRows.map((row: any) => ({
+          date: row.date,
+          zona: row.zona,
+          rgu: Number(row.rgu),
+          technicians: Number(row.technicians),
         })),
         supervisorPerformance: supervisorRows.map((row: any) => ({
           supervisor: row.supervisor,
@@ -3030,6 +3062,256 @@ export class MySQLStorage implements IStorage {
     } catch (error) {
       console.error("Error fetching Desafio Tecnico data:", error);
       throw error;
+    }
+  }
+  // ============================================
+  // SESSION MONITOR
+  // ============================================
+
+  async getSessionMonitorData(): Promise<any> {
+    try {
+      // 1. Active sessions (today only, with server-side duration calc)
+      // DATE_SUB converts UTC stored times to Chile (GMT-3)
+      const [activeSessions] = await pool.execute(`
+        SELECT cl.id, cl.usuario,
+               DATE_FORMAT(DATE_SUB(cl.fecha_conexion, INTERVAL 3 HOUR), '%Y-%m-%d %H:%i:%s') as fecha_conexion,
+               cl.ip, cl.estado,
+               u.Nombre as nombre, u.email, u.PERFIL as perfil, u.area,
+               TIMESTAMPDIFF(MINUTE, cl.fecha_conexion, NOW()) as minutesActive
+        FROM tb_conexiones_log cl
+        LEFT JOIN tb_user_tqw u ON cl.usuario = u.Rut
+        WHERE cl.estado = 'ACTIVE' AND cl.tcp_state = 1
+          AND cl.fecha_conexion >= CURDATE()
+        ORDER BY cl.fecha_conexion DESC
+      `);
+
+      // 2. Recent logins (last 50, dates converted to Chile timezone)
+      const [recentLogins] = await pool.execute(`
+        SELECT cl.id, cl.usuario, cl.pagina, cl.estado,
+               DATE_FORMAT(DATE_SUB(cl.fecha_conexion, INTERVAL 3 HOUR), '%Y-%m-%d %H:%i:%s') as fecha_conexion,
+               DATE_FORMAT(DATE_SUB(cl.fecha_desconexion, INTERVAL 3 HOUR), '%Y-%m-%d %H:%i:%s') as fecha_desconexion,
+               cl.duracion, cl.ip,
+               u.Nombre as nombre, u.email, u.PERFIL as perfil, u.area
+        FROM tb_conexiones_log cl
+        LEFT JOIN tb_user_tqw u ON cl.usuario = u.Rut
+        WHERE cl.pagina = '/login'
+        ORDER BY cl.fecha_conexion DESC
+        LIMIT 50
+      `);
+
+      // 3. Failed attempts today (dates converted to Chile timezone)
+      const [failedAttempts] = await pool.execute(`
+        SELECT la.id, la.email, la.ip_address, la.user_agent, la.failure_reason,
+               DATE_FORMAT(DATE_SUB(la.created_at, INTERVAL 3 HOUR), '%Y-%m-%d %H:%i:%s') as created_at
+        FROM login_attempts la
+        WHERE la.success = 0 AND la.created_at >= CURDATE()
+        ORDER BY la.created_at DESC
+        LIMIT 20
+      `);
+
+      // 4. Stats for today (both metrics use CURDATE for consistency)
+      const [statsRows] = await pool.execute(`
+        SELECT
+          (SELECT COUNT(*) FROM login_attempts WHERE success = 1 AND created_at >= CURDATE()) as totalLoginsToday,
+          (SELECT COUNT(*) FROM login_attempts WHERE success = 0 AND created_at >= CURDATE()) as failedAttemptsToday,
+          (SELECT COUNT(*) FROM tb_conexiones_log WHERE estado = 'ACTIVE' AND tcp_state = 1 AND fecha_conexion >= CURDATE()) as activeSessionsCount,
+          (SELECT COUNT(DISTINCT email) FROM login_attempts WHERE success = 1 AND created_at >= CURDATE()) as uniqueUsersToday,
+          (SELECT ROUND(AVG(duracion), 0) FROM tb_conexiones_log WHERE duracion IS NOT NULL AND fecha_conexion >= CURDATE()) as avgSessionDuration
+      `);
+
+      const stats = (statsRows as any[])[0];
+      const totalAttempts = stats.totalLoginsToday + stats.failedAttemptsToday;
+      const successRate = totalAttempts > 0 ? Math.round((stats.totalLoginsToday / totalAttempts) * 100) : 100;
+
+      return {
+        activeSessions,
+        recentLogins,
+        failedAttempts,
+        stats: {
+          totalLoginsToday: stats.totalLoginsToday,
+          failedAttemptsToday: stats.failedAttemptsToday,
+          activeSessionsCount: stats.activeSessionsCount,
+          uniqueUsersToday: stats.uniqueUsersToday,
+          avgSessionDuration: stats.avgSessionDuration ? `${Math.floor(stats.avgSessionDuration / 60)}m` : '0m',
+          successRate,
+        }
+      };
+    } catch (error) {
+      console.error("Error fetching session monitor data:", error);
+      throw error;
+    }
+  }
+
+  async getSessionMonitorStats(dateFrom: string, dateTo: string): Promise<any> {
+    try {
+      // Hourly distribution
+      const [hourlyDist] = await pool.execute(`
+        SELECT HOUR(created_at) as hour, COUNT(*) as count
+        FROM login_attempts
+        WHERE success = 1 AND created_at >= ? AND created_at <= ?
+        GROUP BY HOUR(created_at)
+        ORDER BY hour
+      `, [dateFrom, dateTo]);
+
+      // Daily distribution (day of week)
+      const [dailyDist] = await pool.execute(`
+        SELECT DAYOFWEEK(created_at) as dayOfWeek, COUNT(*) as count
+        FROM login_attempts
+        WHERE success = 1 AND created_at >= ? AND created_at <= ?
+        GROUP BY DAYOFWEEK(created_at)
+        ORDER BY dayOfWeek
+      `, [dateFrom, dateTo]);
+
+      // Top users by login frequency
+      const [topUsers] = await pool.execute(`
+        SELECT la.email, u.Nombre as nombre, u.PERFIL as perfil, COUNT(*) as loginCount
+        FROM login_attempts la
+        LEFT JOIN tb_user_tqw u ON la.email = u.email
+        WHERE la.success = 1 AND la.created_at >= ? AND la.created_at <= ?
+        GROUP BY la.email, u.Nombre, u.PERFIL
+        ORDER BY loginCount DESC
+        LIMIT 10
+      `, [dateFrom, dateTo]);
+
+      // Top IPs
+      const [topIPs] = await pool.execute(`
+        SELECT ip_address, COUNT(*) as count
+        FROM login_attempts
+        WHERE created_at >= ? AND created_at <= ?
+        GROUP BY ip_address
+        ORDER BY count DESC
+        LIMIT 10
+      `, [dateFrom, dateTo]);
+
+      // Success rate over time (daily)
+      const [successRateOverTime] = await pool.execute(`
+        SELECT
+          DATE(created_at) as date,
+          SUM(CASE WHEN success = 1 THEN 1 ELSE 0 END) as successful,
+          SUM(CASE WHEN success = 0 THEN 1 ELSE 0 END) as failed,
+          COUNT(*) as total
+        FROM login_attempts
+        WHERE created_at >= ? AND created_at <= ?
+        GROUP BY DATE(created_at)
+        ORDER BY date
+      `, [dateFrom, dateTo]);
+
+      return {
+        hourlyDistribution: hourlyDist,
+        dailyDistribution: dailyDist,
+        topUsers,
+        topIPs,
+        successRateOverTime,
+      };
+    } catch (error) {
+      console.error("Error fetching session monitor stats:", error);
+      throw error;
+    }
+  }
+
+  async getActiveSessionsList(): Promise<any[]> {
+    try {
+      const [rows] = await pool.execute(`
+        SELECT cl.id, cl.usuario, cl.fecha_conexion, cl.ip, cl.estado,
+               u.Nombre as nombre, u.email, u.PERFIL as perfil, u.area,
+               TIMESTAMPDIFF(MINUTE, cl.fecha_conexion, NOW()) as minutesActive
+        FROM tb_conexiones_log cl
+        LEFT JOIN tb_user_tqw u ON cl.usuario = u.Rut
+        WHERE cl.estado = 'ACTIVE' AND cl.tcp_state = 1
+          AND cl.fecha_conexion >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
+        ORDER BY cl.fecha_conexion DESC
+      `);
+      return rows as any[];
+    } catch (error) {
+      console.error("Error fetching active sessions:", error);
+      throw error;
+    }
+  }
+
+  // ============================================
+  // SESSION MANAGEMENT V2
+  // ============================================
+
+  async closeActiveSessionsByUser(rut: string): Promise<number> {
+    try {
+      const [result] = await pool.execute(
+        `UPDATE tb_conexiones_log
+         SET estado = 'CLOSED',
+             fecha_desconexion = NOW(),
+             duracion = TIMESTAMPDIFF(SECOND, fecha_conexion, NOW()),
+             tcp_state = 0,
+             tcp_info = JSON_OBJECT('reason', 'concurrent_session', 'closed_at', NOW())
+         WHERE usuario = ? AND estado = 'ACTIVE' AND tcp_state = 1`,
+        [rut]
+      );
+      const affected = (result as any).affectedRows || 0;
+      if (affected > 0) {
+        console.log(`[SESSION] Cerradas ${affected} sesiones previas para usuario: ${rut}`);
+      }
+      return affected;
+    } catch (error) {
+      console.error("Error closing active sessions by user:", error);
+      return 0;
+    }
+  }
+
+  async forceCloseSession(connectionId: number): Promise<boolean> {
+    try {
+      const [result] = await pool.execute(
+        `UPDATE tb_conexiones_log
+         SET estado = 'CLOSED',
+             fecha_desconexion = NOW(),
+             duracion = TIMESTAMPDIFF(SECOND, fecha_conexion, NOW()),
+             tcp_state = 0,
+             tcp_info = JSON_OBJECT('reason', 'admin_force_close', 'closed_at', NOW())
+         WHERE id = ? AND estado = 'ACTIVE'`,
+        [connectionId]
+      );
+      const affected = (result as any).affectedRows || 0;
+      if (affected > 0) {
+        console.log(`[SESSION] Sesión ${connectionId} cerrada por admin`);
+      }
+      return affected > 0;
+    } catch (error) {
+      console.error("Error force closing session:", error);
+      return false;
+    }
+  }
+
+  async cleanupZombieSessions(): Promise<number> {
+    try {
+      const [result] = await pool.execute(
+        `UPDATE tb_conexiones_log
+         SET estado = 'TIMEOUT',
+             fecha_desconexion = NOW(),
+             duracion = TIMESTAMPDIFF(SECOND, fecha_conexion, NOW()),
+             tcp_state = 0,
+             tcp_info = JSON_OBJECT('reason', 'zombie_cleanup', 'closed_at', NOW())
+         WHERE estado = 'ACTIVE' AND tcp_state = 1
+           AND fecha_conexion < DATE_SUB(NOW(), INTERVAL 35 MINUTE)`
+      );
+      const affected = (result as any).affectedRows || 0;
+      if (affected > 0) {
+        console.log(`[SESSION CLEANUP] ${affected} sesiones zombie cerradas`);
+      }
+      return affected;
+    } catch (error) {
+      console.error("Error cleaning up zombie sessions:", error);
+      return 0;
+    }
+  }
+
+  async getConnectionStatus(connectionId: number): Promise<string | null> {
+    try {
+      const [rows] = await pool.execute(
+        `SELECT estado FROM tb_conexiones_log WHERE id = ?`,
+        [connectionId]
+      );
+      const row = (rows as any[])[0];
+      return row ? row.estado : null;
+    } catch (error) {
+      console.error("Error getting connection status:", error);
+      return null;
     }
   }
 }

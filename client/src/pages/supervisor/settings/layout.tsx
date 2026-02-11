@@ -15,6 +15,7 @@ export default function SettingsLayout({ children }: SettingsLayoutProps) {
         { label: "Permisos de Menú", path: "/supervisor/settings/permissions" },
         { label: "Notificaciones", path: "/supervisor/settings/notifications" },
         { label: "Usuarios TQW", path: "/supervisor/settings/users" },
+        { label: "Monitor de Sesiones", path: "/supervisor/settings/sessions" },
     ];
 
     return (

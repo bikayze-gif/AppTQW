@@ -74,8 +74,16 @@ import { KpiCard } from "@/components/supervisor/kpi-card";
 import { PieChart } from "@/components/supervisor/pie-chart";
 
 import { BarChart } from "@/components/supervisor/bar-chart";
-
 import { StackedBarChart } from "@/components/supervisor/stacked-bar-chart";
+import {
+  ResponsiveContainer,
+  LineChart as RLineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+} from "recharts";
 
 
 
@@ -1983,52 +1991,165 @@ export default function SupervisorKPI() {
                   />
                 </div>
 
-                {/* Gráficos de Tendencia y Distribución */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  <div className="lg:col-span-2 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
-                    <div className="flex items-center justify-between mb-6">
-                      <div>
-                        <h3 className="text-lg font-bold text-slate-900 dark:text-white">Tendencia de Producción RGU</h3>
-                        <p className="text-sm text-slate-500">Evolución diaria del mes en curso</p>
-                      </div>
-                      <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                        <TrendingUp className="w-5 h-5 text-blue-600" />
-                      </div>
+                {/* Gráfico de Tendencia de Producción RGU */}
+                <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h3 className="text-lg font-bold text-slate-900 dark:text-white">Tendencia de Producción RGU</h3>
+                      <p className="text-sm text-slate-500">Evolución diaria del mes en curso</p>
                     </div>
-                    <div className="h-[280px] w-full mt-2">
-                      <BarChart
-                        title="Producción Diaria"
-                        data={mesActualData.dailyTrend.map((d: any) => ({
-                          name: new Date(d.date).getUTCDate().toString(),
-                          rgu: d.rgu,
-                          technicians: d.technicians
-                        }))}
-                        bars={[
-                          { key: 'rgu', name: 'Producción RGU', color: '#6366f1' },
-                          { key: 'technicians', name: 'Técnicos Activos', color: '#10b981' }
-                        ]}
-                        height={280}
-                      />
+                    <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                      <TrendingUp className="w-5 h-5 text-blue-600" />
+                    </div>
+                  </div>
+                  <div className="h-[280px] w-full mt-2">
+                    <BarChart
+                      title="Producción Diaria"
+                      data={mesActualData.dailyTrend.map((d: any) => ({
+                        name: new Date(d.date).getUTCDate().toString(),
+                        rgu: d.rgu,
+                        technicians: d.technicians
+                      }))}
+                      bars={[
+                        { key: 'rgu', name: 'Producción RGU', color: '#6366f1' },
+                        { key: 'technicians', name: 'Técnicos Activos', color: '#10b981' }
+                      ]}
+                      height={280}
+                    />
+                  </div>
+                </div>
+
+                {/* Gráfico de Evolutivo Diario por Zona - Multi-Chart Facetado */}
+                <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h3 className="text-lg font-bold text-slate-900 dark:text-white">Evolutivo Diario por Zona</h3>
+                      <p className="text-sm text-slate-500">Producción RGU distribuida por zona de facturación</p>
+                    </div>
+                    <div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
+                      <TrendingUp className="w-5 h-5 text-emerald-600" />
                     </div>
                   </div>
 
-                  <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
-                    <div className="flex items-center justify-between mb-6">
-                      <h3 className="text-lg font-bold text-slate-900 dark:text-white">Distribución Actividades</h3>
-                      <div className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                        <PieChartIcon className="w-5 h-5 text-purple-600" />
-                      </div>
-                    </div>
-                    <div className="h-[280px] flex items-center justify-center">
-                      <PieChart
-                        title="Distribución"
-                        data={[
-                          { name: 'Completadas', value: mesActualData.activitiesDistribution.completed, color: '#10b981' },
-                          { name: 'No Realizadas', value: mesActualData.activitiesDistribution.notCompleted, color: '#f43f5e' }
-                        ]}
-                        height={280}
-                      />
-                    </div>
+                  {/* Grid de gráficos facetados por zona */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {(() => {
+                      // Definir colores específicos por zona
+                      const zoneColors: Record<string, string> = {
+                        'ZCEN': '#6366f1', // Indigo
+                        'ZMSU': '#f59e0b', // Amber
+                        'ZMOR': '#10b981', // Emerald
+                        'ZMPO': '#ec4899', // Pink
+                        'ZNOR': '#8b5cf6', // Purple
+                        'ZSUR': '#06b6d4', // Cyan
+                      };
+
+                      // Agrupar datos por zona
+                      const zoneData: Record<string, { date: string; rgu: number }[]> = {};
+                      let zoneTotals: Record<string, number> = {};
+
+                      mesActualData.dailyTrendByZone?.forEach((item: any) => {
+                        const zona = item.zona;
+                        if (!zoneData[zona]) {
+                          zoneData[zona] = [];
+                          zoneTotals[zona] = 0;
+                        }
+                        const day = new Date(item.date).getUTCDate().toString();
+                        zoneData[zona].push({
+                          date: day,
+                          rgu: item.rgu
+                        });
+                        zoneTotals[zona] += item.rgu;
+                      });
+
+                      // Ordenar zonas por total RGU (descendente)
+                      const sortedZones = Object.keys(zoneData).sort((a, b) =>
+                        zoneTotals[b] - zoneTotals[a]
+                      );
+
+                      return sortedZones.map((zona) => {
+                        const data = zoneData[zona];
+                        const totalRGU = zoneTotals[zona];
+                        const avgRGU = Math.round(totalRGU / data.length);
+                        const color = zoneColors[zona] || '#64748b'; // Slate como fallback
+
+                        return (
+                          <div
+                            key={zona}
+                            className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700"
+                          >
+                            {/* Header con nombre y promedio */}
+                            <div className="flex justify-between items-start mb-2">
+                              <h4 className="font-bold text-slate-900 dark:text-white text-sm">
+                                {zona}
+                              </h4>
+                              <div
+                                className="px-2 py-1 rounded text-xs font-semibold"
+                                style={{
+                                  backgroundColor: `${color}20`,
+                                  color: color
+                                }}
+                              >
+                                {avgRGU} RGU/día
+                              </div>
+                            </div>
+
+                            {/* Mini LineChart */}
+                            <div className="h-[120px]">
+                              <ResponsiveContainer width="100%" height="100%">
+                                <RLineChart
+                                  data={data}
+                                  margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
+                                >
+                                  <CartesianGrid
+                                    strokeDasharray="3 3"
+                                    stroke="#e2e8f0"
+                                    strokeOpacity={0.3}
+                                  />
+                                  <XAxis
+                                    dataKey="date"
+                                    stroke="#94a3b8"
+                                    fontSize={10}
+                                    tickLine={false}
+                                  />
+                                  <YAxis
+                                    stroke="#94a3b8"
+                                    fontSize={10}
+                                    tickLine={false}
+                                    width={30}
+                                  />
+                                  <Tooltip
+                                    contentStyle={{
+                                      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                      border: '1px solid #e2e8f0',
+                                      borderRadius: '8px',
+                                      fontSize: '12px'
+                                    }}
+                                    labelFormatter={(value) => `Día ${value}`}
+                                    formatter={(value: any) => [`${value} RGU`, 'Producción']}
+                                  />
+                                  <Line
+                                    type="monotone"
+                                    dataKey="rgu"
+                                    stroke={color}
+                                    strokeWidth={2}
+                                    dot={{ fill: color, r: 3 }}
+                                    activeDot={{ r: 5 }}
+                                  />
+                                </RLineChart>
+                              </ResponsiveContainer>
+                            </div>
+
+                            {/* Footer con total */}
+                            <div className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-700">
+                              <p className="text-xs text-slate-600 dark:text-slate-400">
+                                Total: <span className="font-bold text-slate-900 dark:text-white">{totalRGU} RGU</span>
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      });
+                    })()}
                   </div>
                 </div>
 
@@ -2037,7 +2158,7 @@ export default function SupervisorKPI() {
                 {/* Detalle Diario por Técnico (Matriz) */}
 
                 {/* Comparativa Técnicos: Mejores vs Peores */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                   {/* Top 10 Técnicos (RGU) */}
                   <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm overflow-hidden">
                     <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
@@ -2053,7 +2174,6 @@ export default function SupervisorKPI() {
                             <TableHead className="text-right text-xs font-bold">Días</TableHead>
                             <TableHead className="text-right text-xs font-bold">RGU/Día</TableHead>
                             <TableHead className="text-right text-xs font-bold">Total RGU</TableHead>
-                            <TableHead className="text-right text-xs font-bold">Eficiencia</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -2069,16 +2189,6 @@ export default function SupervisorKPI() {
                               <TableCell className="text-right font-medium text-xs">{t.daysWorked}</TableCell>
                               <TableCell className="text-right font-medium text-xs">{t.rguPerDay}</TableCell>
                               <TableCell className="text-right font-bold text-slate-900 dark:text-white text-xs">{t.totalRGU}</TableCell>
-                              <TableCell className="text-right">
-                                <span className={cn(
-                                  "px-2.5 py-1 rounded-full text-xs font-bold",
-                                  t.completionRate >= 90 ? "bg-emerald-100 text-emerald-700" :
-                                    t.completionRate >= 70 ? "bg-amber-100 text-amber-700" :
-                                      "bg-rose-100 text-rose-700"
-                                )}>
-                                  {t.completionRate}%
-                                </span>
-                              </TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
@@ -2101,7 +2211,6 @@ export default function SupervisorKPI() {
                             <TableHead className="text-right text-xs font-bold">Días</TableHead>
                             <TableHead className="text-right text-xs font-bold">RGU/Día</TableHead>
                             <TableHead className="text-right text-xs font-bold">Total RGU</TableHead>
-                            <TableHead className="text-right text-xs font-bold">Eficiencia</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -2117,16 +2226,6 @@ export default function SupervisorKPI() {
                               <TableCell className="text-right font-medium text-xs">{t.daysWorked}</TableCell>
                               <TableCell className="text-right font-medium text-xs">{t.rguPerDay}</TableCell>
                               <TableCell className="text-right font-bold text-slate-900 dark:text-white text-xs">{t.totalRGU}</TableCell>
-                              <TableCell className="text-right">
-                                <span className={cn(
-                                  "px-2.5 py-1 rounded-full text-xs font-bold",
-                                  t.completionRate >= 90 ? "bg-emerald-100 text-emerald-700" :
-                                    t.completionRate >= 70 ? "bg-amber-100 text-amber-700" :
-                                      "bg-rose-100 text-rose-700"
-                                )}>
-                                  {t.completionRate}%
-                                </span>
-                              </TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
