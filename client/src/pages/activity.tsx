@@ -237,6 +237,7 @@ export default function Activity() {
     { value: "202511", label: "Noviembre 2025" },
     { value: "202512", label: "Diciembre 2025" },
     { value: "202601", label: "Enero 2026" },
+    { value: "202602", label: "Febrero 2026" },
   ];
 
   const handleDownloadPDF = () => {
