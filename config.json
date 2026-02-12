@@ -11,11 +11,12 @@
       "allow-all"
     ],
     "thinkingLevel": "think",
-    "enabledSourceSlugs": []
+    "enabledSourceSlugs": [],
+    "colorTheme": "pierre"
   },
   "localMcpServers": {
     "enabled": true
   },
   "createdAt": 1769435927567,
-  "updatedAt": 1769435927571
+  "updatedAt": 1770854252960
 }

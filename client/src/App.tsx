@@ -47,6 +47,9 @@ function Router() {
     <Switch>
       {/* Public routes */}
       <Route path="/login" component={Login} />
+      <Route path="/login.php">
+        <Redirect to="/login" />
+      </Route>
       <Route path="/forgot-password" component={ForgotPassword} />
 
       {/* Protected supervisor routes */}
@@ -174,15 +177,23 @@ function Router() {
 }
 
 function AppLayout() {
-  const [currentPath] = useLocation();
+  const { user, isLoading } = useAuth();
+  const [currentPath, setLocation] = useLocation();
   const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
   const [isMaterialFormOpen, setIsMaterialFormOpen] = useState(false);
   const [isAIChatOpen, setIsAIChatOpen] = useState(false);
   const [isReportChatOpen, setIsReportChatOpen] = useState(false);
 
   const isSupervisorRoute = currentPath.startsWith("/supervisor");
-  const isLoginPage = currentPath === "/login";
+  const isLoginPage = currentPath === "/login" || currentPath === "/forgot-password";
   const showTechnicianLayout = !isLoginPage && !isSupervisorRoute;
+
+  // 🔒 GUARDIA: Si no hay usuario y se intenta mostrar layout técnico, redirigir a login
+  if (showTechnicianLayout && !isLoading && !user) {
+    console.log(`[AppLayout] No hay usuario autenticado en ruta: ${currentPath}, redirigiendo a login`);
+    setLocation("/login");
+    return null;
+  }
 
   const handleMaterialSubmit = (data: MaterialFormData) => {
     console.log("Material request submitted:", data);

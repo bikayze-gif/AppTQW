@@ -45,5 +45,16 @@ export default defineConfig({
       strict: true,
       deny: ["**/.*"],
     },
+    hmr: {
+      overlay: {
+        errors: (error: Error) => {
+          // Ignorar errores de extensiones de Chrome (MetaMask, etc.)
+          if (error.message?.includes('chrome-extension://')) {
+            return false;
+          }
+          return true;
+        },
+      },
+    },
   },
 });

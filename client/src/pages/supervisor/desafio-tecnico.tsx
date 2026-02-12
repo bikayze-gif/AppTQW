@@ -1,7 +1,8 @@
 import { useState, useMemo } from "react";
 import { SupervisorLayout } from "@/components/supervisor/supervisor-layout";
-import { Trophy, AlertCircle, Loader2, Search, ChevronUp, ChevronDown } from "lucide-react";
+import { Trophy, AlertCircle, Loader2, Search, ChevronUp, ChevronDown, Download } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import * as XLSX from "xlsx";
 import {
   Table,
   TableBody,
@@ -44,6 +45,7 @@ export default function SupervisorDesafioTecnico() {
   const [sortField, setSortField] = useState<SortField>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
   const [estadoFilter, setEstadoFilter] = useState<string>("todos");
+  const [supervisorFilter, setSupervisorFilter] = useState<string>("todos");
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const getEstadoColor = (estado: string, justificacion: string) => {
@@ -100,6 +102,18 @@ export default function SupervisorDesafioTecnico() {
     return Array.from(estados).sort();
   }, [records]);
 
+  // Get unique supervisors
+  const uniqueSupervisors = useMemo(() => {
+    if (!records) return [];
+    const supervisors = new Set<string>();
+    records.forEach((r) => {
+      if (r.supervisor) {
+        supervisors.add(r.supervisor);
+      }
+    });
+    return Array.from(supervisors).sort();
+  }, [records]);
+
   const filteredRecords = useMemo(() => {
     if (!records) return [];
 
@@ -112,28 +126,33 @@ export default function SupervisorDesafioTecnico() {
         record.estado_turno?.toLowerCase().includes(searchLower) ||
         record.Estado_Evaluacion?.toLowerCase().includes(searchLower);
 
+      // Match supervisor filter
+      const matchesSupervisor =
+        supervisorFilter === "todos" ||
+        record.supervisor === supervisorFilter;
+
       // Match estado with sub-estados
-      if (estadoFilter === "todos") {
-        return matchesSearch;
-      }
+      let matchesEstado = true;
+      if (estadoFilter !== "todos") {
+        const estadoLower = record.Estado_Evaluacion?.toLowerCase() || "";
+        const justificacionLower = record.Justificaciones?.toLowerCase() || "";
 
-      const estadoLower = record.Estado_Evaluacion?.toLowerCase() || "";
-      const justificacionLower = record.Justificaciones?.toLowerCase() || "";
-
-      let recordEstado = "";
-      if (estadoLower.includes("realizado") && !estadoLower.includes("no realizado")) {
-        recordEstado = "Realizado";
-      } else if (estadoLower.includes("no realizado")) {
-        if (justificacionLower === "no" || !record.Justificaciones) {
-          recordEstado = "No Realizado - Sin Justificar";
-        } else {
-          recordEstado = "No Realizado - Justificado";
+        let recordEstado = "";
+        if (estadoLower.includes("realizado") && !estadoLower.includes("no realizado")) {
+          recordEstado = "Realizado";
+        } else if (estadoLower.includes("no realizado")) {
+          if (justificacionLower === "no" || !record.Justificaciones) {
+            recordEstado = "No Realizado - Sin Justificar";
+          } else {
+            recordEstado = "No Realizado - Justificado";
+          }
         }
+        matchesEstado = recordEstado === estadoFilter;
       }
 
-      return matchesSearch && recordEstado === estadoFilter;
+      return matchesSearch && matchesSupervisor && matchesEstado;
     });
-  }, [records, searchTerm, estadoFilter]);
+  }, [records, searchTerm, supervisorFilter, estadoFilter]);
 
   const sortedRecords = useMemo(() => {
     if (!sortField || !filteredRecords) return filteredRecords;
@@ -185,6 +204,72 @@ export default function SupervisorDesafioTecnico() {
     ) : (
       <ChevronDown className="w-4 h-4" />
     );
+  };
+
+  // Download function
+  const handleDownload = () => {
+    if (!sortedRecords || sortedRecords.length === 0) return;
+
+    // Prepare data for Excel
+    const excelData = sortedRecords.map((record) => {
+      const estadoLower = record.Estado_Evaluacion?.toLowerCase() || "";
+      const justificacionLower = record.Justificaciones?.toLowerCase() || "";
+      let estadoEvaluacion = record.Estado_Evaluacion || "";
+
+      // Add sub-estado to Estado Evaluación
+      if (estadoLower.includes("realizado") && !estadoLower.includes("no realizado")) {
+        estadoEvaluacion = "Realizado";
+      } else if (estadoLower.includes("no realizado")) {
+        if (justificacionLower === "no" || !record.Justificaciones) {
+          estadoEvaluacion = "No Realizado - Sin Justificar";
+        } else {
+          estadoEvaluacion = "No Realizado - Justificado";
+        }
+      }
+
+      const fechaCarga = record.fecha_carga
+        ? new Date(record.fecha_carga).toLocaleString("es-CL", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        : "";
+
+      return {
+        "Estado Turno": record.estado_turno || "",
+        "Supervisor": record.supervisor || "",
+        "RUT/DNI": record.RUT_O_DNI || "",
+        "Nombre Completo": record.Nombre_Completo || "",
+        "Justificaciones": record.Justificaciones || "",
+        "Motivo Justificación": record.Motivo_Justificacion || "",
+        "Estado Evaluación": estadoEvaluacion,
+        "Fecha Carga": fechaCarga,
+      };
+    });
+
+    // Create workbook and worksheet
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Desafío Técnico");
+
+    // Set column widths
+    const columnWidths = [
+      { wch: 15 }, // Estado Turno
+      { wch: 20 }, // Supervisor
+      { wch: 12 }, // RUT/DNI
+      { wch: 30 }, // Nombre Completo
+      { wch: 15 }, // Justificaciones
+      { wch: 30 }, // Motivo Justificación
+      { wch: 30 }, // Estado Evaluación
+      { wch: 18 }, // Fecha Carga
+    ];
+    worksheet["!cols"] = columnWidths;
+
+    // Generate and download file
+    const fileName = `desafio-tecnico-${new Date().toISOString().split("T")[0]}.xlsx`;
+    XLSX.writeFile(workbook, fileName);
   };
 
   // KPIs - Based on original records, not filtered
@@ -388,35 +473,67 @@ export default function SupervisorDesafioTecnico() {
 
         {/* Search Box and Filters */}
         {!isLoading && !error && records && records.length > 0 && (
-          <div className="mb-6 flex flex-col sm:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <Input
-                placeholder="Buscar por supervisor, RUT, nombre, estado..."
-                className="pl-10 bg-white dark:bg-[#1e293b] border-slate-200 dark:border-slate-700"
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
+          <div className="mb-6 flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Input
+                  placeholder="Buscar por supervisor, RUT, nombre, estado..."
+                  className="pl-10 bg-white dark:bg-[#1e293b] border-slate-200 dark:border-slate-700"
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                />
+              </div>
+              <Select
+                value={supervisorFilter}
+                onValueChange={(value) => {
+                  setSupervisorFilter(value);
                   setCurrentPage(1);
                 }}
-              />
+              >
+                <SelectTrigger className="w-full sm:w-56 bg-white dark:bg-[#1e293b] border-slate-200 dark:border-slate-700">
+                  <SelectValue placeholder="Filtrar por supervisor..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos los supervisores</SelectItem>
+                  {uniqueSupervisors.map((supervisor) => (
+                    <SelectItem key={supervisor} value={supervisor}>
+                      {supervisor}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select
+                value={estadoFilter}
+                onValueChange={(value) => {
+                  setEstadoFilter(value);
+                  setCurrentPage(1);
+                }}
+              >
+                <SelectTrigger className="w-full sm:w-56 bg-white dark:bg-[#1e293b] border-slate-200 dark:border-slate-700">
+                  <SelectValue placeholder="Filtrar por estado..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos los estados</SelectItem>
+                  {uniqueEstados.map((estado) => (
+                    <SelectItem key={estado} value={estado}>
+                      {estado}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <button
+                onClick={handleDownload}
+                disabled={!sortedRecords || sortedRecords.length === 0}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+              >
+                <Download className="w-4 h-4" />
+                Descargar Excel
+              </button>
             </div>
-            <Select value={estadoFilter} onValueChange={(value) => {
-              setEstadoFilter(value);
-              setCurrentPage(1);
-            }}>
-              <SelectTrigger className="w-full sm:w-48 bg-white dark:bg-[#1e293b] border-slate-200 dark:border-slate-700">
-                <SelectValue placeholder="Filtrar por estado..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos los estados</SelectItem>
-                {uniqueEstados.map((estado) => (
-                  <SelectItem key={estado} value={estado}>
-                    {estado}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
         )}
 
