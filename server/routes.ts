@@ -939,11 +939,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/materials/items/:tipo/:familia/:subfamilia", async (req, res) => {
     try {
       const { tipo, familia, subfamilia } = req.params;
+      const decodedParams = {
+        tipo: decodeURIComponent(tipo),
+        familia: decodeURIComponent(familia),
+        subfamilia: decodeURIComponent(subfamilia)
+      };
+
+      console.log('[MATERIALS] Fetching items with params:', decodedParams);
+
       const items = await storage.getMaterialItems(
-        decodeURIComponent(tipo),
-        decodeURIComponent(familia),
-        decodeURIComponent(subfamilia)
+        decodedParams.tipo,
+        decodedParams.familia,
+        decodedParams.subfamilia
       );
+
+      console.log(`[MATERIALS] Found ${items.length} items for combination: ${decodedParams.tipo} -> ${decodedParams.familia} -> ${decodedParams.subfamilia}`);
+
       res.json(items);
     } catch (error) {
       console.error("Error fetching material items:", error);

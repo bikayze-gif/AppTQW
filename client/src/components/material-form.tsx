@@ -353,7 +353,11 @@ export function MaterialForm({ isOpen, onClose, onSubmit, userId }: MaterialForm
                   data-testid="select-material"
                 >
                   <option value="" className="bg-slate-900">
-                    {loading ? "Cargando..." : "Seleccione material"}
+                    {loading
+                      ? "Cargando..."
+                      : materiales.length === 0 && formData.subfamilia
+                        ? "No hay materiales disponibles para esta combinación"
+                        : "Seleccione material"}
                   </option>
                   {materiales.map((mat) => (
                     <option key={mat.id} value={mat.id} className="bg-slate-900">

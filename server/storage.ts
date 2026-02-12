@@ -813,14 +813,48 @@ export class MySQLStorage implements IStorage {
 
   async getMaterialItems(tipo: string, familia: string, subfamilia: string): Promise<Array<{ id: string, description: string }>> {
     try {
-      const [rows] = await pool.execute(
-        `SELECT \`Item\`, \`Item Description\` FROM tp_logistica_mat_oracle 
-         WHERE \`Tipo Material\` = ? AND \`Familia\` = ? AND \`Sub Familia\` = ? 
-         AND \`Item\` IS NOT NULL AND \`Item\` != '' 
+      console.log(`[STORAGE] Querying items with: tipo="${tipo}", familia="${familia}", subfamilia="${subfamilia}"`);
+
+      // First try exact match with TRIM
+      let [rows] = await pool.execute(
+        `SELECT \`Item\`, \`Item Description\`, \`Sub Familia\`
+         FROM tp_logistica_mat_oracle
+         WHERE TRIM(\`Tipo Material\`) = TRIM(?)
+           AND TRIM(\`Familia\`) = TRIM(?)
+           AND TRIM(\`Sub Familia\`) = TRIM(?)
+           AND \`Item\` IS NOT NULL
+           AND TRIM(\`Item\`) != ''
          ORDER BY \`Item Description\` ASC`,
         [tipo, familia, subfamilia]
       );
-      const results = rows as any[];
+      let results = rows as any[];
+
+      console.log(`[STORAGE] Exact match query returned ${results.length} rows`);
+
+      // If no exact match, try normalized match (replace spaces/hyphens for comparison)
+      if (results.length === 0) {
+        console.log('[STORAGE] No exact match found, trying normalized match...');
+
+        [rows] = await pool.execute(
+          `SELECT \`Item\`, \`Item Description\`, \`Sub Familia\`
+           FROM tp_logistica_mat_oracle
+           WHERE TRIM(\`Tipo Material\`) = TRIM(?)
+             AND TRIM(\`Familia\`) = TRIM(?)
+             AND REPLACE(REPLACE(TRIM(\`Sub Familia\`), ' ', ''), '-', '') = REPLACE(REPLACE(TRIM(?), ' ', ''), '-', '')
+             AND \`Item\` IS NOT NULL
+             AND TRIM(\`Item\`) != ''
+           ORDER BY \`Item Description\` ASC`,
+          [tipo, familia, subfamilia]
+        );
+        results = rows as any[];
+
+        console.log(`[STORAGE] Normalized match query returned ${results.length} rows`);
+
+        if (results.length > 0) {
+          console.log(`[STORAGE] Found match using normalized comparison. DB value: "${results[0]['Sub Familia']}", Query value: "${subfamilia}"`);
+        }
+      }
+
       return results.map(r => ({
         id: r['Item'],
         description: r['Item Description'] || r['Item']
