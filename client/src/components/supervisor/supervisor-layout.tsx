@@ -166,7 +166,7 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
               return allowedItems.includes(item.label);
             }).map((item, index) => (
               <div key={index} className="group">
-                <button onClick={() => handleNavigation(item.label)} className="w-full flex items-center px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                <button onClick={() => handleNavigation(item.label)} className="w-full flex items-center px-3 py-2 text-slate-800 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors group-hover:text-blue-600 dark:group-hover:text-blue-400">
                   <item.icon size={20} className="shrink-0" />
                   <div className={`ml-4 flex-1 flex flex-col items-start ${!isSidebarOpen && "hidden md:hidden"}`}>
                     <span className="font-medium text-sm">{item.label}</span>
@@ -190,7 +190,7 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
         <div className="p-4 border-t border-slate-100 dark:border-slate-800">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg transition-colors"
+            className="w-full flex items-center px-3 py-2 text-slate-800 dark:text-white hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg transition-colors"
           >
             <LogOut size={20} className="shrink-0" />
             <span className={`ml-4 font-medium text-sm ${!isSidebarOpen && "hidden md:hidden"}`}>Logout</span>
@@ -205,7 +205,7 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
           <div className="flex items-center">
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="p-2 rounded-md text-slate-400 hover:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none"
+              className="p-2 rounded-md text-slate-800 dark:text-white hover:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none"
             >
               <Menu size={20} />
             </button>
@@ -214,7 +214,7 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
           <div className="flex items-center gap-4">
             <Sheet>
               <SheetTrigger asChild>
-                <button className="p-2 text-slate-400 hover:text-slate-600 relative">
+                <button className="p-2 text-slate-800 dark:text-white hover:text-slate-600 relative">
                   <Bell size={20} />
                   {unreadCount > 0 && (
                     <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white dark:ring-[#1e293b]" />
@@ -310,7 +310,7 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
 
             <button
               onClick={toggleFullscreen}
-              className="p-2 text-slate-400 hover:text-slate-600 transition-colors"
+              className="p-2 text-slate-800 dark:text-white hover:text-slate-600 transition-colors"
               title={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
             >
               {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
@@ -318,14 +318,14 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
 
             <button
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="p-2 text-slate-400 hover:text-slate-600 transition-colors"
+              className="p-2 text-slate-800 dark:text-white hover:text-slate-600 transition-colors"
               title="Alternar modo oscuro"
             >
               {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
             </button>
 
             <div className="flex items-center gap-2 ml-2 px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
-              <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+              <span className="text-sm font-semibold text-slate-800 dark:text-white">
                 {user?.nombre || "Usuario"}
               </span>
             </div>
