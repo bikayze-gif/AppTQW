@@ -112,7 +112,7 @@ export function MaterialForm({ isOpen, onClose, onSubmit, userId }: MaterialForm
         try {
           setLoading(true);
           const res = await fetch(
-            `/api/materials/items/${encodeURIComponent(formData.tipo)}/${encodeURIComponent(formData.familia)}/${encodeURIComponent(formData.subfamilia)}`
+            `/api/materials/items?tipo=${encodeURIComponent(formData.tipo)}&familia=${encodeURIComponent(formData.familia)}&subfamilia=${encodeURIComponent(formData.subfamilia)}`
           );
           if (res.ok) {
             const data = await res.json();

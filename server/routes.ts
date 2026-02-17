@@ -936,13 +936,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // GET material items filtered by tipo, familia, and subfamilia
-  app.get("/api/materials/items/:tipo/:familia/:subfamilia", async (req, res) => {
+  app.get("/api/materials/items", async (req, res) => {
     try {
-      const { tipo, familia, subfamilia } = req.params;
+      const { tipo, familia, subfamilia } = req.query;
+      if (!tipo || !familia || !subfamilia) {
+        return res.status(400).json({ error: "Missing required parameters: tipo, familia, subfamilia" });
+      }
       const decodedParams = {
-        tipo: decodeURIComponent(tipo),
-        familia: decodeURIComponent(familia),
-        subfamilia: decodeURIComponent(subfamilia)
+        tipo: String(tipo),
+        familia: String(familia),
+        subfamilia: String(subfamilia)
       };
 
       console.log('[MATERIALS] Fetching items with params:', decodedParams);
