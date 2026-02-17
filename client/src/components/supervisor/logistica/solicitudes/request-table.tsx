@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { RequestDetailSheet } from "./request-detail-sheet";
 
 // Mock Data
 const MOCK_REQUESTS: MaterialRequest[] = [
@@ -39,6 +40,8 @@ export function RequestTable() {
     const { dispatch } = useMaterialRequest();
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState<"ALL" | "PENDIENTE" | "APROBADO" | "RECHAZADO">("ALL");
+    const [selectedRequest, setSelectedRequest] = useState<MaterialRequest | null>(null);
+    const [detailOpen, setDetailOpen] = useState(false);
 
     const { data: solicitudes = [], isLoading } = useQuery<MaterialRequest[]>({
         queryKey: ["/api/materials/solicitudes"],
@@ -363,11 +366,14 @@ export function RequestTable() {
                                         <Button
                                             variant="ghost"
                                             size="sm"
-                                            className="h-8 w-8 p-0"
-                                            disabled={req.supervisorName !== 'Corrotea'}
+                                            className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                                            onClick={() => {
+                                                setSelectedRequest(req);
+                                                setDetailOpen(true);
+                                            }}
                                         >
                                             <span className="sr-only">Ver detalles</span>
-                                            <FileText className={`h-4 w-4 ${req.supervisorName === 'Corrotea' ? 'text-blue-600' : 'text-slate-300'}`} />
+                                            <FileText className="h-4 w-4" />
                                         </Button>
                                     </TableCell>
                                 </TableRow>
@@ -413,5 +419,14 @@ export function RequestTable() {
                 </div>
             </div>
         </div>
+
+        <RequestDetailSheet
+            request={selectedRequest}
+            open={detailOpen}
+            onClose={() => {
+                setDetailOpen(false);
+                setSelectedRequest(null);
+            }}
+        />
     );
 }

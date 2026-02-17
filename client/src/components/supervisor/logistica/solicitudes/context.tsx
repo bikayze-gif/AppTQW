@@ -22,6 +22,7 @@ export interface MaterialRequest {
     date: string;
     materialName: string;
     quantity: number;
+    itemCode?: string;
     originTechnician: string;
     supervisorName?: string;
     flagRegiones?: string;
