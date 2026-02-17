@@ -141,6 +141,7 @@ export function RequestTable() {
     };
 
     return (
+        <>
         <div className="space-y-4">
             {/* KPI Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -428,5 +429,6 @@ export function RequestTable() {
                 setSelectedRequest(null);
             }}
         />
+        </>
     );
 }
