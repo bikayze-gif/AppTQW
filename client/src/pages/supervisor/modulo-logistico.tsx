@@ -176,7 +176,7 @@ export default function SupervisorModuloLogistico() {
                                 </p>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 <Card className="bg-amber-50/50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-900/20 shadow-sm">
                                     <CardContent className="p-4 flex items-center justify-between">
                                         <div>
@@ -201,6 +201,34 @@ export default function SupervisorModuloLogistico() {
                                         </div>
                                         <div className="bg-green-100 dark:bg-green-900/30 p-2 rounded-lg">
                                             <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
+                                        </div>
+                                    </CardContent>
+                                </Card>
+
+                                <Card className="bg-red-50/50 dark:bg-red-900/10 border-red-100 dark:border-red-900/20 shadow-sm">
+                                    <CardContent className="p-4 flex items-center justify-between">
+                                        <div>
+                                            <p className="text-[10px] font-bold text-red-600 dark:text-red-400 uppercase tracking-wider mb-1">Solicitudes Rechazadas</p>
+                                            <h3 className="text-2xl font-black text-slate-900 dark:text-white leading-none">
+                                                {filteredAndSortedSolicitudes.filter(s => s.flag_gestion_supervisor === 2).length}
+                                            </h3>
+                                        </div>
+                                        <div className="bg-red-100 dark:bg-red-900/30 p-2 rounded-lg">
+                                            <XIcon className="h-5 w-5 text-red-600 dark:text-red-400" />
+                                        </div>
+                                    </CardContent>
+                                </Card>
+
+                                <Card className="bg-blue-50/50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/20 shadow-sm">
+                                    <CardContent className="p-4 flex items-center justify-between">
+                                        <div>
+                                            <p className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-1">Total Solicitudes</p>
+                                            <h3 className="text-2xl font-black text-slate-900 dark:text-white leading-none">
+                                                {filteredAndSortedSolicitudes.length}
+                                            </h3>
+                                        </div>
+                                        <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-lg">
+                                            <Package className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                                         </div>
                                     </CardContent>
                                 </Card>

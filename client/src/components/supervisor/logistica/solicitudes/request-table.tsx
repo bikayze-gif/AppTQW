@@ -10,7 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Filter, Plus, FileText, ArrowUpDown, RotateCcw } from "lucide-react";
+import { Search, Filter, Plus, FileText, ArrowUpDown, RotateCcw, Package, Check, X as XIcon } from "lucide-react";
 import { MaterialRequest, useMaterialRequest } from "./context";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -139,6 +139,57 @@ export function RequestTable() {
 
     return (
         <div className="space-y-4">
+            {/* KPI Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20 rounded-lg shadow-sm p-4 flex items-center justify-between">
+                    <div>
+                        <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider mb-1">Solicitudes Pendientes</p>
+                        <h3 className="text-2xl font-black text-slate-900 dark:text-white leading-none">
+                            {solicitudes.filter(s => s.status === "PENDIENTE").length}
+                        </h3>
+                    </div>
+                    <div className="bg-amber-100 dark:bg-amber-900/30 p-2 rounded-lg">
+                        <RotateCcw className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                    </div>
+                </div>
+
+                <div className="bg-green-50/50 dark:bg-green-900/10 border border-green-100 dark:border-green-900/20 rounded-lg shadow-sm p-4 flex items-center justify-between">
+                    <div>
+                        <p className="text-[10px] font-bold text-green-600 dark:text-green-400 uppercase tracking-wider mb-1">Solicitudes Aprobadas</p>
+                        <h3 className="text-2xl font-black text-slate-900 dark:text-white leading-none">
+                            {solicitudes.filter(s => s.status === "APROBADO").length}
+                        </h3>
+                    </div>
+                    <div className="bg-green-100 dark:bg-green-900/30 p-2 rounded-lg">
+                        <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
+                    </div>
+                </div>
+
+                <div className="bg-red-50/50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 rounded-lg shadow-sm p-4 flex items-center justify-between">
+                    <div>
+                        <p className="text-[10px] font-bold text-red-600 dark:text-red-400 uppercase tracking-wider mb-1">Solicitudes Rechazadas</p>
+                        <h3 className="text-2xl font-black text-slate-900 dark:text-white leading-none">
+                            {solicitudes.filter(s => s.status === "RECHAZADO").length}
+                        </h3>
+                    </div>
+                    <div className="bg-red-100 dark:bg-red-900/30 p-2 rounded-lg">
+                        <XIcon className="h-5 w-5 text-red-600 dark:text-red-400" />
+                    </div>
+                </div>
+
+                <div className="bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/20 rounded-lg shadow-sm p-4 flex items-center justify-between">
+                    <div>
+                        <p className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-1">Total Solicitudes</p>
+                        <h3 className="text-2xl font-black text-slate-900 dark:text-white leading-none">
+                            {solicitudes.length}
+                        </h3>
+                    </div>
+                    <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-lg">
+                        <Package className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                    </div>
+                </div>
+            </div>
+
             {/* Actions Bar */}
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
                 <div className="flex flex-wrap gap-3 items-center flex-1 w-full">
