@@ -28,6 +28,7 @@ const MENU_ITEMS = [
     "Logística",
     "Formulario SME",
     "Modulo Logistico",
+    "Flujo Logístico",
     "KPI",
     "Calidad",
     "Desafío Técnico",

@@ -1996,13 +1996,13 @@ export default function SupervisorKPI() {
                   <div className="flex items-center justify-between mb-6">
                     <div>
                       <h3 className="text-lg font-bold text-slate-900 dark:text-white">Tendencia de Producción RGU</h3>
-                      <p className="text-sm text-slate-500">Evolución diaria del mes en curso</p>
+                      <p className="text-sm text-slate-500">Evolución diaria del mes en curso con técnicos distintos por día</p>
                     </div>
                     <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                       <TrendingUp className="w-5 h-5 text-blue-600" />
                     </div>
                   </div>
-                  <div className="h-[280px] w-full mt-2">
+                  <div className="h-[322px] w-full mt-2">
                     <BarChart
                       title="Producción Diaria"
                       data={mesActualData.dailyTrend.map((d: any) => ({
@@ -2011,10 +2011,12 @@ export default function SupervisorKPI() {
                         technicians: d.technicians
                       }))}
                       bars={[
-                        { key: 'rgu', name: 'Producción RGU', color: '#6366f1' },
-                        { key: 'technicians', name: 'Técnicos Activos', color: '#10b981' }
+                        { key: "rgu", name: "Producción RGU", color: "#6366f1", yAxisId: "left" },
+                        { key: "technicians", name: "Técnicos Distintos/Día", color: "#10b981", yAxisId: "right" }
                       ]}
-                      height={280}
+                      height={322}
+                      secondaryYAxis={{ label: "Técnicos" }}
+                      showBarLabels={true}
                     />
                   </div>
                 </div>
@@ -2032,7 +2034,7 @@ export default function SupervisorKPI() {
                   </div>
 
                   {/* Grid de gráficos facetados por zona */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-4">
                     {(() => {
                       // Definir colores específicos por zona
                       const zoneColors: Record<string, string> = {
@@ -2045,7 +2047,7 @@ export default function SupervisorKPI() {
                       };
 
                       // Agrupar datos por zona
-                      const zoneData: Record<string, { date: string; rgu: number }[]> = {};
+                      const zoneData: Record<string, { date: string; rgu: number; technicians: number }[]> = {};
                       let zoneTotals: Record<string, number> = {};
 
                       mesActualData.dailyTrendByZone?.forEach((item: any) => {
@@ -2057,7 +2059,8 @@ export default function SupervisorKPI() {
                         const day = new Date(item.date).getUTCDate().toString();
                         zoneData[zona].push({
                           date: day,
-                          rgu: item.rgu
+                          rgu: item.rgu,
+                          technicians: item.technicians || 0
                         });
                         zoneTotals[zona] += item.rgu;
                       });
@@ -2095,11 +2098,11 @@ export default function SupervisorKPI() {
                             </div>
 
                             {/* Mini LineChart */}
-                            <div className="h-[120px]">
+                            <div className="h-[159px]">
                               <ResponsiveContainer width="100%" height="100%">
                                 <RLineChart
                                   data={data}
-                                  margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
+                                  margin={{ top: 5, right: 30, left: 5, bottom: 5 }}
                                 >
                                   <CartesianGrid
                                     strokeDasharray="3 3"
@@ -2113,10 +2116,21 @@ export default function SupervisorKPI() {
                                     tickLine={false}
                                   />
                                   <YAxis
+                                    yAxisId="left"
                                     stroke="#94a3b8"
                                     fontSize={10}
                                     tickLine={false}
                                     width={30}
+                                  />
+                                  <YAxis
+                                    yAxisId="right"
+                                    orientation="right"
+                                    stroke="#f59e0b"
+                                    fontSize={9}
+                                    tickLine={false}
+                                    width={25}
+                                    domain={[0, 'auto']}
+                                    allowDecimals={false}
                                   />
                                   <Tooltip
                                     contentStyle={{
@@ -2126,7 +2140,11 @@ export default function SupervisorKPI() {
                                       fontSize: '12px'
                                     }}
                                     labelFormatter={(value) => `Día ${value}`}
-                                    formatter={(value: any) => [`${value} RGU`, 'Producción']}
+                                    formatter={(value: any, name: string) => {
+                                      if (name === 'rgu') return [`${value} RGU`, 'Producción'];
+                                      if (name === 'technicians') return [`${value} Téc.`, 'Técnicos'];
+                                      return [value, name];
+                                    }}
                                   />
                                   <Line
                                     type="monotone"
@@ -2135,6 +2153,17 @@ export default function SupervisorKPI() {
                                     strokeWidth={2}
                                     dot={{ fill: color, r: 3 }}
                                     activeDot={{ r: 5 }}
+                                    yAxisId="left"
+                                  />
+                                  <Line
+                                    type="monotone"
+                                    dataKey="technicians"
+                                    stroke="#f59e0b"
+                                    strokeWidth={1.5}
+                                    dot={{ fill: "#f59e0b", r: 2 }}
+                                    activeDot={{ r: 4 }}
+                                    yAxisId="right"
+                                    strokeDasharray="3 3"
                                   />
                                 </RLineChart>
                               </ResponsiveContainer>
@@ -2158,7 +2187,7 @@ export default function SupervisorKPI() {
                 {/* Detalle Diario por Técnico (Matriz) */}
 
                 {/* Comparativa Técnicos: Mejores vs Peores */}
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Top 10 Técnicos (RGU) */}
                   <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm overflow-hidden">
                     <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">

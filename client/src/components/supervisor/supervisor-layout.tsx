@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useAuth } from "@/lib/auth-context";
@@ -7,9 +7,10 @@ import {
   HelpCircle, Mail, FileText, Trello, CheckSquare,
   User, Bell, Settings, Menu, ChevronRight,
   LogOut, NotebookPen, BarChart3, Receipt, Sun, Moon,
-  AlertCircle, CheckCircle2, Package, Briefcase, Truck, Maximize, Minimize, Check, Trophy, CalendarDays
+  AlertCircle, CheckCircle2, Package, Briefcase, Truck, Maximize, Minimize, Check, Trophy, CalendarDays, Route, PenLine
 } from "lucide-react";
 import { useTheme } from "next-themes";
+import { QuickNoteDropdown } from "@/components/supervisor/quick-note-dropdown";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useNotifications } from "@/hooks/use-notifications";
@@ -44,6 +45,8 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
   const { user } = useAuth();
   const profile = user?.perfil || "user";
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isQuickNoteOpen, setIsQuickNoteOpen] = useState(false);
+  const quickNoteButtonRef = useRef<HTMLButtonElement>(null);
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
 
   useEffect(() => {
@@ -99,6 +102,8 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
       setLocation("/supervisor/sme");
     } else if (label === "Modulo Logistico") {
       setLocation("/supervisor/modulo-logistico");
+    } else if (label === "Flujo Logístico") {
+      setLocation("/supervisor/flujo-logistico");
     } else if (label === "Desafío Técnico") {
       setLocation("/supervisor/desafio-tecnico");
     } else if (label === "Turnos") {
@@ -120,6 +125,7 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
     { icon: Package, label: "Logística", hasSubmenu: false },
     { icon: Briefcase, label: "Formulario SME", hasSubmenu: false },
     { icon: Truck, label: "Modulo Logistico", hasSubmenu: false },
+    { icon: Route, label: "Flujo Logístico", hasSubmenu: false },
     { icon: BarChart3, label: "KPI", hasSubmenu: false },
     { icon: CheckSquare, label: "Calidad", hasSubmenu: false },
     { icon: Trophy, label: "Desafío Técnico", hasSubmenu: false },
@@ -309,6 +315,18 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
             </Sheet>
 
             <button
+              ref={quickNoteButtonRef}
+              onClick={() => setIsQuickNoteOpen(!isQuickNoteOpen)}
+              className={`p-2 rounded-md transition-colors ${isQuickNoteOpen
+                ? "text-blue-600 bg-blue-100 dark:bg-blue-900/30"
+                : "text-slate-800 dark:text-white hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800"
+                }`}
+              title="Nueva nota rápida"
+            >
+              <PenLine size={20} />
+            </button>
+
+            <button
               onClick={toggleFullscreen}
               className="p-2 text-slate-800 dark:text-white hover:text-slate-600 transition-colors"
               title={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
@@ -359,6 +377,13 @@ export function SupervisorLayout({ children }: SupervisorLayoutProps) {
           {children}
         </main>
       </div>
+
+      {/* Quick Note Dropdown */}
+      <QuickNoteDropdown
+        isOpen={isQuickNoteOpen}
+        onClose={() => setIsQuickNoteOpen(false)}
+        anchorRef={quickNoteButtonRef}
+      />
     </div>
   );
 }

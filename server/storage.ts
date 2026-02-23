@@ -781,8 +781,9 @@ export class MySQLStorage implements IStorage {
   async getMaterialFamilias(tipo: string): Promise<string[]> {
     try {
       const [rows] = await pool.execute(
-        `SELECT DISTINCT \`Familia\` FROM tp_logistica_mat_oracle 
-         WHERE \`Tipo Material\` = ? AND \`Familia\` IS NOT NULL AND \`Familia\` != '' 
+        `SELECT DISTINCT \`Familia\` FROM tp_logistica_mat_oracle
+         WHERE \`Tipo Material\` = ? AND \`Familia\` IS NOT NULL AND \`Familia\` != ''
+         AND \`Item\` IS NOT NULL AND TRIM(\`Item\`) != ''
          ORDER BY \`Familia\` ASC`,
         [tipo]
       );
@@ -797,9 +798,10 @@ export class MySQLStorage implements IStorage {
   async getMaterialSubfamilias(tipo: string, familia: string): Promise<string[]> {
     try {
       const [rows] = await pool.execute(
-        `SELECT DISTINCT \`Sub Familia\` FROM tp_logistica_mat_oracle 
-         WHERE \`Tipo Material\` = ? AND \`Familia\` = ? 
-         AND \`Sub Familia\` IS NOT NULL AND \`Sub Familia\` != '' 
+        `SELECT DISTINCT \`Sub Familia\` FROM tp_logistica_mat_oracle
+         WHERE \`Tipo Material\` = ? AND \`Familia\` = ?
+         AND \`Sub Familia\` IS NOT NULL AND \`Sub Familia\` != ''
+         AND \`Item\` IS NOT NULL AND TRIM(\`Item\`) != ''
          ORDER BY \`Sub Familia\` ASC`,
         [tipo, familia]
       );
@@ -3347,6 +3349,127 @@ export class MySQLStorage implements IStorage {
       console.error("Error getting connection status:", error);
       return null;
     }
+  }
+
+  // ============================================
+  // SAP FLUJO LOGÍSTICO — tablas SAP (MySQL)
+  // ============================================
+
+  async getSapStockAll(params: { page: number; limit: number; search: string; sortBy: string; sortOrder: string }): Promise<{ data: any[]; total: number; fechaCarga: string | null }> {
+    const allowed = ["Material", "Denominacion_almacen", "ALIADO", "Stock_SAP_DISPONIBLE", "Stock_Bodega", "Stock_Total", "FECHA_CARGA"];
+    const col = allowed.includes(params.sortBy) ? params.sortBy : "FECHA_CARGA";
+    const dir = params.sortOrder === "asc" ? "ASC" : "DESC";
+    const offset = (params.page - 1) * params.limit;
+    const like = `%${params.search}%`;
+
+    const [countRows] = await pool.execute(
+      `SELECT COUNT(*) as total, MAX(FECHA_CARGA) as fecha_carga FROM sap_stock_all
+       WHERE FECHA_CARGA = (SELECT MAX(FECHA_CARGA) FROM sap_stock_all)
+         AND (ALIADO LIKE ? OR \`Denominación-almacén\` LIKE ? OR \`Texto breve de material\` LIKE ? OR Material LIKE ?)`,
+      [like, like, like, like]
+    );
+    const total = (countRows as any[])[0].total;
+    const fechaCarga = (countRows as any[])[0].fecha_carga;
+
+    const [rows] = await pool.execute(
+      `SELECT * FROM sap_stock_all
+       WHERE FECHA_CARGA = (SELECT MAX(FECHA_CARGA) FROM sap_stock_all)
+         AND (ALIADO LIKE ? OR \`Denominación-almacén\` LIKE ? OR \`Texto breve de material\` LIKE ? OR Material LIKE ?)
+       ORDER BY \`${col}\` ${dir}
+       LIMIT ${params.limit} OFFSET ${offset}`,
+      [like, like, like, like]
+    );
+    return { data: rows as any[], total, fechaCarga };
+  }
+
+  async getSapMaestroCodigos(params: { page: number; limit: number; search: string; sortBy: string; sortOrder: string }): Promise<{ data: any[]; total: number; fechaCarga: string | null }> {
+    const allowed = ["SKU", "ITEM_CODE_FROM", "ITEM_DESC_FROM", "ITEM_CODE_TO", "ITEM_DESC_TO"];
+    const col = allowed.includes(params.sortBy) ? params.sortBy : "SKU";
+    const dir = params.sortOrder === "asc" ? "ASC" : "DESC";
+    const offset = (params.page - 1) * params.limit;
+    const like = `%${params.search}%`;
+
+    const [countRows] = await pool.execute(
+      `SELECT COUNT(*) as total, MAX(fc) as fecha_carga FROM (
+         SELECT SKU, MAX(FECHA_CARGA) as fc FROM sap_maestroCodigos
+         WHERE FECHA_CARGA = (SELECT MAX(FECHA_CARGA) FROM sap_maestroCodigos)
+           AND (SKU LIKE ? OR ITEM_CODE_FROM LIKE ? OR ITEM_DESC_FROM LIKE ? OR ITEM_CODE_TO LIKE ? OR ITEM_DESC_TO LIKE ?)
+         GROUP BY SKU
+       ) t`,
+      [like, like, like, like, like]
+    );
+    const total = (countRows as any[])[0].total;
+    const fechaCarga = (countRows as any[])[0].fecha_carga;
+
+    const [rows] = await pool.execute(
+      `SELECT SKU, MIN(ITEM_CODE_FROM) AS ITEM_CODE_FROM, MIN(ITEM_DESC_FROM) AS ITEM_DESC_FROM,
+              MIN(ITEM_CODE_TO) AS ITEM_CODE_TO, MIN(ITEM_DESC_TO) AS ITEM_DESC_TO,
+              MIN(UDM_FROM) AS UDM_FROM, MIN(UDM_TO) AS UDM_TO,
+              MIN(SERIADO_FROM) AS SERIADO_FROM, MIN(SERIADO_TO) AS SERIADO_TO,
+              MIN(ITEM_ID_FROM) AS ITEM_ID_FROM, MIN(ITEM_ID_TO) AS ITEM_ID_TO
+       FROM sap_maestroCodigos
+       WHERE FECHA_CARGA = (SELECT MAX(FECHA_CARGA) FROM sap_maestroCodigos)
+         AND (SKU LIKE ? OR ITEM_CODE_FROM LIKE ? OR ITEM_DESC_FROM LIKE ? OR ITEM_CODE_TO LIKE ? OR ITEM_DESC_TO LIKE ?)
+       GROUP BY SKU
+       ORDER BY \`${col}\` ${dir}
+       LIMIT ${params.limit} OFFSET ${offset}`,
+      [like, like, like, like, like]
+    );
+    return { data: rows as any[], total, fechaCarga };
+  }
+
+  async getSapStockValorizado(params: { page: number; limit: number; search: string; sortBy: string; sortOrder: string }): Promise<{ data: any[]; total: number; fechaCarga: string | null }> {
+    const allowed = ["Material", "Centro", "Almacen", "Moneda", "Libre_utilizacion", "Valor_libre_util"];
+    const col = allowed.includes(params.sortBy) ? params.sortBy : "Material";
+    const dir = params.sortOrder === "asc" ? "ASC" : "DESC";
+    const offset = (params.page - 1) * params.limit;
+    const like = `%${params.search}%`;
+
+    const [countRows] = await pool.execute(
+      `SELECT COUNT(*) as total, MAX(FECHA_CARGA) as fecha_carga FROM sap_stock_valorizado
+       WHERE FECHA_CARGA = (SELECT MAX(FECHA_CARGA) FROM sap_stock_valorizado)
+         AND (Material LIKE ? OR \`Texto breve de material\` LIKE ? OR Centro LIKE ? OR \`Nombre 1\` LIKE ?)`,
+      [like, like, like, like]
+    );
+    const total = (countRows as any[])[0].total;
+    const fechaCarga = (countRows as any[])[0].fecha_carga;
+
+    const [rows] = await pool.execute(
+      `SELECT * FROM sap_stock_valorizado
+       WHERE FECHA_CARGA = (SELECT MAX(FECHA_CARGA) FROM sap_stock_valorizado)
+         AND (Material LIKE ? OR \`Texto breve de material\` LIKE ? OR Centro LIKE ? OR \`Nombre 1\` LIKE ?)
+       ORDER BY \`${col}\` ${dir}
+       LIMIT ${params.limit} OFFSET ${offset}`,
+      [like, like, like, like]
+    );
+    return { data: rows as any[], total, fechaCarga };
+  }
+
+  async getSapAsignacionTecnicos(params: { page: number; limit: number; search: string; sortBy: string; sortOrder: string }): Promise<{ data: any[]; total: number; fechaCarga: string | null }> {
+    const allowed = ["RUT Técnico", "Nombre 1", "Apellido", "Material", "Centro", "Almacén", "Equipo", "Número de serie", "Denominación equipo", "Estado", "FECHA_CARGA"];
+    const col = allowed.includes(params.sortBy) ? params.sortBy : "Nombre 1";
+    const dir = params.sortOrder === "asc" ? "ASC" : "DESC";
+    const offset = (params.page - 1) * params.limit;
+    const like = `%${params.search}%`;
+
+    const [countRows] = await pool.execute(
+      `SELECT COUNT(*) as total, MAX(FECHA_CARGA) as fecha_carga FROM TB_SAP_ASIGNACION_TECNICOS
+       WHERE FECHA_CARGA = (SELECT MAX(FECHA_CARGA) FROM TB_SAP_ASIGNACION_TECNICOS)
+         AND (\`Nombre 1\` LIKE ? OR \`RUT Técnico\` LIKE ? OR Apellido LIKE ? OR \`Texto breve material\` LIKE ?)`,
+      [like, like, like, like]
+    );
+    const total = (countRows as any[])[0].total;
+    const fechaCarga = (countRows as any[])[0].fecha_carga;
+
+    const [rows] = await pool.execute(
+      `SELECT * FROM TB_SAP_ASIGNACION_TECNICOS
+       WHERE FECHA_CARGA = (SELECT MAX(FECHA_CARGA) FROM TB_SAP_ASIGNACION_TECNICOS)
+         AND (\`Nombre 1\` LIKE ? OR \`RUT Técnico\` LIKE ? OR Apellido LIKE ? OR \`Texto breve material\` LIKE ?)
+       ORDER BY \`${col}\` ${dir}
+       LIMIT ${params.limit} OFFSET ${offset}`,
+      [like, like, like, like]
+    );
+    return { data: rows as any[], total, fechaCarga };
   }
 }
 

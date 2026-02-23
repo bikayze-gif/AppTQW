@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowUpDown, Filter, LayoutDashboard, Search, Eye, EyeOff, Trophy, Download, Copy } from "lucide-react";
+import { ArrowUpDown, Filter, LayoutDashboard, Search, EyeOff, Trophy, Download, Copy } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,12 +36,18 @@ export function TechnicianDailyMatrix({ data }: TechnicianDailyMatrixProps) {
     const { toast } = useToast();
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedDay, setSelectedDay] = useState<string>("ALL");
+    const [supervisorFilter, setSupervisorFilter] = useState<string>("ALL");
     const [sortConfig, setSortConfig] = useState<{
         key: string;
         direction: 'asc' | 'desc';
     }>({ key: 'total', direction: 'desc' });
 
-    // Get all unique days from the data, sorted
+    // Get all unique supervisors from data, sorted
+    const uniqueSupervisors = useMemo(() => {
+        return Array.from(new Set(data.map((d) => d.supervisor))).sort();
+    }, [data]);
+
+    // Get all unique days from data, sorted
     const uniqueDays = useMemo(() => {
         return Array.from(new Set(data.map((d) => d.day)))
             .sort((a, b) => a - b);
@@ -62,7 +68,7 @@ export function TechnicianDailyMatrix({ data }: TechnicianDailyMatrixProps) {
             }
             acc[curr.rut].daily[curr.day] = curr.rgu;
             acc[curr.rut].total += curr.rgu;
-            acc[curr.rut].daysWorked += 1;
+            if (curr.rgu > 0) acc[curr.rut].daysWorked += 1;
             return acc;
         }, {});
 
@@ -74,7 +80,6 @@ export function TechnicianDailyMatrix({ data }: TechnicianDailyMatrixProps) {
         const result = Object.values(techMap) as any[];
 
         // Add absolute rank based on total RGU descending
-        // This ranking persists regardless of search/filter/sort in the table UI
         const sortedForRank = [...result].sort((a, b) => b.total - a.total);
         const rankMap = new Map();
         sortedForRank.forEach((tech, index) => {
@@ -101,7 +106,12 @@ export function TechnicianDailyMatrix({ data }: TechnicianDailyMatrixProps) {
             );
         }
 
-        // 2. Sort
+        // 2. Supervisor Filter
+        if (supervisorFilter !== "ALL") {
+            filtered = filtered.filter((t: any) => t.supervisor === supervisorFilter);
+        }
+
+        // 3. Sort
         filtered.sort((a: any, b: any) => {
             let valA, valB;
 
@@ -131,12 +141,12 @@ export function TechnicianDailyMatrix({ data }: TechnicianDailyMatrixProps) {
         });
 
         return filtered;
-    }, [pivotedData, searchTerm, sortConfig]);
+    }, [pivotedData, searchTerm, supervisorFilter, sortConfig]);
 
     const handleSort = (key: string) => {
         setSortConfig(current => ({
             key,
-            direction: current.key === key && current.direction === 'desc' ? 'asc' : 'desc'
+            direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc'
         }));
     };
 
@@ -144,18 +154,15 @@ export function TechnicianDailyMatrix({ data }: TechnicianDailyMatrixProps) {
         const rows = processedData.map((t: any) => {
             const row: any = {
                 'Técnico': t.name,
-                'Supervisor': t.supervisor || '-'
+                'Supervisor': t.supervisor || '-',
             };
-
             uniqueDays.forEach(day => {
                 row[`Día ${day}`] = t.daily[day] || 0;
             });
-
             row['Total'] = t.total;
             row['Promedio'] = t.average;
             return row;
         });
-
         const ws = XLSX.utils.json_to_sheet(rows);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Detalle Diario");
@@ -164,7 +171,9 @@ export function TechnicianDailyMatrix({ data }: TechnicianDailyMatrixProps) {
 
     const handleCopyToClipboard = () => {
         const headers = ['Técnico', 'Supervisor', ...uniqueDays.map(d => `Día ${d}`), 'Total', 'Promedio'];
+        const headerRow = headers.map(h => h.replace(/_/g, ' ').toUpperCase()).join('\t');
 
+        // Get rows
         const rows = processedData.map((t: any) => {
             return [
                 t.name,
@@ -175,12 +184,11 @@ export function TechnicianDailyMatrix({ data }: TechnicianDailyMatrixProps) {
             ].join('\t');
         });
 
-        const content = [headers.join('\t'), ...rows].join('\n');
-
+        const content = [headerRow, ...rows].join('\n');
         navigator.clipboard.writeText(content).then(() => {
             toast({
                 title: "Copiado",
-                description: "Tabla copiada al portapapeles",
+                description: `${processedData.length} registros copiados al portapapeles`,
             });
         }).catch(err => {
             console.error('Error al copiar: ', err);
@@ -196,13 +204,12 @@ export function TechnicianDailyMatrix({ data }: TechnicianDailyMatrixProps) {
     const visibleDays = uniqueDays.filter(day => selectedDay === 'ALL' || selectedDay === day.toString());
 
     if (processedData.length === 0) return null;
-
     return (
         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm overflow-hidden mt-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
                 <div className="flex items-center gap-3">
                     <div className="p-2 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg">
-                        <LayoutDashboard className="w-5 h-5 text-indigo-600" />
+                        <LayoutDashboard className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                     </div>
                     <div>
                         <h3 className="text-lg font-bold text-slate-900 dark:text-white">Detalle Diario por Técnico</h3>
@@ -211,54 +218,71 @@ export function TechnicianDailyMatrix({ data }: TechnicianDailyMatrixProps) {
                         </p>
                     </div>
                 </div>
+                <div className="flex gap-2">
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-9 w-9"
+                        onClick={handleExportExcel}
+                        title="Descargar Excel"
+                    >
+                        <Download className="h-4 w-4 text-slate-500" />
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-9 w-9"
+                        onClick={handleCopyToClipboard}
+                        title="Copiar al portapapeles"
+                    >
+                        <Copy className="h-4 w-4 text-slate-500" />
+                    </Button>
+                </div>
+            </div>
 
-                <div className="flex flex-col sm:flex-row gap-3">
-                    <div className="flex gap-2">
-                        <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-9 w-9"
-                            onClick={handleExportExcel}
-                            title="Descargar Excel"
-                        >
-                            <Download className="h-4 w-4 text-slate-500" />
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-9 w-9"
-                            onClick={handleCopyToClipboard}
-                            title="Copiar al portapapeles"
-                        >
-                            <Copy className="h-4 w-4 text-slate-500" />
-                        </Button>
-                    </div>
+            <div className="flex flex-col sm:flex-row gap-3">
+                {/* Supervisor Filter Dropdown */}
+                <div className="relative">
+                    <Select value={supervisorFilter} onValueChange={setSupervisorFilter}>
+                        <SelectTrigger className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 h-9 text-xs bg-slate-50 dark:bg-slate-700 focus-visible:ring-indigo-500">
+                            <div className="flex items-center gap-2">
+                                <Filter className="w-4 h-4 text-indigo-500" />
+                                <SelectValue placeholder="Filtrar por Supervisor" />
+                            </div>
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="ALL">Todos los Supervisores</SelectItem>
+                            {uniqueSupervisors.map(sup => (
+                                <SelectItem key={sup} value={sup}>{sup}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
 
-                    {/* Day Filter */}
-                    <div className="w-[140px]">
-                        <Select value={selectedDay} onValueChange={setSelectedDay}>
-                            <SelectTrigger className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 h-9 text-xs">
-                                <SelectValue placeholder="Filtrar Día" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="ALL">Todos los Días</SelectItem>
-                                {uniqueDays.map(day => (
-                                    <SelectItem key={day} value={day.toString()}>Día {day}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
+                {/* Day Filter Dropdown */}
+                <div className="w-[140px]">
+                    <Select value={selectedDay} onValueChange={setSelectedDay}>
+                        <SelectTrigger className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 h-9 text-xs bg-slate-50 dark:bg-slate-700 focus-visible:ring-indigo-500">
+                            <SelectValue placeholder="Filtrar Día" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="ALL">Todos los Días</SelectItem>
+                            {uniqueDays.map(day => (
+                                <SelectItem key={day} value={day.toString()}>Día {day}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
 
-                    {/* Search Input */}
-                    <div className="relative w-full sm:w-[250px]">
-                        <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <Input
-                            placeholder="Buscar técnico o supervisor..."
-                            className="pl-9 h-9 text-xs bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-indigo-500"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </div>
+                {/* Search Input */}
+                <div className="relative w-full sm:w-[250px]">
+                    <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Input
+                        placeholder="Buscar técnico o supervisor..."
+                        className="pl-9 h-9 text-xs bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-indigo-500"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
                 </div>
             </div>
 
@@ -267,7 +291,7 @@ export function TechnicianDailyMatrix({ data }: TechnicianDailyMatrixProps) {
                     <TableHeader>
                         <TableRow className="bg-slate-50 dark:bg-slate-800/50">
                             <TableHead
-                                className="w-[200px] text-xs font-bold sticky left-0 bg-slate-50 dark:bg-slate-800 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                className="w-[200px] text-xs font-bold sticky left-0 bg-slate-50 dark:bg-slate-800 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,.1)] cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                                 onClick={() => handleSort('name')}
                             >
                                 <div className="flex items-center gap-2">
@@ -276,7 +300,7 @@ export function TechnicianDailyMatrix({ data }: TechnicianDailyMatrixProps) {
                                 </div>
                             </TableHead>
                             <TableHead
-                                className="w-[120px] text-xs font-bold cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                className="w-[120px] text-xs font-bold sticky left-0 bg-slate-50 dark:bg-slate-800 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,.1)] cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                                 onClick={() => handleSort('supervisor')}
                             >
                                 <div className="flex items-center gap-2">
@@ -287,17 +311,17 @@ export function TechnicianDailyMatrix({ data }: TechnicianDailyMatrixProps) {
                             {visibleDays.map(day => (
                                 <TableHead
                                     key={day}
-                                    className="text-center text-xs font-bold px-1 min-w-[40px] cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                    className="text-center text-xs font-bold min-w-[70px] px-1 py-2 sticky left-0 bg-slate-50 dark:bg-slate-800 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,.1)] cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                                     onClick={() => handleSort(`day_${day}`)}
                                 >
                                     <div className="flex flex-col items-center justify-center h-full">
                                         <span>{day}</span>
-                                        {sortConfig.key === `day_${day}` && <div className="h-1 w-1 rounded-full bg-indigo-500 mt-0.5"></div>}
+                                        {sortConfig.key === `day_${day}` && <ArrowUpDown className="w-3 h-3 text-indigo-500 mt-0.5" />}
                                     </div>
                                 </TableHead>
                             ))}
                             <TableHead
-                                className="text-right text-xs font-bold min-w-[70px] pr-4 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                className="text-right text-xs font-bold min-w-[70px] px-4 py-2 sticky left-0 bg-slate-50 dark:bg-slate-800 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,.1)] cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                                 onClick={() => handleSort('total')}
                             >
                                 <div className="flex items-center justify-end gap-2">
@@ -306,7 +330,7 @@ export function TechnicianDailyMatrix({ data }: TechnicianDailyMatrixProps) {
                                 </div>
                             </TableHead>
                             <TableHead
-                                className="text-right text-xs font-bold min-w-[70px] pr-4 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                className="text-right text-xs font-bold min-w-[70px] px-4 py-2 sticky left-0 bg-slate-50 dark:bg-slate-800 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,.1)] cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                                 onClick={() => handleSort('average')}
                             >
                                 <div className="flex items-center justify-end gap-2">
@@ -319,33 +343,33 @@ export function TechnicianDailyMatrix({ data }: TechnicianDailyMatrixProps) {
                     <TableBody>
                         {processedData.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={visibleDays.length + 4} className="h-24 text-center">
-                                    <div className="flex flex-col items-center justify-center text-slate-500">
-                                        <Search className="w-6 h-6 mb-2 opacity-50" />
-                                        <p>No se encontraron técnicos</p>
-                                    </div>
+                                <TableCell colSpan={visibleDays.length + 4} className="h-24 text-center text-slate-500">
+                                    <div className="flex items-center justify-center">
+                                            <Search className="w-6 h-6 mb-2 opacity-50" />
+                                            <p>No se encontraron técnicos</p>
+                                        </div>
                                 </TableCell>
                             </TableRow>
                         ) : (
                             processedData.map((t: any) => (
-                                <TableRow key={t.rut} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors border-b border-slate-100 dark:border-slate-800 last:border-0 group">
-                                    <TableCell className="font-medium text-xs sticky left-0 bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-700/50 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] py-2 border-r border-slate-100 dark:border-slate-800">
-                                        <div className="flex items-center gap-2">
+                                <TableRow key={t.rut} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors border-b border-slate-100 dark:border-slate-800">
+                                    <TableCell className="font-medium text-xs sticky left-0 bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-700/50 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,.1)] py-2 border-r border-slate-200 dark:border-slate-700">
+                                        <div className="flex flex-col items-center justify-center h-full">
                                             {t.rank === 1 && <Trophy className="w-4 h-4 text-yellow-500 shrink-0 drop-shadow-sm" />}
                                             {t.rank === 2 && <Trophy className="w-4 h-4 text-slate-400 shrink-0 drop-shadow-sm" />}
                                             {t.rank === 3 && <Trophy className="w-4 h-4 text-amber-600 shrink-0 drop-shadow-sm" />}
-                                            <span className="line-clamp-1 text-slate-900 dark:text-white" title={t.name}>{t.name}</span>
+                                            <span className="line-clamp-1 text-slate-900 dark:text-white font-medium" title={t.name}>{t.name}</span>
                                         </div>
                                     </TableCell>
                                     <TableCell className="text-xs text-slate-500 dark:text-slate-400 py-2">
                                         <div className="line-clamp-1" title={t.supervisor}>{t.supervisor || '-'}</div>
                                     </TableCell>
                                     {visibleDays.map(day => (
-                                        <TableCell key={day} className="text-center text-xs px-1 py-1.5">
+                                        <TableCell key={day} className="text-center text-xs px-1 py-2">
                                             {t.daily[day] ? (
                                                 <div
                                                     className={cn(
-                                                        "font-medium text-[11px] py-1 px-1.5 rounded",
+                                                        "font-medium text-[11px] py-1 px-1 rounded",
                                                         t.daily[day] >= 5 ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400" :
                                                             t.daily[day] >= 3 ? "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400" :
                                                                 "text-slate-700 dark:text-slate-300"
@@ -354,7 +378,7 @@ export function TechnicianDailyMatrix({ data }: TechnicianDailyMatrixProps) {
                                                     {t.daily[day]}
                                                 </div>
                                             ) : (
-                                                <span className="text-slate-200 dark:text-slate-700 text-[10px]">-</span>
+                                                <span className="text-slate-200 dark:text-slate-700">-</span>
                                             )}
                                         </TableCell>
                                     ))}
@@ -367,8 +391,8 @@ export function TechnicianDailyMatrix({ data }: TechnicianDailyMatrixProps) {
                                 </TableRow>
                             ))
                         )}
-                    </TableBody>
-                </Table>
+                        </TableBody>
+                    </Table>
             </div>
         </div>
     );

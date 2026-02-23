@@ -2089,6 +2089,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ============================================
+  // SAP FLUJO LOGÍSTICO
+  // ============================================
+
+  app.get("/api/sap/stock-all", requireAuth, async (req, res) => {
+    try {
+      const page = Math.max(1, parseInt(req.query.page as string) || 1);
+      const limit = Math.min(200, parseInt(req.query.limit as string) || 50);
+      const search = (req.query.search as string) || "";
+      const sortBy = (req.query.sortBy as string) || "FECHA_CARGA";
+      const sortOrder = (req.query.sortOrder as string) === "asc" ? "asc" : "desc";
+      const result = await storage.getSapStockAll({ page, limit, search, sortBy, sortOrder });
+      res.json(result);
+    } catch (error) {
+      console.error("[SAP StockAll] Error:", error);
+      res.status(500).json({ error: "Failed to fetch sap_stock_all" });
+    }
+  });
+
+  app.get("/api/sap/maestro-codigos", requireAuth, async (req, res) => {
+    try {
+      const page = Math.max(1, parseInt(req.query.page as string) || 1);
+      const limit = Math.min(200, parseInt(req.query.limit as string) || 50);
+      const search = (req.query.search as string) || "";
+      const sortBy = (req.query.sortBy as string) || "SKU";
+      const sortOrder = (req.query.sortOrder as string) === "asc" ? "asc" : "desc";
+      const result = await storage.getSapMaestroCodigos({ page, limit, search, sortBy, sortOrder });
+      res.json(result);
+    } catch (error) {
+      console.error("[SAP MaestroCodigos] Error:", error);
+      res.status(500).json({ error: "Failed to fetch sap_maestroCodigos" });
+    }
+  });
+
+  app.get("/api/sap/stock-valorizado", requireAuth, async (req, res) => {
+    try {
+      const page = Math.max(1, parseInt(req.query.page as string) || 1);
+      const limit = Math.min(200, parseInt(req.query.limit as string) || 50);
+      const search = (req.query.search as string) || "";
+      const sortBy = (req.query.sortBy as string) || "Material";
+      const sortOrder = (req.query.sortOrder as string) === "asc" ? "asc" : "desc";
+      const result = await storage.getSapStockValorizado({ page, limit, search, sortBy, sortOrder });
+      res.json(result);
+    } catch (error) {
+      console.error("[SAP StockValorizado] Error:", error);
+      res.status(500).json({ error: "Failed to fetch sap_stock_valorizado" });
+    }
+  });
+
+  app.get("/api/sap/asignacion-tecnicos", requireAuth, async (req, res) => {
+    try {
+      const page = Math.max(1, parseInt(req.query.page as string) || 1);
+      const limit = Math.min(200, parseInt(req.query.limit as string) || 50);
+      const search = (req.query.search as string) || "";
+      const sortBy = (req.query.sortBy as string) || "Nombre 1";
+      const sortOrder = (req.query.sortOrder as string) === "asc" ? "asc" : "desc";
+      const result = await storage.getSapAsignacionTecnicos({ page, limit, search, sortBy, sortOrder });
+      res.json(result);
+    } catch (error) {
+      console.error("[SAP AsignacionTecnicos] Error:", error);
+      res.status(500).json({ error: "Failed to fetch TB_SAP_ASIGNACION_TECNICOS" });
+    }
+  });
+
+  // ============================================
   // CRON: Limpieza de sesiones zombie (cada 5 minutos)
   // ============================================
   const ZOMBIE_CLEANUP_INTERVAL = 5 * 60 * 1000; // 5 minutos
