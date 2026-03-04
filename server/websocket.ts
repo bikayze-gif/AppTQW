@@ -11,6 +11,10 @@ const watcherPool = mysql.createPool({
     user: dbConfig.user,
     password: dbConfig.password,
     database: dbConfig.database,
+    connectionLimit: 2, // Watcher only needs 1-2 connections
+    connectTimeout: 5000, // 5s timeout for connection
+    waitForConnections: false, // Don't wait if all connections are busy
+    queueLimit: 0,
 });
 
 let wss: WebSocketServer | null = null;
