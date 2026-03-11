@@ -37,7 +37,9 @@ export function setupWebSockets(server: Server) {
     });
 
     // Start the database watcher
-    startDatabaseWatcher();
+    // TEMPORARILY DISABLED: Causing connection pool exhaustion
+    // TODO: Implement more robust connection handling before re-enabling
+    // startDatabaseWatcher();
 
     return wss;
 }
