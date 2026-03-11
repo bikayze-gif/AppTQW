@@ -3,7 +3,7 @@
   "name": "AppTQW",
   "slug": "apptqw",
   "defaults": {
-    "model": "claude-sonnet-4-5-20250929",
+    "model": "claude-sonnet-4-6",
     "permissionMode": "safe",
     "cyclablePermissionModes": [
       "safe",
@@ -18,5 +18,5 @@
     "enabled": true
   },
   "createdAt": 1769435927567,
-  "updatedAt": 1770854252960
+  "updatedAt": 1772506220092
 }

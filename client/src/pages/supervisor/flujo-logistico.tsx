@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { SupervisorLayout } from "@/components/supervisor/supervisor-layout";
 import {
@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import {
   Route, Search, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown,
+  Download, Loader2, Calendar,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -29,9 +30,12 @@ interface SapTableProps {
   endpoint: string;
   columns: { key: string; label: string }[];
   defaultSort?: string;
+  exportFilename?: string;
+  aliadoFilter?: boolean;
+  onFechaCargaChange?: (fecha: string | null) => void;
 }
 
-function SapTable({ endpoint, columns, defaultSort = "" }: SapTableProps) {
+function SapTable({ endpoint, columns, defaultSort = "", exportFilename = "export", aliadoFilter = false, onFechaCargaChange }: SapTableProps) {
   const [search, setSearch] = useState("");
   const [inputValue, setInputValue] = useState("");
   const [page, setPage] = useState(1);
@@ -39,9 +43,11 @@ function SapTable({ endpoint, columns, defaultSort = "" }: SapTableProps) {
   const [sortBy, setSortBy] = useState(defaultSort);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [goToPage, setGoToPage] = useState("");
+  const [exporting, setExporting] = useState(false);
+  const [aliadoValue, setAliadoValue] = useState<string>("todos");
 
   const { data, isLoading, isError } = useQuery<SapPage>({
-    queryKey: [endpoint, page, limit, search, sortBy, sortOrder],
+    queryKey: [endpoint, page, limit, search, sortBy, sortOrder, aliadoValue],
     queryFn: async () => {
       const params = new URLSearchParams({
         page: page.toString(),
@@ -50,6 +56,9 @@ function SapTable({ endpoint, columns, defaultSort = "" }: SapTableProps) {
         sortBy,
         sortOrder,
       });
+      if (aliadoFilter && aliadoValue !== "todos") {
+        params.append("aliado", aliadoValue);
+      }
       const res = await fetch(`${endpoint}?${params}`);
       if (!res.ok) throw new Error("Error fetching data");
       return res.json();
@@ -59,6 +68,13 @@ function SapTable({ endpoint, columns, defaultSort = "" }: SapTableProps) {
   const rows = data?.data ?? [];
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / limit));
+
+  // Notificar cambios en fechaCarga
+  useEffect(() => {
+    if (data?.fechaCarga && onFechaCargaChange) {
+      onFechaCargaChange(data.fechaCarga);
+    }
+  }, [data?.fechaCarga, onFechaCargaChange]);
 
   const handleSearch = () => {
     setSearch(inputValue);
@@ -92,6 +108,50 @@ function SapTable({ endpoint, columns, defaultSort = "" }: SapTableProps) {
       setPage(n);
     }
     setGoToPage("");
+  };
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const params = new URLSearchParams({
+        page: "1",
+        limit: "99999",
+        search,
+        sortBy,
+        sortOrder,
+      });
+      if (aliadoFilter && aliadoValue !== "todos") {
+        params.append("aliado", aliadoValue);
+      }
+      const res = await fetch(`${endpoint}?${params}`);
+      if (!res.ok) throw new Error("Error fetching data");
+      const json: SapPage = await res.json();
+
+      const header = columns.map(c => `"${c.label.replace(/"/g, '""')}"`).join(",");
+      const rowLines = json.data.map(row =>
+        columns.map(c => {
+          const val = row[c.key] != null ? String(row[c.key]) : "";
+          return val.includes(",") || val.includes('"') || val.includes("\n")
+            ? `"${val.replace(/"/g, '""')}"`
+            : val;
+        }).join(",")
+      );
+
+      const csv = [header, ...rowLines].join("\n");
+      const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${exportFilename}_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error("Export error:", e);
+    } finally {
+      setExporting(false);
+    }
   };
 
   const SortIcon = ({ col }: { col: string }) => {
@@ -128,6 +188,18 @@ function SapTable({ endpoint, columns, defaultSort = "" }: SapTableProps) {
           </Button>
         )}
 
+        {aliadoFilter && (
+          <Select value={aliadoValue} onValueChange={(val) => { setAliadoValue(val); setPage(1); }}>
+            <SelectTrigger className="h-8 w-[130px] text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos</SelectItem>
+              <SelectItem value="TELQWAY">TELQWAY</SelectItem>
+            </SelectContent>
+          </Select>
+        )}
+
         <Select value={String(limit)} onValueChange={handleLimitChange}>
           <SelectTrigger className="h-8 w-[90px] text-xs">
             <SelectValue />
@@ -145,6 +217,20 @@ function SapTable({ endpoint, columns, defaultSort = "" }: SapTableProps) {
             <span className="ml-2 text-slate-300">— Carga: {fechaCargaStr}</span>
           )}
         </span>
+
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-8 text-xs px-3 gap-1.5 shrink-0"
+          onClick={handleExport}
+          disabled={exporting || total === 0}
+          title="Exportar a CSV"
+        >
+          {exporting
+            ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            : <Download className="h-3.5 w-3.5" />}
+          {exporting ? "Exportando..." : "Exportar CSV"}
+        </Button>
       </div>
 
       {/* Tabla */}
@@ -258,6 +344,7 @@ function SapTable({ endpoint, columns, defaultSort = "" }: SapTableProps) {
 const COLS_STOCK_ALL = [
   { key: "ALIADO",                  label: "Aliado" },
   { key: "Denominación-almacén",    label: "Almacén" },
+  { key: "Nombre_Zona",             label: "Zona" },
   { key: "Material",                label: "Material" },
   { key: "Texto breve de material", label: "Descripción" },
   { key: "Centro",                  label: "Centro" },
@@ -324,6 +411,8 @@ const COLS_ASIGNACION = [
 // ─── Página ───────────────────────────────────────────────────────────────────
 
 export default function FlujoLogistico() {
+  const [fechaCargaValorizado, setFechaCargaValorizado] = useState<string | null>(null);
+
   return (
     <SupervisorLayout>
       <div className="p-6 space-y-5">
@@ -340,55 +429,93 @@ export default function FlujoLogistico() {
           </div>
         </div>
 
-        {/* Tabs */}
-        <Tabs defaultValue="stock-all">
-          <TabsList className="h-9">
-            <TabsTrigger value="stock-all" className="text-xs">Stock All</TabsTrigger>
-            <TabsTrigger value="maestro" className="text-xs">Maestro Códigos</TabsTrigger>
-            <TabsTrigger value="valorizado" className="text-xs">Stock Valorizado</TabsTrigger>
-            <TabsTrigger value="asignacion" className="text-xs">Asignación Técnicos</TabsTrigger>
-          </TabsList>
+        {/* Layout de 2 columnas */}
+        <div className="flex gap-5">
 
-          <TabsContent value="stock-all" className="mt-4">
+          {/* Columna Izquierda: Tabs de Stock (65%) */}
+          <div className="flex-[65] min-w-0">
+            <Tabs defaultValue="stock-all">
+              <TabsList className="h-9">
+                <TabsTrigger value="stock-all" className="text-xs">Stock Claro Día 0</TabsTrigger>
+                <TabsTrigger value="valorizado" className="text-xs">Stock Valorizado</TabsTrigger>
+                <TabsTrigger value="asignacion" className="text-xs">Asignación Técnicos</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="stock-all" className="mt-4 data-[state=inactive]:hidden" forceMount>
+                <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">sap_stock_all</h2>
+                    <Badge variant="outline" className="text-xs font-normal">~2,600 registros / carga</Badge>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <SapTable key="stock-all-table" endpoint="/api/sap/stock-all" columns={COLS_STOCK_ALL} defaultSort="ALIADO" exportFilename="stock_claro_dia0" aliadoFilter={true} />
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="valorizado" className="mt-4 data-[state=inactive]:hidden" forceMount>
+                <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+
+                  {/* KPI de Fecha de Carga */}
+                  {fechaCargaValorizado && (
+                    <div className="mb-4 flex items-center gap-3">
+                      <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                        <Calendar className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                        <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                          Fecha de Carga:
+                        </span>
+                        <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
+                          {new Date(fechaCargaValorizado).toLocaleDateString("es-CL")}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">sap_stock_valorizado</h2>
+                    <Badge variant="outline" className="text-xs font-normal">~22,600 registros / carga</Badge>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <SapTable
+                      key="valorizado-table"
+                      endpoint="/api/sap/stock-valorizado"
+                      columns={COLS_VALORIZADO}
+                      defaultSort="Material"
+                      exportFilename="stock_valorizado"
+                      onFechaCargaChange={setFechaCargaValorizado}
+                    />
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="asignacion" className="mt-4 data-[state=inactive]:hidden" forceMount>
+                <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">TB_SAP_ASIGNACION_TECNICOS</h2>
+                    <Badge variant="outline" className="text-xs font-normal">~44,000 registros / carga</Badge>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <SapTable key="asignacion-table" endpoint="/api/sap/asignacion-tecnicos" columns={COLS_ASIGNACION} defaultSort="Nombre 1" exportFilename="asignacion_tecnicos" />
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </div>
+
+          {/* Columna Derecha: Maestro Códigos (fijo, 35%) */}
+          <div className="flex-[35] min-w-0">
             <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">sap_stock_all</h2>
-                <Badge variant="outline" className="text-xs font-normal">~2,600 registros / carga</Badge>
+                <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Maestro Códigos</h2>
+                <Badge variant="outline" className="text-xs font-normal">680 SKUs únicos</Badge>
               </div>
-              <SapTable endpoint="/api/sap/stock-all" columns={COLS_STOCK_ALL} defaultSort="ALIADO" />
+              <div className="overflow-x-auto">
+                <SapTable key="maestro-table" endpoint="/api/sap/maestro-codigos" columns={COLS_MAESTRO} defaultSort="SKU" exportFilename="maestro_codigos" />
+              </div>
             </div>
-          </TabsContent>
+          </div>
 
-          <TabsContent value="maestro" className="mt-4">
-            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">sap_maestroCodigos</h2>
-                <Badge variant="outline" className="text-xs font-normal">657 SKUs únicos</Badge>
-              </div>
-              <SapTable endpoint="/api/sap/maestro-codigos" columns={COLS_MAESTRO} defaultSort="SKU" />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="valorizado" className="mt-4">
-            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">sap_stock_valorizado</h2>
-                <Badge variant="outline" className="text-xs font-normal">~22,600 registros / carga</Badge>
-              </div>
-              <SapTable endpoint="/api/sap/stock-valorizado" columns={COLS_VALORIZADO} defaultSort="Material" />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="asignacion" className="mt-4">
-            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">TB_SAP_ASIGNACION_TECNICOS</h2>
-                <Badge variant="outline" className="text-xs font-normal">~44,000 registros / carga</Badge>
-              </div>
-              <SapTable endpoint="/api/sap/asignacion-tecnicos" columns={COLS_ASIGNACION} defaultSort="Nombre 1" />
-            </div>
-          </TabsContent>
-        </Tabs>
+        </div>
       </div>
     </SupervisorLayout>
   );

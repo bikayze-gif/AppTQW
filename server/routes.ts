@@ -1154,6 +1154,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // POST create material solicitud
   // GET material solicitudes
+  // TEMPORARILY DISABLED - Query optimization needed (17+ min execution time blocking DB)
+  // TODO: Add indexes and optimize query with multiple JOINs
+  /*
   app.get("/api/materials/solicitudes", requireAuth, async (req, res) => {
     try {
       const userId = req.session.user?.id;
@@ -1166,6 +1169,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error fetching material solicitudes:", error);
       res.status(500).json({ error: "No se pudieron obtener las solicitudes" });
     }
+  });
+  */
+
+  // Temporary endpoint returning empty array until optimization is complete
+  app.get("/api/materials/solicitudes", requireAuth, async (req, res) => {
+    res.json([]);
   });
 
   app.get("/api/materials/technicians", requireAuth, async (req, res) => {
@@ -2099,7 +2108,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const search = (req.query.search as string) || "";
       const sortBy = (req.query.sortBy as string) || "FECHA_CARGA";
       const sortOrder = (req.query.sortOrder as string) === "asc" ? "asc" : "desc";
-      const result = await storage.getSapStockAll({ page, limit, search, sortBy, sortOrder });
+      const aliado = (req.query.aliado as string) || undefined;
+      const result = await storage.getSapStockAll({ page, limit, search, sortBy, sortOrder, aliado });
       res.json(result);
     } catch (error) {
       console.error("[SAP StockAll] Error:", error);

@@ -1,0 +1,36 @@
+2026-02-23 14:20:50,670 - INFO - ============================================================
+2026-02-23 14:20:50,670 - INFO - INICIO: SAP Maestro Codigos -> MySQL [sap_maestroCodigos]
+2026-02-23 14:20:50,670 - INFO - FECHA_CARGA de esta corrida: 2026-02-23 14:20:50
+2026-02-23 14:20:50,670 - INFO - ============================================================
+2026-02-23 14:20:50,670 - INFO - Conectando a SQL Server y leyendo tabla: sap_maestroCodigos
+2026-02-23 14:20:50,685 - INFO - Configuración cargada desde: C:\Users\pc\Nextcloud\03 Reportes Operaciones\02FlujosDatos\global_config.json
+2026-02-23 14:20:50,686 - ERROR - ERROR al leer desde SQL Server: 'ConfigManager' object has no attribute 'databases'
+2026-02-23 14:20:50,686 - ERROR - ERROR FATAL: 'ConfigManager' object has no attribute 'databases'
+2026-02-23 14:21:23,691 - INFO - ============================================================
+2026-02-23 14:21:23,691 - INFO - INICIO: SAP Maestro Codigos -> MySQL [sap_maestroCodigos]
+2026-02-23 14:21:23,691 - INFO - FECHA_CARGA de esta corrida: 2026-02-23 14:21:23
+2026-02-23 14:21:23,691 - INFO - ============================================================
+2026-02-23 14:21:23,691 - INFO - Conectando a SQL Server y leyendo tabla: sap_maestroCodigos
+2026-02-23 14:21:23,691 - INFO - Configuración cargada desde: C:\Users\pc\Nextcloud\03 Reportes Operaciones\02FlujosDatos\global_config.json
+2026-02-23 14:21:54,884 - WARNING - Fallo conexion a sqlserver_main: ('08001', '[08001] [Microsoft][ODBC Driver 17 for SQL Server]Named Pipes Provider: Could not open a connection to SQL Server [64].  (64) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 17 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 17 for SQL Server]A network-related or instance-specific error has occurred while establishing a connection to SQL Server. Server is not found or not accessible. Check if instance name is correct and if SQL Server is configured to allow remote connections. For more information see SQL Server Books Online. (64)')
+2026-02-23 14:21:55,225 - INFO - Conexion establecida: sqlserver_alt
+2026-02-23 14:21:56,064 - INFO - Filas leidas: 680 | Columnas: 11
+2026-02-23 14:21:56,064 - INFO - Columnas: ['ITEM_CODE_FROM', 'ITEM_DESC_FROM', 'UDM_FROM', 'SERIADO_FROM', 'ITEM_ID_FROM', 'ITEM_CODE_TO', 'ITEM_DESC_TO', 'UDM_TO', 'SERIADO_TO', 'ITEM_ID_TO', 'SKU']
+2026-02-23 14:21:56,064 - INFO - Limpiando datos (NaN -> None)...
+2026-02-23 14:21:56,069 - INFO - Conectando a MySQL...
+2026-02-23 14:21:56,397 - INFO - Conexion establecida: mysql_main
+2026-02-23 14:21:56,424 - INFO - Verificando existencia de `sap_maestroCodigos`...
+2026-02-23 14:21:56,544 - INFO - Tabla existente con 1 cargas previas (675 filas acumuladas).
+2026-02-23 14:21:56,544 - INFO - Insertando 680 filas en 1 lote(s) de 1000...
+2026-02-23 14:21:56,848 - INFO -   Lote 1/1 -> 680/680 filas insertadas
+2026-02-23 14:21:56,885 - INFO - ============================================================
+2026-02-23 14:21:56,885 - INFO - COMPLETADO exitosamente.
+2026-02-23 14:21:56,885 - INFO -   Tabla:      sap_maestroCodigos
+2026-02-23 14:21:56,886 - INFO -   Esta carga: 680 filas | FECHA_CARGA = 2026-02-23 14:21:23
+2026-02-23 14:21:56,886 - INFO -   Tiempo:     0:00:33.193291
+2026-02-23 14:21:56,886 - INFO - 
+2026-02-23 14:21:56,886 - INFO -   Historial de cargas (2 corridas):
+2026-02-23 14:21:56,886 - INFO -     2026-02-23 14:21:23  |  680 filas <-- ESTA CORRIDA
+2026-02-23 14:21:56,886 - INFO -     2026-02-18 09:38:01  |  675 filas
+2026-02-23 14:21:56,886 - INFO - ============================================================
+2026-02-23 14:21:56,886 - INFO - ETL finalizado: 680 filas | FECHA_CARGA=2026-02-23 14:21:23 | tiempo=0:00:33.193291

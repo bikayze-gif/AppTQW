@@ -13,7 +13,12 @@
       "WebSearch",
       "mcp__sqlserver-database__list_tables",
       "mcp__sqlserver-database__describe_table",
-      "mcp__sqlserver-database__read_query"
+      "mcp__sqlserver-database__read_query",
+      "mcp__matirepuestos__connect_db",
+      "mcp__matirepuestos__query",
+      "Bash(ssh tqw-prod \"cd /var/www/apptqw && git pull origin main && npm install && export NODE_OPTIONS=--max-old-space-size=1536 && npm run build && pm2 restart apptqw && pm2 status\")",
+      "Bash(ssh:*)",
+      "mcp__matirepuestos__list_tables"
     ]
   }
 }
