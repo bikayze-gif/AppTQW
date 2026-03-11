@@ -15,7 +15,7 @@ const pool = mysql.createPool({
   database: dbConfig.database,
   timezone: "-03:00",
   waitForConnections: true,
-  connectionLimit: 15, // Increased from 10 to give more margin
+  connectionLimit: 30, // Support up to 40 concurrent users (75% buffer)
   maxIdle: 5, // Reduced from 10 to force cleanup of idle connections
   idleTimeout: 10000, // Reduced from 60s to 10s - close idle connections faster
   queueLimit: 0,
