@@ -15,12 +15,12 @@ const pool = mysql.createPool({
   database: dbConfig.database,
   timezone: "-03:00",
   waitForConnections: true,
-  connectionLimit: 10,
-  maxIdle: 10,
-  idleTimeout: 60000,
+  connectionLimit: 15, // Increased from 10 to give more margin
+  maxIdle: 5, // Reduced from 10 to force cleanup of idle connections
+  idleTimeout: 10000, // Reduced from 60s to 10s - close idle connections faster
   queueLimit: 0,
   enableKeepAlive: true,
-  keepAliveInitialDelay: 10000,
+  keepAliveInitialDelay: 5000, // Reduced from 10s to 5s - detect dead connections faster
 });
 
 const db = drizzle(pool, { schema, mode: "default" });
@@ -3355,29 +3355,43 @@ export class MySQLStorage implements IStorage {
   // SAP FLUJO LOGÍSTICO — tablas SAP (MySQL)
   // ============================================
 
-  async getSapStockAll(params: { page: number; limit: number; search: string; sortBy: string; sortOrder: string }): Promise<{ data: any[]; total: number; fechaCarga: string | null }> {
-    const allowed = ["Material", "Denominacion_almacen", "ALIADO", "Stock_SAP_DISPONIBLE", "Stock_Bodega", "Stock_Total", "FECHA_CARGA"];
+  async getSapStockAll(params: { page: number; limit: number; search: string; sortBy: string; sortOrder: string; aliado?: string }): Promise<{ data: any[]; total: number; fechaCarga: string | null }> {
+    const allowed = ["Material", "Denominacion_almacen", "ALIADO", "Stock_SAP_DISPONIBLE", "Stock_Bodega", "Stock_Total", "FECHA_CARGA", "Nombre_Zona"];
     const col = allowed.includes(params.sortBy) ? params.sortBy : "FECHA_CARGA";
     const dir = params.sortOrder === "asc" ? "ASC" : "DESC";
     const offset = (params.page - 1) * params.limit;
     const like = `%${params.search}%`;
 
+    // Construir filtro de ALIADO si está presente
+    const aliadoCondition = params.aliado ? "AND a.ALIADO = ?" : "";
+    const aliadoParams = params.aliado ? [params.aliado] : [];
+
     const [countRows] = await pool.execute(
-      `SELECT COUNT(*) as total, MAX(FECHA_CARGA) as fecha_carga FROM sap_stock_all
-       WHERE FECHA_CARGA = (SELECT MAX(FECHA_CARGA) FROM sap_stock_all)
-         AND (ALIADO LIKE ? OR \`Denominación-almacén\` LIKE ? OR \`Texto breve de material\` LIKE ? OR Material LIKE ?)`,
-      [like, like, like, like]
+      `SELECT COUNT(*) as total, MAX(a.FECHA_CARGA) as fecha_carga
+       FROM sap_stock_all a
+       LEFT JOIN sap_tp_centros_almacen ca
+         ON a.Centro = ca.Centro AND a.Almacén = ca.Almacén
+         AND ca.FECHA_CARGA = (SELECT MAX(FECHA_CARGA) FROM sap_tp_centros_almacen)
+       WHERE a.FECHA_CARGA = (SELECT MAX(FECHA_CARGA) FROM sap_stock_all)
+         AND (a.ALIADO LIKE ? OR a.\`Denominación-almacén\` LIKE ? OR a.\`Texto breve de material\` LIKE ? OR a.Material LIKE ? OR ca.Nombre_Zona LIKE ?)
+         ${aliadoCondition}`,
+      [...[like, like, like, like, like], ...aliadoParams]
     );
     const total = (countRows as any[])[0].total;
     const fechaCarga = (countRows as any[])[0].fecha_carga;
 
     const [rows] = await pool.execute(
-      `SELECT * FROM sap_stock_all
-       WHERE FECHA_CARGA = (SELECT MAX(FECHA_CARGA) FROM sap_stock_all)
-         AND (ALIADO LIKE ? OR \`Denominación-almacén\` LIKE ? OR \`Texto breve de material\` LIKE ? OR Material LIKE ?)
+      `SELECT a.*, ca.Nombre_Zona
+       FROM sap_stock_all a
+       LEFT JOIN sap_tp_centros_almacen ca
+         ON a.Centro = ca.Centro AND a.Almacén = ca.Almacén
+         AND ca.FECHA_CARGA = (SELECT MAX(FECHA_CARGA) FROM sap_tp_centros_almacen)
+       WHERE a.FECHA_CARGA = (SELECT MAX(FECHA_CARGA) FROM sap_stock_all)
+         AND (a.ALIADO LIKE ? OR a.\`Denominación-almacén\` LIKE ? OR a.\`Texto breve de material\` LIKE ? OR a.Material LIKE ? OR ca.Nombre_Zona LIKE ?)
+         ${aliadoCondition}
        ORDER BY \`${col}\` ${dir}
        LIMIT ${params.limit} OFFSET ${offset}`,
-      [like, like, like, like]
+      [...[like, like, like, like, like], ...aliadoParams]
     );
     return { data: rows as any[], total, fechaCarga };
   }
