@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { BottomNav } from "@/components/bottom-nav";
-import { AlertCircle, ChevronUp, ChevronDown, Wrench, Clock, X } from "lucide-react";
+import { AlertCircle, ChevronUp, ChevronDown, Wrench, Clock } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/lib/auth-context";
 import { MaterialForm } from "@/components/material-form";
 import { useLocation } from "wouter";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 const GLOBAL_PERIODO = "202602";
 
@@ -128,7 +128,6 @@ export default function PeriodInfo() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showMaterialForm, setShowMaterialForm] = useState(false);
-  const [showMaintenanceModal, setShowMaintenanceModal] = useState(true);
   const countdown = useCountdown(MAINTENANCE_END);
 
   // 🔒 GUARDIA DE SESIÓN: Redirigir a login si no hay usuario autenticado
@@ -357,39 +356,26 @@ export default function PeriodInfo() {
 
       <BottomNav />
 
-      {/* Modal de Mantenimiento */}
-      <AnimatePresence>
-        {showMaintenanceModal && (
-          <>
-            {/* Backdrop — z-[48] para no tapar el BottomNav (z-50) */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/60 backdrop-blur-md z-[48]"
-            />
+      {/* Modal de Mantenimiento — no se puede cerrar */}
+      <>
+        {/* Backdrop — z-[48] para no tapar el BottomNav (z-50) */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="fixed inset-0 bg-black/60 backdrop-blur-md z-[48]"
+        />
 
-            {/* Modal — mismo z-index, el BottomNav queda por encima */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.92, y: 16 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.92, y: 16 }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="fixed inset-0 flex items-center justify-center z-[48] px-5 pb-20"
-            >
+        {/* Modal */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.92, y: 16 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          className="fixed inset-0 flex items-center justify-center z-[48] px-5 pb-20"
+        >
               <div className="relative w-full max-w-sm rounded-2xl border border-white/20 bg-white/10 backdrop-blur-2xl shadow-2xl shadow-black/40 p-6 overflow-hidden">
                 {/* Glow decorativo */}
                 <div className="absolute -top-12 -left-12 w-40 h-40 bg-amber-500/20 rounded-full blur-3xl pointer-events-none" />
                 <div className="absolute -bottom-10 -right-10 w-36 h-36 bg-cyan-500/20 rounded-full blur-3xl pointer-events-none" />
-
-                {/* Botón cerrar */}
-                <button
-                  onClick={() => setShowMaintenanceModal(false)}
-                  className="absolute top-4 right-4 text-white/40 hover:text-white/80 transition-colors"
-                  aria-label="Cerrar"
-                >
-                  <X size={18} />
-                </button>
 
                 {/* Ícono */}
                 <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-amber-500/20 border border-amber-400/30 mb-4 mx-auto">
@@ -436,18 +422,9 @@ export default function PeriodInfo() {
                   </div>
                 )}
 
-                {/* Botón */}
-                <button
-                  onClick={() => setShowMaintenanceModal(false)}
-                  className="w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold text-sm hover:opacity-90 active:scale-[0.98] transition-all shadow-lg shadow-cyan-500/30"
-                >
-                  Entendido
-                </button>
               </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+        </motion.div>
+      </>
     </div>
   );
 }
