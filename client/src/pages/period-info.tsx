@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { BottomNav } from "@/components/bottom-nav";
-import { AlertCircle, ChevronUp, ChevronDown } from "lucide-react";
+import { AlertCircle, ChevronUp, ChevronDown, Wrench, Clock, X } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/lib/auth-context";
 import { MaterialForm } from "@/components/material-form";
 import { useLocation } from "wouter";
+import { motion, AnimatePresence } from "framer-motion";
 
 const GLOBAL_PERIODO = "202602";
 
@@ -97,6 +98,29 @@ function CollapsibleSection({ title, isOpen, onToggle, children }: CollapsibleSe
   );
 }
 
+// Fecha fin de mantenimiento: 13 de marzo de 2026 a las 12:30 GMT-3
+const MAINTENANCE_END = new Date("2026-03-13T15:30:00Z");
+
+function useCountdown(target: Date) {
+  const [remaining, setRemaining] = useState(() => Math.max(0, target.getTime() - Date.now()));
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const diff = Math.max(0, target.getTime() - Date.now());
+      setRemaining(diff);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [target]);
+
+  const totalSeconds = Math.floor(remaining / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const expired = remaining === 0;
+
+  return { hours, minutes, seconds, expired };
+}
+
 export default function PeriodInfo() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
@@ -104,6 +128,8 @@ export default function PeriodInfo() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showMaterialForm, setShowMaterialForm] = useState(false);
+  const [showMaintenanceModal, setShowMaintenanceModal] = useState(true);
+  const countdown = useCountdown(MAINTENANCE_END);
 
   // 🔒 GUARDIA DE SESIÓN: Redirigir a login si no hay usuario autenticado
   useEffect(() => {
@@ -330,6 +356,98 @@ export default function PeriodInfo() {
       />
 
       <BottomNav />
+
+      {/* Modal de Mantenimiento */}
+      <AnimatePresence>
+        {showMaintenanceModal && (
+          <>
+            {/* Backdrop — z-[48] para no tapar el BottomNav (z-50) */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-md z-[48]"
+            />
+
+            {/* Modal — mismo z-index, el BottomNav queda por encima */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 16 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="fixed inset-0 flex items-center justify-center z-[48] px-5 pb-20"
+            >
+              <div className="relative w-full max-w-sm rounded-2xl border border-white/20 bg-white/10 backdrop-blur-2xl shadow-2xl shadow-black/40 p-6 overflow-hidden">
+                {/* Glow decorativo */}
+                <div className="absolute -top-12 -left-12 w-40 h-40 bg-amber-500/20 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute -bottom-10 -right-10 w-36 h-36 bg-cyan-500/20 rounded-full blur-3xl pointer-events-none" />
+
+                {/* Botón cerrar */}
+                <button
+                  onClick={() => setShowMaintenanceModal(false)}
+                  className="absolute top-4 right-4 text-white/40 hover:text-white/80 transition-colors"
+                  aria-label="Cerrar"
+                >
+                  <X size={18} />
+                </button>
+
+                {/* Ícono */}
+                <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-amber-500/20 border border-amber-400/30 mb-4 mx-auto">
+                  <Wrench size={28} className="text-amber-400" />
+                </div>
+
+                {/* Título */}
+                <h2 className="text-center text-lg font-bold text-white mb-1">
+                  Módulo en Mantenimiento
+                </h2>
+                <p className="text-center text-slate-300 text-xs mb-5 leading-relaxed">
+                  Esta página está siendo actualizada actualmente. Los datos de comisiones y producción del período están siendo procesados y pueden no estar disponibles de forma temporal.
+                </p>
+
+                {/* Fecha estimada */}
+                <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-4 py-3 mb-4">
+                  <Clock size={15} className="text-cyan-400 flex-shrink-0" />
+                  <div>
+                    <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">Disponible estimado</p>
+                    <p className="text-sm font-semibold text-white">Viernes 13 de marzo · 12:30 hrs</p>
+                  </div>
+                </div>
+
+                {/* Countdown */}
+                {!countdown.expired ? (
+                  <div className="grid grid-cols-3 gap-2 mb-5">
+                    {[
+                      { value: countdown.hours, label: "Horas" },
+                      { value: countdown.minutes, label: "Minutos" },
+                      { value: countdown.seconds, label: "Segundos" },
+                    ].map(({ value, label }) => (
+                      <div key={label} className="flex flex-col items-center bg-white/5 border border-white/10 rounded-xl py-2.5">
+                        <span className="text-2xl font-bold text-white tabular-nums">
+                          {String(value).padStart(2, "0")}
+                        </span>
+                        <span className="text-[9px] text-slate-400 uppercase tracking-wider mt-0.5">{label}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="bg-green-500/10 border border-green-500/30 rounded-xl px-4 py-3 mb-5 text-center">
+                    <p className="text-green-400 text-sm font-semibold">✓ Mantenimiento finalizado</p>
+                    <p className="text-slate-300 text-xs mt-0.5">Por favor recarga la página</p>
+                  </div>
+                )}
+
+                {/* Botón */}
+                <button
+                  onClick={() => setShowMaintenanceModal(false)}
+                  className="w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold text-sm hover:opacity-90 active:scale-[0.98] transition-all shadow-lg shadow-cyan-500/30"
+                >
+                  Entendido
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
