@@ -1,9 +1,10 @@
 import { SupervisorLayout } from "@/components/supervisor/supervisor-layout";
+import * as XLSX from "xlsx";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Loader2, AlertCircle, X, Package, ChevronRight, Check, X as XIcon, RotateCcw, Search, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Loader2, AlertCircle, X, Package, ChevronRight, Check, X as XIcon, RotateCcw, Search, ArrowUpDown, ArrowUp, ArrowDown, Download } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
     Table,
@@ -157,6 +158,32 @@ export default function SupervisorModuloLogistico() {
         updateStatusMutation.mutate({ id, status: 'rejected' });
     };
 
+    const downloadXLSX = () => {
+        const rows = filteredAndSortedSolicitudes.map((s) => ({
+            "Ticket": s.TICKET,
+            "Fecha": s.fecha ? format(new Date(s.fecha), "dd/MM/yyyy HH:mm", { locale: es }) : "-",
+            "Origen": s.tecnicoOrigen || `ID: ${s.tecnico}`,
+            "Destino": s.tecnicoDestino || (s.id_tecnico_traspaso === 0 ? "Bodega" : "-"),
+            "Región": s.flag_regiones || "-",
+            "Items": s.total_items,
+            "Cant. Total": s.total_cantidad,
+            "Gest. Supervisor": s.flag_gestion_supervisor === 1 ? "Aprobado" : s.flag_gestion_supervisor === 0 ? "Pendiente" : "-",
+            "Estado Bodega": s.ESTADO_BODEGA,
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(rows);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Logística");
+
+        // Auto-width columns
+        const colWidths = Object.keys(rows[0] ?? {}).map((key) => ({
+            wch: Math.max(key.length, ...rows.map((r) => String(r[key as keyof typeof r] ?? "").length)) + 2,
+        }));
+        worksheet["!cols"] = colWidths;
+
+        XLSX.writeFile(workbook, `logistica_${startDate}_${endDate}.xlsx`);
+    };
+
     return (
         <SupervisorLayout>
             <div className="flex h-[calc(100vh-4rem)]">
@@ -264,19 +291,31 @@ export default function SupervisorModuloLogistico() {
                                         />
                                     </div>
                                 </div>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                        setStartDate(twoDaysAgoStr);
-                                        setEndDate(todayStr);
-                                        setSearchTerm("");
-                                    }}
-                                    className="h-9 text-xs gap-2 ml-auto"
-                                >
-                                    <RotateCcw className="h-3.5 w-3.5" />
-                                    Restablecer
-                                </Button>
+                                <div className="flex items-center gap-2 ml-auto">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                            setStartDate(twoDaysAgoStr);
+                                            setEndDate(todayStr);
+                                            setSearchTerm("");
+                                        }}
+                                        className="h-9 text-xs gap-2"
+                                    >
+                                        <RotateCcw className="h-3.5 w-3.5" />
+                                        Restablecer
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={downloadXLSX}
+                                        disabled={!filteredAndSortedSolicitudes.length}
+                                        className="h-9 text-xs gap-2 text-green-700 border-green-300 hover:bg-green-50 dark:text-green-400 dark:border-green-700 dark:hover:bg-green-900/20"
+                                    >
+                                        <Download className="h-3.5 w-3.5" />
+                                        Descargar Excel
+                                    </Button>
+                                </div>
                             </div>
 
                             <Card>
