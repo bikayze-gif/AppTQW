@@ -159,29 +159,40 @@ export default function SupervisorModuloLogistico() {
     };
 
     const downloadXLSX = () => {
-        const rows = filteredAndSortedSolicitudes.map((s) => ({
-            "Ticket": s.TICKET,
-            "Fecha": s.fecha ? format(new Date(s.fecha), "dd/MM/yyyy HH:mm", { locale: es }) : "-",
-            "Origen": s.tecnicoOrigen || `ID: ${s.tecnico}`,
-            "Destino": s.tecnicoDestino || (s.id_tecnico_traspaso === 0 ? "Bodega" : "-"),
-            "Región": s.flag_regiones || "-",
-            "Items": s.total_items,
-            "Cant. Total": s.total_cantidad,
-            "Gest. Supervisor": s.flag_gestion_supervisor === 1 ? "Aprobado" : s.flag_gestion_supervisor === 0 ? "Pendiente" : "-",
-            "Estado Bodega": s.ESTADO_BODEGA,
-        }));
+        // Una fila por material, con datos del ticket repetidos en cada fila
+        const rows = filteredAndSortedSolicitudes.flatMap((s) => {
+            const fecha = s.fecha ? format(new Date(s.fecha), "dd/MM/yyyy HH:mm", { locale: es }) : "-";
+            const origen = s.tecnicoOrigen || `ID: ${s.tecnico}`;
+            const destino = s.tecnicoDestino || (s.id_tecnico_traspaso === 0 ? "Bodega" : "-");
+            const gestion = s.flag_gestion_supervisor === 1 ? "Aprobado" : s.flag_gestion_supervisor === 0 ? "Pendiente" : "-";
+
+            return s.items.map((item) => ({
+                "Ticket": s.TICKET,
+                "Fecha": fecha,
+                "Origen": origen,
+                "Destino": destino,
+                "Región": s.flag_regiones || "-",
+                "Estado Bodega": s.ESTADO_BODEGA,
+                "Gest. Supervisor": gestion,
+                "ID Material": item.campo_item || "-",
+                "Material": item.material,
+                "Cantidad": item.cantidad,
+            }));
+        });
+
+        if (!rows.length) return;
 
         const worksheet = XLSX.utils.json_to_sheet(rows);
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Logística");
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Detalle Materiales");
 
         // Auto-width columns
-        const colWidths = Object.keys(rows[0] ?? {}).map((key) => ({
+        const colWidths = Object.keys(rows[0]).map((key) => ({
             wch: Math.max(key.length, ...rows.map((r) => String(r[key as keyof typeof r] ?? "").length)) + 2,
         }));
         worksheet["!cols"] = colWidths;
 
-        XLSX.writeFile(workbook, `logistica_${startDate}_${endDate}.xlsx`);
+        XLSX.writeFile(workbook, `materiales_${startDate}_${endDate}.xlsx`);
     };
 
     return (
