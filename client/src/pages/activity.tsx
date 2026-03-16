@@ -209,7 +209,7 @@ export default function Activity() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [showDrawer, setShowDrawer] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedMonth, setSelectedMonth] = useState("202601"); // Default to January 2026
+  const [selectedMonth, setSelectedMonth] = useState("202603"); // Default to Marzo 2026
   const { user } = useAuth();
 
   const chartConfig = {
@@ -238,6 +238,7 @@ export default function Activity() {
     { value: "202512", label: "Diciembre 2025" },
     { value: "202601", label: "Enero 2026" },
     { value: "202602", label: "Febrero 2026" },
+    { value: "202603", label: "Marzo 2026" },
   ];
 
   const handleDownloadPDF = () => {
