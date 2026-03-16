@@ -98,8 +98,8 @@ function CollapsibleSection({ title, isOpen, onToggle, children }: CollapsibleSe
   );
 }
 
-// Fecha fin de mantenimiento: 13 de marzo de 2026 a las 12:30 GMT-3
-const MAINTENANCE_END = new Date("2026-03-13T15:30:00Z");
+// Fecha fin de mantenimiento: 16 de marzo de 2026 a las 15:00 GMT-3
+const MAINTENANCE_END = new Date("2026-03-16T18:00:00Z");
 
 function useCountdown(target: Date) {
   const [remaining, setRemaining] = useState(() => Math.max(0, target.getTime() - Date.now()));
@@ -395,7 +395,7 @@ export default function PeriodInfo() {
                   <Clock size={15} className="text-cyan-400 flex-shrink-0" />
                   <div>
                     <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">Disponible estimado</p>
-                    <p className="text-sm font-semibold text-white">Viernes 13 de marzo · 12:30 hrs</p>
+                    <p className="text-sm font-semibold text-white">Lunes 16 de marzo · 15:00 hrs</p>
                   </div>
                 </div>
 
