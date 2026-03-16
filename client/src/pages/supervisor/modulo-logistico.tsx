@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface MaterialItem {
     id: number;
@@ -56,6 +57,7 @@ export default function SupervisorModuloLogistico() {
     const [startDate, setStartDate] = useState<string>(twoDaysAgoStr);
     const [endDate, setEndDate] = useState<string>(todayStr);
     const [searchTerm, setSearchTerm] = useState("");
+    const [statusFilter, setStatusFilter] = useState<string>("all");
     const [sortConfig, setSortConfig] = useState<{
         key: keyof SolicitudLogistica | null;
         direction: "asc" | "desc";
@@ -113,9 +115,14 @@ export default function SupervisorModuloLogistico() {
         );
     };
 
+    const estadoOptions = solicitudes
+        ? ["all", ...Array.from(new Set(solicitudes.map((s) => s.ESTADO_BODEGA)))]
+        : ["all"];
+
     const filteredAndSortedSolicitudes = solicitudes
         ? solicitudes
             .filter((s) => {
+                if (statusFilter !== "all" && s.ESTADO_BODEGA !== statusFilter) return false;
                 const searchStr = searchTerm.toLowerCase();
                 return (
                     s.TICKET.toLowerCase().includes(searchStr) ||
@@ -291,6 +298,21 @@ export default function SupervisorModuloLogistico() {
                                         className="h-9 text-xs w-[160px] bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700"
                                     />
                                 </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs font-bold text-slate-500 uppercase tracking-tight">Estado:</span>
+                                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                                        <SelectTrigger className="h-9 text-xs w-[150px] bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                                            <SelectValue placeholder="Todos" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {estadoOptions.map((estado) => (
+                                                <SelectItem key={estado} value={estado} className="text-xs">
+                                                    {estado === "all" ? "Todos" : estado}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                                 <div className="flex items-center gap-2 ml-4 flex-1 max-w-sm">
                                     <div className="relative w-full">
                                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
@@ -310,6 +332,7 @@ export default function SupervisorModuloLogistico() {
                                             setStartDate(twoDaysAgoStr);
                                             setEndDate(todayStr);
                                             setSearchTerm("");
+                                            setStatusFilter("all");
                                         }}
                                         className="h-9 text-xs gap-2"
                                     >
