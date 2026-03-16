@@ -8,7 +8,7 @@ import { MaterialForm } from "@/components/material-form";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 
-const GLOBAL_PERIODO = "202602";
+const GLOBAL_PERIODO = "202603";
 
 interface TqwData {
   RutTecnicoOrig: string;
