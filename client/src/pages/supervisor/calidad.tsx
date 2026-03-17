@@ -252,9 +252,9 @@ export default function SupervisorCalidad() {
         });
 
         const periods = Array.from(periodsSet)
-            .filter(p => p.startsWith('2025'))
+            .filter(p => p >= '2025')
             .sort()
-            .reverse(); // Solo periodos del año 2025 ordenados por fecha descendente
+            .reverse(); // Periodos desde 2025 en adelante, ordenados descendente
         const companies = Array.from(companiesSet).sort();
 
         // Crear matriz de datos: empresas x periodos
