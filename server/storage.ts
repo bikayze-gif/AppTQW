@@ -977,10 +977,12 @@ export class MySQLStorage implements IStorage {
           tlts.flag_gestion_bodega,
           tlts.FLAG_BODEGA,
           MAX(tut.Nombre_short) as tecnicoOrigen,
-          MAX(tut2.Nombre_short) as tecnicoDestino
+          MAX(tut2.Nombre_short) as tecnicoDestino,
+          MAX(tmo.Familia) as familia
         FROM tb_logis_tecnico_solicitud tlts
         LEFT JOIN tb_user_tqw tut ON tut.id = tlts.tecnico
         LEFT JOIN tb_user_tqw tut2 ON tut2.id = tlts.id_tecnico_traspaso
+        LEFT JOIN tp_logistica_mat_oracle tmo ON tmo.Item = tlts.campo_item
         ${whereClause}
         GROUP BY 
           tlts.id, tlts.TICKET, tlts.material, tlts.cantidad, tlts.campo_item, 
@@ -1026,7 +1028,8 @@ export class MySQLStorage implements IStorage {
             id: item.id,
             material: item.material || '',
             cantidad: Number(item.cantidad) || 0,
-            campo_item: item.campo_item || ''
+            campo_item: item.campo_item || '',
+            familia: item.familia || ''
           });
         }
       });

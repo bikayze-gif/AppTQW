@@ -593,6 +593,11 @@ export default function SupervisorModuloLogistico() {
                                                             <span className="text-sm font-medium text-slate-900 dark:text-white leading-tight">
                                                                 {item.material}
                                                             </span>
+                                                            {item.familia && (
+                                                                <span className="text-[10px] font-bold text-cyan-600 dark:text-cyan-400 uppercase truncate">
+                                                                    {item.familia}
+                                                                </span>
+                                                            )}
                                                             {item.campo_item && (
                                                                 <code className="text-[10px] bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded w-fit text-slate-500">
                                                                     ID: {item.campo_item}
