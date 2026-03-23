@@ -543,24 +543,26 @@ export default function FlujoLogistico() {
 
   return (
     <SupervisorLayout>
-      <div className="flex gap-6">
+      <div className="flex gap-6 h-[calc(100vh-140px)] overflow-hidden">
         {/* Main Content */}
-        <div className="flex-1 p-6 space-y-5 min-w-0">
-        {/* Header */}
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center shrink-0">
-            <Route className="text-white" size={18} />
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          {/* Header - Fixed */}
+          <div className="p-6 pb-3 shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center shrink-0">
+                <Route className="text-white" size={18} />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-slate-800 dark:text-white">Flujo Logístico</h1>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Datos SAP sincronizados — última carga disponible
+                </p>
+              </div>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-slate-800 dark:text-white">Flujo Logístico</h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Datos SAP sincronizados — última carga disponible
-            </p>
-          </div>
-        </div>
 
-        {/* Tabs de todas las tablas SAP */}
-        <div>
+          {/* Tabs Container - Scrollable */}
+          <div className="flex-1 overflow-y-auto px-6 pb-6">
           <Tabs defaultValue="stock-all">
             <TabsList className="h-9">
               <TabsTrigger value="stock-all" className="text-xs">Stock Claro Día 0</TabsTrigger>
@@ -645,8 +647,9 @@ export default function FlujoLogistico() {
         </div>
 
         {/* Timeline Sidebar */}
-        <div className="w-96 shrink-0 p-6">
-          <div className="sticky top-6">
+        <div className="w-96 shrink-0 flex flex-col overflow-hidden">
+          {/* Sticky top replaced with flex layout */}
+          <div className="p-6 overflow-y-auto h-full">
             <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
