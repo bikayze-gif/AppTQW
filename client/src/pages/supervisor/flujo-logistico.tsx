@@ -13,8 +13,9 @@ import {
 } from "@/components/ui/select";
 import {
   Route, Search, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown,
-  Download, Loader2, Calendar,
+  Download, Loader2, Calendar, Package, Truck, CheckCircle, Clock, AlertCircle,
 } from "lucide-react";
+import { Timeline, TimelineEvent } from "@/components/ui/timeline";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -413,9 +414,138 @@ const COLS_ASIGNACION = [
 export default function FlujoLogistico() {
   const [fechaCargaValorizado, setFechaCargaValorizado] = useState<string | null>(null);
 
+  // Generar datos de timeline con fechas relativas a hoy
+  const getMockLogisticTimeline = (): TimelineEvent[] => {
+    const today = new Date();
+    today.setHours(15, 25, 0, 0); // Aproximadamente a las 15:25
+
+    const formatDate = (date: Date) => date.toISOString().split('T')[0];
+    const formatTime = (date: Date) => date.toTimeString().slice(0, 5);
+
+    // Eventos basados en los 8 archivos Excel modificados
+    const excelEvents: TimelineEvent[] = [
+      {
+        id: "excel-1",
+        title: "Inventario Móviles 10-03-2026 V2 RM",
+        date: formatDate(today),
+        time: "15:27",
+        category: "personal",
+        status: "completed",
+        description: "Archivo Excel modificado: Actualización de inventario de móviles V2",
+      },
+      {
+        id: "excel-2",
+        title: "Series Antofa 11-03",
+        date: formatDate(today),
+        time: "15:27",
+        category: "deadline",
+        status: "completed",
+        description: "Archivo Excel modificado: Actualización de series Antofa",
+      },
+      {
+        id: "excel-3",
+        title: "Inventario Móviles 10-03-2026 RM",
+        date: formatDate(today),
+        time: "15:27",
+        category: "personal",
+        status: "completed",
+        description: "Archivo Excel modificado: Inventario de móviles versión original",
+      },
+      {
+        id: "excel-4",
+        title: "Inventario Móviles 11-03-2026 RM",
+        date: formatDate(today),
+        time: "15:27",
+        category: "personal",
+        status: "completed",
+        description: "Archivo Excel modificado: Inventario de móviles día 11",
+      },
+      {
+        id: "excel-5",
+        title: "Inventario Seriado 05-03 RM",
+        date: formatDate(today),
+        time: "15:26",
+        category: "personal",
+        status: "completed",
+        description: "Archivo Excel modificado: Inventario seriado del día 5",
+      },
+      {
+        id: "excel-6",
+        title: "Base Seriados por Bodegas - Inventario 04-03",
+        date: formatDate(today),
+        time: "15:26",
+        category: "meeting",
+        status: "completed",
+        description: "Archivo Excel modificado: Base de datos de seriados por bodega",
+      },
+      {
+        id: "excel-7",
+        title: "Inventario Los Andes 12-03",
+        date: formatDate(today),
+        time: "15:25",
+        category: "personal",
+        status: "completed",
+        description: "Archivo Excel modificado: Copia de inventario Los Andes",
+      },
+      {
+        id: "excel-8",
+        title: "Stock Ferretería RM 18-03",
+        date: formatDate(today),
+        time: "11:47",
+        category: "deadline",
+        status: "completed",
+        description: "Archivo Excel modificado: Inventario de stock ferretería",
+      },
+    ];
+
+    // Eventos existentes del sistema
+    const systemEvents: TimelineEvent[] = [
+      {
+        id: "sys-1",
+        title: "Stock Claro Día 0 Sincronizado",
+        date: formatDate(today),
+        time: "08:00",
+        duration: "5min",
+        category: "meeting",
+        status: "completed",
+        description: "Sincronización completada: 2,600 registros de stock SAP actualizados",
+      },
+      {
+        id: "sys-2",
+        title: "Alerta: Stock Crítico Material 45002001",
+        date: formatDate(today),
+        time: "09:30",
+        category: "deadline",
+        status: "upcoming",
+        description: "Material 'CABLE ACERO 3/8' bajo stock mínimo (5 unidades en bodega)",
+      },
+      {
+        id: "sys-3",
+        title: "Asignación de Técnicos Pendiente",
+        date: formatDate(new Date(today.getTime() + 86400000)),
+        time: "10:00",
+        duration: "1h",
+        category: "reminder",
+        status: "upcoming",
+        description: "Revisar asignación de equipos para 44 técnicos activos",
+      },
+    ];
+
+    // Combinar y ordenar por tiempo
+    return [...excelEvents, ...systemEvents].sort((a, b) => {
+      const timeA = a.date + 'T' + a.time;
+      const timeB = b.date + 'T' + b.time;
+      return timeB.localeCompare(timeA);
+    });
+  };
+
+  const mockLogisticTimeline = getMockLogisticTimeline();
+
   return (
     <SupervisorLayout>
-      <div className="p-6 space-y-5">
+      <div className="flex gap-6">
+        {/* Main Content */}
+        <div className="flex-1 p-6 space-y-5 min-w-0">
         {/* Header */}
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center shrink-0">
@@ -429,17 +559,15 @@ export default function FlujoLogistico() {
           </div>
         </div>
 
-        {/* Layout de 2 columnas */}
-        <div className="flex gap-5">
-
-          {/* Columna Izquierda: Tabs de Stock (65%) */}
-          <div className="flex-[65] min-w-0">
-            <Tabs defaultValue="stock-all">
-              <TabsList className="h-9">
-                <TabsTrigger value="stock-all" className="text-xs">Stock Claro Día 0</TabsTrigger>
-                <TabsTrigger value="valorizado" className="text-xs">Stock Valorizado</TabsTrigger>
-                <TabsTrigger value="asignacion" className="text-xs">Asignación Técnicos</TabsTrigger>
-              </TabsList>
+        {/* Tabs de todas las tablas SAP */}
+        <div>
+          <Tabs defaultValue="stock-all">
+            <TabsList className="h-9">
+              <TabsTrigger value="stock-all" className="text-xs">Stock Claro Día 0</TabsTrigger>
+              <TabsTrigger value="valorizado" className="text-xs">Stock Valorizado</TabsTrigger>
+              <TabsTrigger value="asignacion" className="text-xs">Asignación Técnicos</TabsTrigger>
+              <TabsTrigger value="maestro" className="text-xs">Maestro Códigos</TabsTrigger>
+            </TabsList>
 
               <TabsContent value="stock-all" className="mt-4 data-[state=inactive]:hidden" forceMount>
                 <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
@@ -499,22 +627,73 @@ export default function FlujoLogistico() {
                   </div>
                 </div>
               </TabsContent>
+
+              <TabsContent value="maestro" className="mt-4 data-[state=inactive]:hidden" forceMount>
+                <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Maestro Códigos</h2>
+                    <Badge variant="outline" className="text-xs font-normal">680 SKUs únicos</Badge>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <SapTable key="maestro-table" endpoint="/api/sap/maestro-codigos" columns={COLS_MAESTRO} defaultSort="SKU" exportFilename="maestro_codigos" />
+                  </div>
+                </div>
+              </TabsContent>
+
             </Tabs>
           </div>
+        </div>
 
-          {/* Columna Derecha: Maestro Códigos (fijo, 35%) */}
-          <div className="flex-[35] min-w-0">
-            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Maestro Códigos</h2>
-                <Badge variant="outline" className="text-xs font-normal">680 SKUs únicos</Badge>
+        {/* Timeline Sidebar */}
+        <div className="w-96 shrink-0 p-6">
+          <div className="sticky top-6">
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                  <Package className="text-white" size={16} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
+                    Actividad Logística
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Eventos y sincronizaciones
+                  </p>
+                </div>
               </div>
-              <div className="overflow-x-auto">
-                <SapTable key="maestro-table" endpoint="/api/sap/maestro-codigos" columns={COLS_MAESTRO} defaultSort="SKU" exportFilename="maestro_codigos" />
+              <Timeline events={mockLogisticTimeline} />
+            </div>
+
+            {/* Stats Summary */}
+            <div className="mt-4 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-200 dark:border-blue-800 p-4">
+              <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-200 mb-3">
+                Resumen del Día
+              </h4>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-500" />
+                    <span className="text-xs text-slate-600 dark:text-slate-300">Sincronizaciones</span>
+                  </div>
+                  <span className="text-sm font-bold text-slate-800 dark:text-white">3</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 text-orange-500" />
+                    <span className="text-xs text-slate-600 dark:text-slate-300">Alertas Stock</span>
+                  </div>
+                  <span className="text-sm font-bold text-orange-600 dark:text-orange-400">1</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Truck className="w-4 h-4 text-blue-500" />
+                    <span className="text-xs text-slate-600 dark:text-slate-300">Registros Procesados</span>
+                  </div>
+                  <span className="text-sm font-bold text-slate-800 dark:text-white">25.2K</span>
+                </div>
               </div>
             </div>
           </div>
-
         </div>
       </div>
     </SupervisorLayout>
