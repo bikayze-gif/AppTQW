@@ -13,9 +13,11 @@ import {
 } from "@/components/ui/select";
 import {
   Route, Search, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown,
-  Download, Loader2, Calendar, Package, Truck, CheckCircle, Clock, AlertCircle,
+  Download, Loader2, Calendar, Package, Truck, CheckCircle, Clock, AlertCircle, Plus,
 } from "lucide-react";
 import { Timeline, TimelineEvent } from "@/components/ui/timeline";
+import { TimelineTaskDialog } from "@/components/supervisor/timeline-task-dialog";
+import { useTimelineTasks } from "@/hooks/use-timeline-tasks";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -413,133 +415,10 @@ const COLS_ASIGNACION = [
 
 export default function FlujoLogistico() {
   const [fechaCargaValorizado, setFechaCargaValorizado] = useState<string | null>(null);
+  const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
 
-  // Generar datos de timeline con fechas relativas a hoy
-  const getMockLogisticTimeline = (): TimelineEvent[] => {
-    const today = new Date();
-    today.setHours(15, 25, 0, 0); // Aproximadamente a las 15:25
-
-    const formatDate = (date: Date) => date.toISOString().split('T')[0];
-    const formatTime = (date: Date) => date.toTimeString().slice(0, 5);
-
-    // Eventos basados en los 8 archivos Excel modificados
-    const excelEvents: TimelineEvent[] = [
-      {
-        id: "excel-1",
-        title: "Inventario Móviles 10-03-2026 V2 RM",
-        date: formatDate(today),
-        time: "15:27",
-        category: "personal",
-        status: "completed",
-        description: "Archivo Excel modificado: Actualización de inventario de móviles V2",
-      },
-      {
-        id: "excel-2",
-        title: "Series Antofa 11-03",
-        date: formatDate(today),
-        time: "15:27",
-        category: "deadline",
-        status: "completed",
-        description: "Archivo Excel modificado: Actualización de series Antofa",
-      },
-      {
-        id: "excel-3",
-        title: "Inventario Móviles 10-03-2026 RM",
-        date: formatDate(today),
-        time: "15:27",
-        category: "personal",
-        status: "completed",
-        description: "Archivo Excel modificado: Inventario de móviles versión original",
-      },
-      {
-        id: "excel-4",
-        title: "Inventario Móviles 11-03-2026 RM",
-        date: formatDate(today),
-        time: "15:27",
-        category: "personal",
-        status: "completed",
-        description: "Archivo Excel modificado: Inventario de móviles día 11",
-      },
-      {
-        id: "excel-5",
-        title: "Inventario Seriado 05-03 RM",
-        date: formatDate(today),
-        time: "15:26",
-        category: "personal",
-        status: "completed",
-        description: "Archivo Excel modificado: Inventario seriado del día 5",
-      },
-      {
-        id: "excel-6",
-        title: "Base Seriados por Bodegas - Inventario 04-03",
-        date: formatDate(today),
-        time: "15:26",
-        category: "meeting",
-        status: "completed",
-        description: "Archivo Excel modificado: Base de datos de seriados por bodega",
-      },
-      {
-        id: "excel-7",
-        title: "Inventario Los Andes 12-03",
-        date: formatDate(today),
-        time: "15:25",
-        category: "personal",
-        status: "completed",
-        description: "Archivo Excel modificado: Copia de inventario Los Andes",
-      },
-      {
-        id: "excel-8",
-        title: "Stock Ferretería RM 18-03",
-        date: formatDate(today),
-        time: "11:47",
-        category: "deadline",
-        status: "completed",
-        description: "Archivo Excel modificado: Inventario de stock ferretería",
-      },
-    ];
-
-    // Eventos existentes del sistema
-    const systemEvents: TimelineEvent[] = [
-      {
-        id: "sys-1",
-        title: "Stock Claro Día 0 Sincronizado",
-        date: formatDate(today),
-        time: "08:00",
-        duration: "5min",
-        category: "meeting",
-        status: "completed",
-        description: "Sincronización completada: 2,600 registros de stock SAP actualizados",
-      },
-      {
-        id: "sys-2",
-        title: "Alerta: Stock Crítico Material 45002001",
-        date: formatDate(today),
-        time: "09:30",
-        category: "deadline",
-        status: "upcoming",
-        description: "Material 'CABLE ACERO 3/8' bajo stock mínimo (5 unidades en bodega)",
-      },
-      {
-        id: "sys-3",
-        title: "Asignación de Técnicos Pendiente",
-        date: formatDate(new Date(today.getTime() + 86400000)),
-        time: "10:00",
-        duration: "1h",
-        category: "reminder",
-        status: "upcoming",
-        description: "Revisar asignación de equipos para 44 técnicos activos",
-      },
-    ];
-
-    // Combinar y ordenar por tiempo
-    return [...excelEvents, ...systemEvents].sort((a, b) => {
-      const timeA = a.date + 'T' + a.time;
-      const timeB = b.date + 'T' + b.time;
-      return timeB.localeCompare(timeA);
-    });
-  };
-
-  const mockLogisticTimeline = getMockLogisticTimeline();
+  // Obtener tareas del timeline desde la API
+  const { events: timelineEvents, isLoading: isLoadingTimeline, createTask } = useTimelineTasks();
 
   return (
     <SupervisorLayout>
@@ -562,7 +441,7 @@ export default function FlujoLogistico() {
           </div>
 
           {/* Tabs Container - Scrollable */}
-          <div className="flex-1 overflow-y-auto px-6 pb-6">
+          <div className="flex-1 overflow-y-auto px-6 pb-3">
           <Tabs defaultValue="stock-all">
             <TabsList className="h-9">
               <TabsTrigger value="stock-all" className="text-xs">Stock Claro Día 0</TabsTrigger>
@@ -651,20 +530,32 @@ export default function FlujoLogistico() {
           {/* Sticky top replaced with flex layout */}
           <div className="p-6 overflow-y-auto h-full">
             <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                  <Package className="text-white" size={16} />
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <Package className="text-white" size={16} />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
+                      Actividad Logística
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Eventos y sincronizaciones
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
-                    Actividad Logística
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Eventos y sincronizaciones
-                  </p>
-                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 px-2 gap-1 text-xs"
+                  onClick={() => setIsTaskDialogOpen(true)}
+                  title="Nueva tarea"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Nueva</span>
+                </Button>
               </div>
-              <Timeline events={mockLogisticTimeline} />
+              <Timeline events={timelineEvents} />
             </div>
 
             {/* Stats Summary */}
@@ -676,28 +567,40 @@ export default function FlujoLogistico() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <CheckCircle className="w-4 h-4 text-green-500" />
-                    <span className="text-xs text-slate-600 dark:text-slate-300">Sincronizaciones</span>
+                    <span className="text-xs text-slate-600 dark:text-slate-300">Tareas Activas</span>
                   </div>
-                  <span className="text-sm font-bold text-slate-800 dark:text-white">3</span>
+                  <span className="text-sm font-bold text-slate-800 dark:text-white">
+                    {timelineEvents.filter(e => e.status === 'upcoming').length}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <AlertCircle className="w-4 h-4 text-orange-500" />
-                    <span className="text-xs text-slate-600 dark:text-slate-300">Alertas Stock</span>
+                    <span className="text-xs text-slate-600 dark:text-slate-300">Tareas Pendientes</span>
                   </div>
-                  <span className="text-sm font-bold text-orange-600 dark:text-orange-400">1</span>
+                  <span className="text-sm font-bold text-orange-600 dark:text-orange-400">
+                    {timelineEvents.filter(e => e.status === 'upcoming' && e.category === 'deadline').length}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Truck className="w-4 h-4 text-blue-500" />
-                    <span className="text-xs text-slate-600 dark:text-slate-300">Registros Procesados</span>
+                    <span className="text-xs text-slate-600 dark:text-slate-300">Total Tareas</span>
                   </div>
-                  <span className="text-sm font-bold text-slate-800 dark:text-white">25.2K</span>
+                  <span className="text-sm font-bold text-slate-800 dark:text-white">
+                    {timelineEvents.length}
+                  </span>
                 </div>
               </div>
             </div>
           </div>
         </div>
+
+        {/* Timeline Task Dialog */}
+        <TimelineTaskDialog
+          open={isTaskDialogOpen}
+          onOpenChange={setIsTaskDialogOpen}
+        />
       </div>
     </SupervisorLayout>
   );

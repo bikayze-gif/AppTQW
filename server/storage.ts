@@ -1,8 +1,5 @@
-import { drizzle } from "drizzle-orm/mysql2";
 import mysql, { RowDataPacket } from "mysql2/promise";
-import * as schema from "@shared/schema";
-import { eq, desc, and, sql, gte } from "drizzle-orm";
-import type { Billing, InsertBilling, User, InsertLoginAttempt, SupervisorNote, InsertNote, NoteLabel, InsertNoteLabel } from "@shared/schema";
+import type { Billing, InsertBilling, User, InsertLoginAttempt, SupervisorNote, InsertNote, NoteLabel, InsertNoteLabel, TimelineTask, InsertTimelineTask } from "@shared/schema";
 import crypto from "crypto";
 import bcrypt from "bcrypt";
 import { dbConfig, securityConfig } from "./config";
@@ -3482,6 +3479,167 @@ export class MySQLStorage implements IStorage {
       [like, like, like, like]
     );
     return { data: rows as any[], total, fechaCarga };
+  }
+
+  // ============================================
+  // TIMELINE TASKS METHODS
+  // ============================================
+
+  async getTimelineTasks(userId: number, options?: { date?: string; category?: string; status?: string }): Promise<TimelineTask[]> {
+    try {
+      let query = `SELECT * FROM tb_timeline_tasks WHERE user_id = ?`;
+      const params: any[] = [userId];
+
+      if (options?.date) {
+        query += ` AND task_date = ?`;
+        params.push(options.date);
+      }
+      if (options?.category) {
+        query += ` AND category = ?`;
+        params.push(options.category);
+      }
+      if (options?.status) {
+        query += ` AND status = ?`;
+        params.push(options.status);
+      }
+
+      query += ` ORDER BY created_at DESC`;
+
+      const [rows] = await pool.execute(query, params);
+      return rows as TimelineTask[];
+    } catch (error) {
+      console.error("Error fetching timeline tasks:", error);
+      throw error;
+    }
+  }
+
+  async getTimelineTaskById(taskId: number, userId: number): Promise<TimelineTask | null> {
+    try {
+      const [rows] = await pool.execute(
+        `SELECT * FROM tb_timeline_tasks WHERE id = ? AND user_id = ?`,
+        [taskId, userId]
+      );
+      const tasks = rows as TimelineTask[];
+      return tasks[0] || null;
+    } catch (error) {
+      console.error("Error fetching timeline task:", error);
+      throw error;
+    }
+  }
+
+  async createTimelineTask(taskData: InsertTimelineTask): Promise<TimelineTask> {
+    try {
+      const { userId, title, description, filePath, fileName, fileType, fileSize, category, status, taskDate, taskTime } = taskData;
+
+      const [result] = await pool.execute(
+        `INSERT INTO tb_timeline_tasks (user_id, title, description, file_path, file_name, file_type, file_size, category, status, task_date, task_time)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [userId, title, description || null, filePath || null, fileName || null, fileType || null, fileSize || null, category, status, taskDate, taskTime]
+      );
+
+      const insertId = (result as any).insertId;
+
+      // Obtener la tarea insertada
+      const [rows] = await pool.execute(
+        `SELECT * FROM tb_timeline_tasks WHERE id = ?`,
+        [insertId]
+      );
+      const tasks = rows as TimelineTask[];
+      return tasks[0];
+    } catch (error) {
+      console.error("Error creating timeline task:", error);
+      throw error;
+    }
+  }
+
+  async updateTimelineTask(taskId: number, userId: number, updates: Partial<TimelineTask>): Promise<TimelineTask | null> {
+    try {
+      // Primero verificar que la tarea existe y pertenece al usuario
+      const existing = await this.getTimelineTaskById(taskId, userId);
+      if (!existing) {
+        return null;
+      }
+
+      // Construir query dinámica
+      const updateFields: string[] = [];
+      const params: any[] = [];
+
+      if (updates.title !== undefined) {
+        updateFields.push("title = ?");
+        params.push(updates.title);
+      }
+      if (updates.description !== undefined) {
+        updateFields.push("description = ?");
+        params.push(updates.description);
+      }
+      if (updates.category !== undefined) {
+        updateFields.push("category = ?");
+        params.push(updates.category);
+      }
+      if (updates.status !== undefined) {
+        updateFields.push("status = ?");
+        params.push(updates.status);
+      }
+      if (updates.taskDate !== undefined) {
+        updateFields.push("task_date = ?");
+        params.push(updates.taskDate);
+      }
+      if (updates.taskTime !== undefined) {
+        updateFields.push("task_time = ?");
+        params.push(updates.taskTime);
+      }
+
+      if (updateFields.length === 0) {
+        return existing;
+      }
+
+      params.push(taskId);
+
+      await pool.execute(
+        `UPDATE tb_timeline_tasks SET ${updateFields.join(", ")} WHERE id = ?`,
+        params
+      );
+
+      // Obtener la tarea actualizada
+      return await this.getTimelineTaskById(taskId, userId);
+    } catch (error) {
+      console.error("Error updating timeline task:", error);
+      throw error;
+    }
+  }
+
+  async deleteTimelineTask(taskId: number, userId: number): Promise<boolean> {
+    try {
+      // Primero obtener la tarea para eliminar el archivo si existe
+      const task = await this.getTimelineTaskById(taskId, userId);
+      if (!task) {
+        return false;
+      }
+
+      // Eliminar el archivo del sistema de archivos si existe
+      if (task.filePath) {
+        const fs = await import('fs');
+        try {
+          if (fs.existsSync(task.filePath)) {
+            fs.unlinkSync(task.filePath);
+          }
+        } catch (error) {
+          console.error('[Storage] Error deleting file:', error);
+          // Continuar con la eliminación de la tarea aunque falle el archivo
+        }
+      }
+
+      // Eliminar la tarea de la base de datos
+      await pool.execute(
+        `DELETE FROM tb_timeline_tasks WHERE id = ? AND user_id = ?`,
+        [taskId, userId]
+      );
+
+      return true;
+    } catch (error) {
+      console.error("Error deleting timeline task:", error);
+      throw error;
+    }
   }
 }
 

@@ -1,12 +1,14 @@
-import type { Express, Request, Response, NextFunction } from "express";
+import express, { type Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import crypto from "crypto";
 import bcrypt from "bcrypt";
+import path from "path";
 import { storage } from "./storage";
-import { insertBillingSchema, loginSchema, materialSolicitudRequestSchema, insertNoteSchema, insertNoteLabelSchema } from "@shared/schema";
+import { insertBillingSchema, loginSchema, materialSolicitudRequestSchema, insertNoteSchema, insertNoteLabelSchema, insertTimelineTaskSchema } from "@shared/schema";
 import { z } from "zod";
 import { broadcast } from "./websocket";
 import { emailService } from "./services/email";
+import { uploadMiddleware, handleUploadError } from "./middleware/upload";
 
 
 // Middleware para verificar autenticación
@@ -100,6 +102,21 @@ export function rotateSessionIfNeeded(req: Request, res: Response, next: NextFun
 export async function registerRoutes(app: Express): Promise<Server> {
   // Aplicar validación de timeout y rotación de sesión a todas las rutas API
   app.use('/api/*', validateSessionTimeout, rotateSessionIfNeeded);
+
+  // Servir archivos estáticos de uploads (timeline tasks, etc.)
+  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads'), {
+    // Seguridad: solo permitir descargas, no listar directorios
+    index: false,
+    // Headers de seguridad
+    setHeaders: (res, filePath) => {
+      // Prevenir ejecución de scripts
+      if (filePath.endsWith('.js') || filePath.endsWith('.exe')) {
+        res.setHeader('Content-Type', 'text/plain');
+      }
+      // Cache control para archivos estáticos
+      res.setHeader('Cache-Control', 'private, max-age=3600');
+    }
+  }));
 
   // ============================================
   // AUTHENTICATION ROUTES
@@ -1975,6 +1992,160 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("[Notes API] Error deleting label:", error);
       res.status(500).json({ error: "Error al eliminar etiqueta" });
+    }
+  });
+
+  // ============================================
+  // ENDPOINTS DE TIMELINE TASKS
+  // ============================================
+
+  // Listar tareas del timeline del usuario actual
+  app.get("/api/timeline/tasks", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "No autenticado" });
+      }
+
+      const { date, category, status } = req.query;
+      const tasks = await storage.getTimelineTasks(userId, {
+        date: date as string,
+        category: category as string,
+        status: status as string,
+      });
+
+      res.json(tasks);
+    } catch (error) {
+      console.error("[Timeline API] Error fetching tasks:", error);
+      res.status(500).json({ error: "Error al obtener tareas" });
+    }
+  });
+
+  // Obtener una tarea específica
+  app.get("/api/timeline/tasks/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "No autenticado" });
+      }
+
+      const taskId = parseInt(req.params.id);
+      if (isNaN(taskId)) {
+        return res.status(400).json({ error: "ID de tarea inválido" });
+      }
+
+      const task = await storage.getTimelineTaskById(taskId, userId);
+      if (!task) {
+        return res.status(404).json({ error: "Tarea no encontrada" });
+      }
+
+      res.json(task);
+    } catch (error) {
+      console.error("[Timeline API] Error fetching task:", error);
+      res.status(500).json({ error: "Error al obtener tarea" });
+    }
+  });
+
+  // Crear una nueva tarea (con archivo adjunto opcional)
+  app.post("/api/timeline/tasks",
+    requireAuth,
+    uploadMiddleware.single('file'),
+    handleUploadError,
+    async (req, res) => {
+    try {
+      const userId = req.session.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "No autenticado" });
+      }
+
+      // Validar datos del formulario
+      const validationResult = insertTimelineTaskSchema.safeParse({
+        ...req.body,
+        userId,
+      });
+
+      if (!validationResult.success) {
+        return res.status(400).json({
+          error: "Datos inválidos",
+          details: validationResult.error.format(),
+        });
+      }
+
+      const taskData = validationResult.data;
+
+      // Si hay un archivo subido, agregar la información
+      if ((req as any).file) {
+        const file = (req as any).file;
+        taskData.filePath = file.path;
+        taskData.fileName = file.originalname;
+        taskData.fileType = file.mimetype;
+        taskData.fileSize = file.size;
+      }
+
+      const task = await storage.createTimelineTask(taskData);
+      res.status(201).json(task);
+    } catch (error) {
+      console.error("[Timeline API] Error creating task:", error);
+      res.status(500).json({ error: "Error al crear tarea" });
+    }
+  });
+
+  // Actualizar una tarea
+  app.patch("/api/timeline/tasks/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "No autenticado" });
+      }
+
+      const taskId = parseInt(req.params.id);
+      if (isNaN(taskId)) {
+        return res.status(400).json({ error: "ID de tarea inválido" });
+      }
+
+      // Validar datos (parcial, para permitir updates parciales)
+      const updateData: any = {};
+      if (req.body.title !== undefined) updateData.title = req.body.title;
+      if (req.body.description !== undefined) updateData.description = req.body.description;
+      if (req.body.category !== undefined) updateData.category = req.body.category;
+      if (req.body.status !== undefined) updateData.status = req.body.status;
+      if (req.body.taskDate !== undefined) updateData.taskDate = req.body.taskDate;
+      if (req.body.taskTime !== undefined) updateData.taskTime = req.body.taskTime;
+
+      const task = await storage.updateTimelineTask(taskId, userId, updateData);
+      if (!task) {
+        return res.status(404).json({ error: "Tarea no encontrada o no autorizado" });
+      }
+
+      res.json(task);
+    } catch (error) {
+      console.error("[Timeline API] Error updating task:", error);
+      res.status(500).json({ error: "Error al actualizar tarea" });
+    }
+  });
+
+  // Eliminar una tarea (y su archivo adjunto si existe)
+  app.delete("/api/timeline/tasks/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "No autenticado" });
+      }
+
+      const taskId = parseInt(req.params.id);
+      if (isNaN(taskId)) {
+        return res.status(400).json({ error: "ID de tarea inválido" });
+      }
+
+      const deleted = await storage.deleteTimelineTask(taskId, userId);
+      if (!deleted) {
+        return res.status(404).json({ error: "Tarea no encontrada o no autorizado" });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("[Timeline API] Error deleting task:", error);
+      res.status(500).json({ error: "Error al eliminar tarea" });
     }
   });
 

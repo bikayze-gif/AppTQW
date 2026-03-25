@@ -526,3 +526,42 @@ export interface HourlyDistribution {
   hour: number;
   count: number;
 }
+
+// ============================================
+// TIMELINE TASKS SYSTEM
+// ============================================
+
+export const timelineTasks = mysqlTable("tb_timeline_tasks", {
+  id: int("id").primaryKey().autoincrement(),
+  userId: int("user_id").notNull().references(() => users.id),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  filePath: varchar("file_path", { length: 500 }),
+  fileName: varchar("file_name", { length: 255 }),
+  fileType: varchar("file_type", { length: 50 }),
+  fileSize: int("file_size"),
+  category: varchar("category", { length: 20 }).notNull().default("reminder"),
+  status: varchar("status", { length: 20 }).notNull().default("upcoming"),
+  taskDate: date("task_date").notNull(),
+  taskTime: varchar("task_time", { length: 10 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
+});
+
+export type TimelineTask = typeof timelineTasks.$inferSelect;
+
+export const insertTimelineTaskSchema = createInsertSchema(timelineTasks, {
+  userId: z.coerce.number().int().positive(),
+  title: z.string().min(1, "El título es requerido").max(255),
+  description: z.string().nullable().optional(),
+  filePath: z.string().max(500).nullable().optional(),
+  fileName: z.string().max(255).nullable().optional(),
+  fileType: z.string().max(50).nullable().optional(),
+  fileSize: z.number().int().nullable().optional(),
+  category: z.enum(["meeting", "deadline", "reminder", "personal"]).default("reminder"),
+  status: z.enum(["completed", "upcoming", "cancelled"]).default("upcoming"),
+  taskDate: z.string().min(1, "La fecha es requerida"),
+  taskTime: z.string().regex(/^\d{2}:\d{2}$/, "Formato de hora inválido (HH:MM)"),
+}).omit({ id: true, createdAt: true, updatedAt: true });
+
+export type InsertTimelineTask = z.infer<typeof insertTimelineTaskSchema>;

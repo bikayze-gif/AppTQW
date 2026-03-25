@@ -12,3 +12,4 @@ server.log
 nul
 *.sql
 client/public/STOCK FERRETERIA ANTOFAGASTA 13022026.XLSX
+uploads/
