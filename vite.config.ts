@@ -41,6 +41,12 @@ export default defineConfig({
   server: {
     host: "0.0.0.0",
     allowedHosts: true,
+    warmup: {
+      clientFiles: [
+        "./src/main.tsx",
+        "./src/App.tsx",
+      ],
+    },
     fs: {
       strict: true,
       deny: ["**/.*"],

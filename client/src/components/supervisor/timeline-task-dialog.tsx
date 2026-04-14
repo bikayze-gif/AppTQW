@@ -13,22 +13,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Upload, X, FileText, FileSpreadsheet, Image, File } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 const taskSchema = z.object({
   title: z.string().min(1, "El título es requerido").max(255),
   description: z.string().optional(),
-  category: z.enum(["meeting", "deadline", "reminder", "personal"]),
+  category: z.string().max(50, "Máximo 50 caracteres").default("general"),
   taskDate: z.string().min(1, "La fecha es requerida"),
-  taskTime: z.string().regex(/^\d{2}:\d{2}$/, "Formato de hora inválido (HH:MM)"),
 });
 
 type TaskFormData = z.infer<typeof taskSchema>;
@@ -55,9 +47,8 @@ export function TimelineTaskDialog({ open, onOpenChange }: TimelineTaskDialogPro
     defaultValues: {
       title: "",
       description: "",
-      category: "reminder",
+      category: "",
       taskDate: new Date().toISOString().split("T")[0],
-      taskTime: new Date().toTimeString().slice(0, 5),
     },
   });
 
@@ -67,7 +58,6 @@ export function TimelineTaskDialog({ open, onOpenChange }: TimelineTaskDialogPro
       formData.append("title", data.title);
       formData.append("category", data.category);
       formData.append("taskDate", data.taskDate);
-      formData.append("taskTime", data.taskTime);
       if (data.description) {
         formData.append("description", data.description);
       }
@@ -253,52 +243,31 @@ export function TimelineTaskDialog({ open, onOpenChange }: TimelineTaskDialogPro
             <Label htmlFor="category" className="text-slate-700 dark:text-slate-300">
               Categoría
             </Label>
-            <Select
-              value={watch("category")}
-              onValueChange={(value) => setValue("category", value as any)}
-            >
-              <SelectTrigger className="mt-1 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="meeting">Reunión</SelectItem>
-                <SelectItem value="deadline">Fecha Límite</SelectItem>
-                <SelectItem value="reminder">Recordatorio</SelectItem>
-                <SelectItem value="personal">Personal</SelectItem>
-              </SelectContent>
-            </Select>
+            <Input
+              id="category"
+              placeholder="Ej: Reunión, Seguimiento, Logística..."
+              className="mt-1 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600"
+              {...register("category")}
+            />
+            {errors.category && (
+              <p className="text-red-500 text-xs mt-1">{errors.category.message}</p>
+            )}
           </div>
 
-          {/* Fecha y Hora */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="taskDate" className="text-slate-700 dark:text-slate-300">
-                Fecha *
-              </Label>
-              <Input
-                id="taskDate"
-                type="date"
-                className="mt-1 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600"
-                {...register("taskDate")}
-              />
-              {errors.taskDate && (
-                <p className="text-red-500 text-xs mt-1">{errors.taskDate.message}</p>
-              )}
-            </div>
-            <div>
-              <Label htmlFor="taskTime" className="text-slate-700 dark:text-slate-300">
-                Hora *
-              </Label>
-              <Input
-                id="taskTime"
-                type="time"
-                className="mt-1 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600"
-                {...register("taskTime")}
-              />
-              {errors.taskTime && (
-                <p className="text-red-500 text-xs mt-1">{errors.taskTime.message}</p>
-              )}
-            </div>
+          {/* Fecha */}
+          <div>
+            <Label htmlFor="taskDate" className="text-slate-700 dark:text-slate-300">
+              Fecha *
+            </Label>
+            <Input
+              id="taskDate"
+              type="date"
+              className="mt-1 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600"
+              {...register("taskDate")}
+            />
+            {errors.taskDate && (
+              <p className="text-red-500 text-xs mt-1">{errors.taskDate.message}</p>
+            )}
           </div>
 
           <DialogFooter>

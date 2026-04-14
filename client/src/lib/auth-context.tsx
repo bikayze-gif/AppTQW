@@ -15,7 +15,7 @@ interface AuthContextType {
   user: AuthUser | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string; redirectTo?: string }>;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string; errorCode?: string; redirectTo?: string }>;
   logout: () => Promise<void>;
   checkSession: () => Promise<void>;
 }
@@ -85,6 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return {
           success: false,
           error: data.error || "Error al iniciar sesión",
+          errorCode: data.code,
         };
       }
 

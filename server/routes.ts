@@ -100,6 +100,58 @@ export function rotateSessionIfNeeded(req: Request, res: Response, next: NextFun
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+
+  // ============================================
+  // HEALTH CHECK (no requiere auth, no sesión)
+  // ============================================
+  app.get("/api/health", async (_req, res) => {
+    const checks: Record<string, { ok: boolean; message: string }> = {};
+
+    // 1. Verificar conexión MySQL
+    try {
+      const mysql = await import("mysql2/promise");
+      const { dbConfig } = await import("./config");
+      const conn = await mysql.createConnection({
+        host: dbConfig.host,
+        port: dbConfig.port,
+        user: dbConfig.user,
+        password: dbConfig.password,
+        database: dbConfig.database,
+        connectTimeout: 3000,
+      });
+      await conn.ping();
+      await conn.end();
+      checks.mysql = { ok: true, message: "Conectado" };
+    } catch (err: any) {
+      const msg = err.code === "ECONNREFUSED"
+        ? "Túnel SSH inactivo o MySQL no disponible (ECONNREFUSED)"
+        : err.message || "Error desconocido";
+      checks.mysql = { ok: false, message: msg };
+    }
+
+    // 2. Verificar puerto del túnel SSH (3307 escuchando)
+    try {
+      const net = await import("net");
+      await new Promise<void>((resolve, reject) => {
+        const sock = new net.Socket();
+        sock.setTimeout(2000);
+        sock.connect(3307, "127.0.0.1", () => { sock.destroy(); resolve(); });
+        sock.on("error", reject);
+        sock.on("timeout", () => { sock.destroy(); reject(new Error("timeout")); });
+      });
+      checks.ssh_tunnel = { ok: true, message: "Puerto 3307 activo" };
+    } catch {
+      checks.ssh_tunnel = { ok: false, message: "Puerto 3307 no disponible — túnel SSH caído" };
+    }
+
+    const allOk = Object.values(checks).every(c => c.ok);
+    res.status(allOk ? 200 : 503).json({
+      status: allOk ? "ok" : "degraded",
+      timestamp: new Date().toISOString(),
+      checks,
+    });
+  });
+
   // Aplicar validación de timeout y rotación de sesión a todas las rutas API
   app.use('/api/*', validateSessionTimeout, rotateSessionIfNeeded);
 
@@ -125,8 +177,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // POST /api/auth/login - Iniciar sesión
   app.post("/api/auth/login", async (req, res) => {
     try {
-      // Validar datos de entrada
-      const validatedData = loginSchema.parse(req.body);
+      // Validar datos de entrada con catch para errores de BD
+      let validatedData: any;
+      try {
+        validatedData = loginSchema.parse(req.body);
+      } catch (parseErr) {
+        return res.status(400).json({ error: "Datos de inicio de sesión inválidos", code: "VALIDATION_ERROR" });
+      }
       const { email, password } = validatedData;
       const ip = req.ip || req.socket.remoteAddress || "unknown";
       const userAgent = req.headers["user-agent"] || "unknown";
@@ -230,15 +287,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         });
       });
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({
           error: "Datos de entrada inválidos",
           details: error.errors,
         });
       }
+      // Detectar error de conexión a MySQL / túnel SSH caído
+      if (error?.code === "ECONNREFUSED" || error?.code === "PROTOCOL_CONNECTION_LOST" || error?.fatal) {
+        console.error("[LOGIN] Error de conexión a base de datos:", error.code);
+        return res.status(503).json({
+          error: "Base de datos no disponible. Verifica el túnel SSH.",
+          code: "DB_UNAVAILABLE",
+        });
+      }
       console.error("Login error:", error);
-      res.status(500).json({ error: "Error interno del servidor" });
+      res.status(500).json({ error: "Error interno del servidor", code: "SERVER_ERROR" });
     }
   });
 

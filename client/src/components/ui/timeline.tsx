@@ -9,7 +9,7 @@ export interface TimelineEvent {
     duration?: string;
     location?: string;
     attendees?: string[];
-    category: "meeting" | "deadline" | "reminder" | "personal";
+    category: string;
     status?: "completed" | "upcoming" | "cancelled";
     description?: string;
 }
@@ -20,7 +20,7 @@ interface TimelineProps {
     className?: string;
 }
 
-const categoryConfig = {
+const categoryConfig: Record<string, { color: string; lightColor: string; textColor: string; borderColor: string }> = {
     meeting: {
         color: "bg-blue-500",
         lightColor: "bg-blue-50 dark:bg-blue-900/20",
@@ -45,6 +45,13 @@ const categoryConfig = {
         textColor: "text-purple-600 dark:text-purple-400",
         borderColor: "border-purple-200 dark:border-purple-800",
     },
+};
+
+const defaultCategoryConfig = {
+    color: "bg-slate-500",
+    lightColor: "bg-slate-50 dark:bg-slate-900/20",
+    textColor: "text-slate-600 dark:text-slate-400",
+    borderColor: "border-slate-200 dark:border-slate-800",
 };
 
 const statusIcon = {
@@ -99,7 +106,7 @@ export function Timeline({ events, onEventClick, className }: TimelineProps) {
                 {/* Events */}
                 <div className="space-y-4">
                     {sortedEvents.map((event, index) => {
-                        const config = categoryConfig[event.category];
+                        const config = categoryConfig[event.category] || defaultCategoryConfig;
                         const StatusIcon = statusIcon[event.status || "upcoming"];
                         const isEven = index % 2 === 0;
 

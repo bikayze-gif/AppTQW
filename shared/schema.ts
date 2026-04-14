@@ -558,10 +558,10 @@ export const insertTimelineTaskSchema = createInsertSchema(timelineTasks, {
   fileName: z.string().max(255).nullable().optional(),
   fileType: z.string().max(50).nullable().optional(),
   fileSize: z.number().int().nullable().optional(),
-  category: z.enum(["meeting", "deadline", "reminder", "personal"]).default("reminder"),
+  category: z.string().max(50, "La categoría no puede exceder 50 caracteres").default("general"),
   status: z.enum(["completed", "upcoming", "cancelled"]).default("upcoming"),
   taskDate: z.string().min(1, "La fecha es requerida"),
-  taskTime: z.string().regex(/^\d{2}:\d{2}$/, "Formato de hora inválido (HH:MM)"),
+  taskTime: z.string().regex(/^\d{2}:\d{2}$/, "Formato de hora inválido (HH:MM)").default("00:00").optional(),
 }).omit({ id: true, createdAt: true, updatedAt: true });
 
 export type InsertTimelineTask = z.infer<typeof insertTimelineTaskSchema>;

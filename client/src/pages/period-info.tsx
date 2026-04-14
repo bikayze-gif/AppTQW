@@ -1,11 +1,19 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { BottomNav } from "@/components/bottom-nav";
-import { AlertCircle, ChevronUp, ChevronDown } from "lucide-react";
+import { AlertCircle, ChevronUp, ChevronDown, Clock, Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/lib/auth-context";
 import { MaterialForm } from "@/components/material-form";
 import { useLocation } from "wouter";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 const GLOBAL_PERIODO = "202603";
 
@@ -105,6 +113,7 @@ export default function PeriodInfo() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showMaterialForm, setShowMaterialForm] = useState(false);
+  const [showInfoModal, setShowInfoModal] = useState(true);
 
   // 🔒 GUARDIA DE SESIÓN: Redirigir a login si no hay usuario autenticado
   useEffect(() => {
@@ -214,6 +223,35 @@ export default function PeriodInfo() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 pb-28">
+
+      {/* Modal informativo de actualización de indicadores */}
+      <Dialog open={showInfoModal} onOpenChange={setShowInfoModal}>
+        <DialogContent className="bg-slate-900 border border-cyan-500/40 text-white max-w-sm mx-auto">
+          <DialogHeader className="items-center text-center gap-3">
+            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-cyan-500/20 border border-cyan-500/40">
+              <Clock className="w-6 h-6 text-cyan-400" />
+            </div>
+            <DialogTitle className="text-lg font-bold text-white">
+              Indicadores en actualización
+            </DialogTitle>
+            <DialogDescription className="text-slate-300 text-sm leading-relaxed text-center">
+              Los indicadores de producción se encuentran en proceso de actualización y estarán disponibles con la información al día{" "}
+              <span className="text-cyan-400 font-semibold">a las 15:00 hrs</span>.
+              <br /><br />
+              Disculpe las molestias.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-2 flex justify-center">
+            <Button
+              onClick={() => setShowInfoModal(false)}
+              className="bg-cyan-600 hover:bg-cyan-500 text-white px-8"
+            >
+              Entendido
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <div className="max-w-5xl mx-auto p-2 sm:p-3 space-y-3 sm:space-y-4">
         {/* Header */}
         <div className="bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 rounded-lg p-4 backdrop-blur-sm">

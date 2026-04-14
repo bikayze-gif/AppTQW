@@ -9,7 +9,7 @@ interface TimelineTask {
   fileName: string | null;
   fileType: string | null;
   fileSize: number | null;
-  category: "meeting" | "deadline" | "reminder" | "personal";
+  category: string;
   status: "completed" | "upcoming" | "cancelled";
   taskDate: string;
   taskTime: string;
@@ -25,7 +25,7 @@ interface TimelineEvent {
   duration?: string;
   location?: string;
   attendees?: string[];
-  category: "meeting" | "deadline" | "reminder" | "personal";
+  category: string;
   status?: "completed" | "upcoming" | "cancelled";
   description?: string;
 }
@@ -88,16 +88,19 @@ export function useTimelineTasks(options?: { date?: string; category?: string; s
     mutationFn: async (data: {
       title: string;
       description?: string;
-      category: "meeting" | "deadline" | "reminder" | "personal";
+      category: string;
       taskDate: string;
-      taskTime: string;
+      taskTime?: string;
       file?: File;
     }) => {
       const formData = new FormData();
       formData.append("title", data.title);
       formData.append("category", data.category);
       formData.append("taskDate", data.taskDate);
-      formData.append("taskTime", data.taskTime);
+      // Solo enviar taskTime si se proporciona (opcional)
+      if (data.taskTime) {
+        formData.append("taskTime", data.taskTime);
+      }
       if (data.description) {
         formData.append("description", data.description);
       }

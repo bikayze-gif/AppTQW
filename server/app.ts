@@ -72,7 +72,7 @@ log("Session store: MemoryStore (temporal)");
 // CORS Configuration
 const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
   'https://appoperaciones.telqway.cl',
-  ...(appConfig.isProduction ? [] : ['http://localhost:5173', 'http://localhost:5000']) // Dev only
+  ...(appConfig.isProduction ? [] : ['http://localhost:5173', 'http://localhost:5000', 'http://localhost:5001']) // Dev only
 ].filter(Boolean);
 
 app.use(cors({

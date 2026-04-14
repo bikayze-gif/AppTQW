@@ -10,13 +10,13 @@
       "ask",
       "allow-all"
     ],
-    "thinkingLevel": "think",
+    "thinkingLevel": "medium",
     "enabledSourceSlugs": [],
-    "colorTheme": "pierre"
+    "colorTheme": "tokyo-night"
   },
   "localMcpServers": {
     "enabled": true
   },
   "createdAt": 1769435927567,
-  "updatedAt": 1772506220092
+  "updatedAt": 1774877678549
 }

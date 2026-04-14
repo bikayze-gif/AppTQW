@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Switch, Route, useLocation, Redirect } from "wouter";
 import { AlertCircle } from "lucide-react";
 import { queryClient } from "./lib/queryClient";
@@ -196,10 +196,15 @@ function AppLayout() {
   const isLoginPage = currentPath === "/login" || currentPath === "/forgot-password";
   const showTechnicianLayout = !isLoginPage && !isSupervisorRoute;
 
-  // 🔒 GUARDIA: Si no hay usuario y se intenta mostrar layout técnico, redirigir a login
+  // 🔒 GUARDIA: redirigir a login en efecto (no durante render)
+  useEffect(() => {
+    if (showTechnicianLayout && !isLoading && !user) {
+      console.log(`[AppLayout] No hay usuario autenticado en ruta: ${currentPath}, redirigiendo a login`);
+      setLocation("/login");
+    }
+  }, [showTechnicianLayout, isLoading, user, currentPath, setLocation]);
+
   if (showTechnicianLayout && !isLoading && !user) {
-    console.log(`[AppLayout] No hay usuario autenticado en ruta: ${currentPath}, redirigiendo a login`);
-    setLocation("/login");
     return null;
   }
 

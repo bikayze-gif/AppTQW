@@ -3,6 +3,9 @@ import type { Billing, InsertBilling, User, InsertLoginAttempt, SupervisorNote, 
 import crypto from "crypto";
 import bcrypt from "bcrypt";
 import { dbConfig, securityConfig } from "./config";
+import { drizzle } from "drizzle-orm/mysql2";
+import { eq, and, desc } from "drizzle-orm";
+import * as schema from "@shared/schema";
 
 const pool = mysql.createPool({
   host: dbConfig.host,
@@ -3531,10 +3534,13 @@ export class MySQLStorage implements IStorage {
     try {
       const { userId, title, description, filePath, fileName, fileType, fileSize, category, status, taskDate, taskTime } = taskData;
 
+      // Usar hora por defecto si no se proporciona
+      const finalTaskTime = taskTime || "00:00";
+
       const [result] = await pool.execute(
         `INSERT INTO tb_timeline_tasks (user_id, title, description, file_path, file_name, file_type, file_size, category, status, task_date, task_time)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [userId, title, description || null, filePath || null, fileName || null, fileType || null, fileSize || null, category, status, taskDate, taskTime]
+        [userId, title, description || null, filePath || null, fileName || null, fileType || null, fileSize || null, category, status, taskDate, finalTaskTime]
       );
 
       const insertId = (result as any).insertId;
