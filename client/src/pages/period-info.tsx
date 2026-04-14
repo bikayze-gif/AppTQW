@@ -15,7 +15,13 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
-const GLOBAL_PERIODO = "202603";
+// ─── Variables Globales de Período ─────────────────────────────────────────
+const GLOBAL_PERIODO       = "202604";          // Período activo (YYYYMM)
+const GLOBAL_PERIODO_LABEL = "Abril 2026";      // Nombre legible del período
+const GLOBAL_FECHA_INICIO  = "01/04/2026";      // Inicio del período
+const GLOBAL_FECHA_CORTE   = "30/04/2026";      // Fecha de corte / cierre
+const GLOBAL_FECHA_PAGO    = "15/05/2026";      // Fecha estimada de pago
+// ────────────────────────────────────────────────────────────────────────────
 
 interface TqwData {
   RutTecnicoOrig: string;
@@ -258,11 +264,29 @@ export default function PeriodInfo() {
           <div className="flex items-center gap-2 mb-1.5">
             <div className="text-xl">📅</div>
             <h1 className="text-2xl font-bold text-white">
-              PERIODO {GLOBAL_PERIODO.slice(0, 4)}-{GLOBAL_PERIODO.slice(4)}
+              {GLOBAL_PERIODO_LABEL}
             </h1>
           </div>
           <p className="text-slate-300 text-xs">{user?.nombre || data.NombreTecnico || "Técnico: Sin datos"}</p>
           <p className="text-slate-400 text-[10px]">RUT: {user?.rut}</p>
+
+          {/* Variables globales del período */}
+          <div className="mt-3 pt-3 border-t border-cyan-500/20 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+            {[
+              { label: "Período",      value: GLOBAL_PERIODO,      icon: "🔑" },
+              { label: "Inicio",       value: GLOBAL_FECHA_INICIO,  icon: "📆" },
+              { label: "Corte",        value: GLOBAL_FECHA_CORTE,   icon: "✂️" },
+              { label: "Pago est.",    value: GLOBAL_FECHA_PAGO,    icon: "💳" },
+            ].map(({ label, value, icon }) => (
+              <div key={label} className="bg-slate-800/60 border border-slate-700/50 rounded px-2 py-1.5 flex items-center gap-1.5">
+                <span className="text-xs">{icon}</span>
+                <div className="min-w-0">
+                  <p className="text-[9px] text-slate-400 uppercase tracking-wide leading-none">{label}</p>
+                  <p className="text-[11px] font-semibold text-cyan-300 mt-0.5 truncate">{value}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Información del Técnico */}
