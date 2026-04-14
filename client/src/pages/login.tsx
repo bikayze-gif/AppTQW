@@ -1,9 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { Eye, EyeOff, Loader2, AlertCircle, Wifi, WifiOff } from "lucide-react";
+import { Eye, EyeOff, Loader2, AlertCircle } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
-
-type HealthStatus = "checking" | "ok" | "degraded" | "unknown";
 
 function getErrorMessage(errorCode?: string, fallback?: string): string {
   switch (errorCode) {
@@ -30,28 +28,12 @@ export default function Login() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [healthStatus, setHealthStatus] = useState<HealthStatus>("unknown");
-
-  const checkHealth = useCallback(async () => {
-    setHealthStatus("checking");
-    try {
-      const res = await fetch("/api/health", { signal: AbortSignal.timeout(4000) });
-      setHealthStatus(res.ok ? "ok" : "degraded");
-    } catch {
-      setHealthStatus("degraded");
-    }
-  }, []);
 
   useEffect(() => {
     if (isAuthenticated && !authLoading) {
       setLocation("/");
     }
   }, [isAuthenticated, authLoading, setLocation]);
-
-  // Verificar salud del servidor al montar
-  useEffect(() => {
-    checkHealth();
-  }, [checkHealth]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,10 +47,6 @@ export default function Login() {
         setLocation(result.redirectTo);
       } else if (!result.success) {
         setError(getErrorMessage(result.errorCode, result.error));
-        // Si hay error de BD, re-verificar salud para mostrar banner actualizado
-        if (result.errorCode === "DB_UNAVAILABLE") {
-          checkHealth();
-        }
       }
     } catch {
       setError("No se pudo contactar el servidor. Verifica que el servidor de desarrollo esté corriendo.");
@@ -94,28 +72,6 @@ export default function Login() {
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-1.5">Iniciar sesión</h1>
         </div>
 
-        {/* Banner de estado del servidor */}
-        {healthStatus === "degraded" && (
-          <div className="flex items-start gap-2 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg text-amber-400 mb-3">
-            <WifiOff size={16} className="mt-0.5 shrink-0" />
-            <div className="text-xs leading-relaxed">
-              <span className="font-semibold">Sin conexión a la base de datos.</span>
-              {" "}El túnel SSH puede estar inactivo. Ejecuta <code className="bg-amber-500/20 px-1 rounded">start-dev.bat</code> para reconectar.
-              <button
-                onClick={checkHealth}
-                className="ml-2 underline hover:no-underline"
-              >
-                Reintentar
-              </button>
-            </div>
-          </div>
-        )}
-        {healthStatus === "ok" && (
-          <div className="flex items-center gap-2 p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-400 mb-3">
-            <Wifi size={14} />
-            <span className="text-xs">Servidor conectado</span>
-          </div>
-        )}
 
         {/* Error Message */}
         {error && (
